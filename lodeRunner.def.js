@@ -1,4 +1,4 @@
-var VERSION = "0.99k";
+var VERSION = "0.99m";
 var AI_VERSION = 1;
 
 var NO_OF_TILES_X = 28,

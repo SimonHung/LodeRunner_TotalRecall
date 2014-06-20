@@ -1,31 +1,3 @@
-
-// World HighScores1
-var wHighScores1 = [
- { s: 662025, n: "SIMON", l: 69, c: "Taiwan"} //1 date: 2014-06-07 15:33:26
-,{ s: 61200, n: "AS", l: 8, c: "United States"} //2 date: 2014-06-14 00:39:07
-,{ s: 58900, n: "BITCH", l: 8, c: "United States"} //3 date: 2014-06-14 01:13:26
-,{ s: 41050, n: "SIMON HUNG", l: 9, c: "Taiwan"} //4 date: 2014-06-02 21:08:18
-,{ s: 38250, n: "DANIEL", l: 6, c: "Taiwan"} //5 date: 2014-06-17 00:49:41
-,{ s: 38250, n: "DANIEL", l: 6, c: "Taiwan"} //6 date: 2014-06-17 00:49:40
-,{ s: 33575, n: "DANIEL", l: 6, c: "Taiwan"} //7 date: 2014-06-16 14:09:01
-,{ s: 32400, n: "DANIEL", l: 6, c: "Taiwan"} //8 date: 2014-06-16 00:44:55
-,{ s: 31325, n: "DANIEL", l: 5, c: "Taiwan"} //9 date: 2014-06-17 00:38:00
-,{ s: 31325, n: "DANIEL", l: 5, c: "Taiwan"} //10 date: 2014-06-17 00:37:59
-];
-
-
-
-// World HighScores2
-var wHighScores2 = [
- { s: 35000, n: "Simon", l: 100, c: "Taiwan"} //1 date: 2014-06-03 00:17:48
-,{ s: 35000, n: "Simon", l: 100, c: "Taiwan"} //2 date: 2014-06-01 19:37:07
-,{ s: 35000, n: "Simon", l: 100, c: "Taiwan"} //3 date: 2014-06-01 14:58:04
-,{ s: 6500, n: "PPP", l: 1, c: "Taiwan"} //4 date: 2014-06-01 10:14:11
-,{ s: 3000, n: "LAD APPLE", l: 1, c: "Taiwan"} //5 date: 2014-06-01 10:15:43
-];
-
-
-
 // World DemoData1
 var wDemoData1 = [
  { level: 1,  ai: 1, time: 757, state: 1, country: "Taiwan", //id=1 2014-06-05 01:11:19
