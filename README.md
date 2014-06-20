@@ -1,4 +1,6 @@
-LodeRunner
-==========
+[Lode Runner (超級運動員)](http://simonsays-tw.com/LodeRunner)
+==========================
 
-Lode Runner (超級運動員) - APPLE-II remake version (HTML5, JavaScript)  http://simonsays-tw.com/LodeRunner
+This program build with Javascript + [CreateJS](http://www.createjs.com).
+
+------------------------------------

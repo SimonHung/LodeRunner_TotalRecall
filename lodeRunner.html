@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Lode Runner</title>
+	<!-- DON'T FORGET TO MODIFY *.web.html
+	* ============================================================================= 
+	* Lode Runner (超級運動員) - APPLE-II version
+	*
+	* This program is a HTML5 remake game.
+	*
+	* The program code base on CreateJS JavaScript libraries !
+	* http://www.createjs.com/
+	*
+	* The AI algorithm reference book:
+	* http://www.kingstone.com.tw/book/book_page.asp?kmcode=2014710650538
+	* 
+	* by Simon Hung 2014/06/20 (http://simonsays-tw.com)
+	* ============================================================================= 
+	-->
+	<meta http-equiv="X-UA-Compatible" content="chrome=1, IE=edge">
+	<meta name="description" content="GAME HTML5 JavaScript CreateJS Championship Lode Runner">
+	<link href="lodeRunner.ico"  rel="shortcut icon" >
+	
+	<style>#canvas { position:absolute; left:0; top:0; }</style>
+	
+	<script type="text/javascript" src="./lib/preloadjs-0.4.1.min.js"></script>
+	<script type="text/javascript" src="./lib/soundjs-0.5.2.min.js"></script>
+	<script type="text/javascript" src="./lib/tweenjs-0.5.1.min.js"></script>
+	<script type="text/javascript" src="./lib/easeljs-0.7.1.min.js"></script>
+
+	<script type="text/javascript" src="lodeRunner.baseLevel.js"></script>
+	<script type="text/javascript" src="lodeRunner.champLevel.js"></script>
+	<script type="text/javascript" src="lodeRunner.storage.js"></script>
+	<script type="text/javascript" src="lodeRunner.def.js"></script>
+	<script type="text/javascript" src="lodeRunner.key.js"></script>
+	<script type="text/javascript" src="lodeRunner.misc.js"></script>
+	<script type="text/javascript" src="lodeRunner.hiscore.js"></script>
+	<script type="text/javascript" src="lodeRunner.menu.js"></script>
+	<script type="text/javascript" src="lodeRunner.runner.js"></script>
+	<script type="text/javascript" src="lodeRunner.guard.js"></script>
+	<script type="text/javascript" src="lodeRunner.demo.js"></script>
+	<script type="text/javascript" src="lodeRunner.demoData1.js"></script>
+	<script type="text/javascript" src="lodeRunner.edit.js"></script>
+	<script type="text/javascript" src="lodeRunner.preload.js"></script>
+	<script type="text/javascript" src="lodeRunner.main.js"></script>
+</head>
+<body onload="init();">	
+	<div class="canvas">
+		<canvas id="canvas" width="960" height="400"></canvas>
+	</div>
+</body>	
+</html>
