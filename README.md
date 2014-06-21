@@ -3,6 +3,8 @@
 
 This program build with Javascript + [CreateJS](http://www.createjs.com).
 
+This game include <b>Lode Runner</b> (150 Levels)  & <b>Championship Lode Runner</b> (50 Levels).
+
 ### GAME Mode
 <table>
 <tr>
