@@ -12,6 +12,12 @@ function pressShiftKey(code)
 	case KEYCODE_COMMA:	 //SHIFT-, = '<', change to previous level	
 		shiftLevelNum = 1;	
 		gameState = GAME_PREV_LEVEL;
+		break;
+	case KEYCODE_UP: //SHIFT-UP, inc runner 	
+		if(runnerLife < 10) {
+			runnerLife++;	
+			drawLife();
+		}
 		break;	
 	default:		
 		if(runnerDebug) debugKeyPress(code);
@@ -89,12 +95,6 @@ function debugKeyPress(code)
 		shiftLevelNum = 50;	
 		gameState = GAME_PREV_LEVEL;
 		break;
-	case KEYCODE_UP: //SHIFT-UP, inc runner
-		if(runnerLife < 10) {
-			runnerLife++;	
-			drawLife();
-		}
-		break;	
 	}
 }
 

@@ -29,8 +29,7 @@ This game include <b>Lode Runner</b> (150 Levels)  & <b>Championship Lode Runner
 
 </table>
 
-### [PLAY](http://goo.gl/KgmXhh)
-
+### PLAY
 <a target="_blank" href="http://goo.gl/KgmXhh">simonsays-tw.com/web/lodeRunner/game/lodeRunner.html</a>
 
 ------------------------------------
