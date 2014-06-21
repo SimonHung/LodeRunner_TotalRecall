@@ -1,5 +1,5 @@
-[Lode Runner (超級運動員)](http://simonsays-tw.com/LodeRunner)
-=========================
+<a target="_blank" href="http://goo.gl/0DrRSO">Lode Runner (超級運動員)</a>
+=======================================
 
 This program build with Javascript + [CreateJS](http://www.createjs.com).
 
@@ -30,6 +30,7 @@ This game include <b>Lode Runner</b> (150 Levels)  & <b>Championship Lode Runner
 </table>
 
 ### [PLAY](http://goo.gl/KgmXhh)
-http://simonsays-tw.com/web/lodeRunner/game/lodeRunner.html
+
+<a target="_blank" href="http://goo.gl/KgmXhh">simonsays-tw.com/web/lodeRunner/game/lodeRunner.html</a>
 
 ------------------------------------
