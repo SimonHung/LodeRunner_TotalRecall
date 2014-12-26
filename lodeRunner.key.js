@@ -14,10 +14,16 @@ function pressShiftKey(code)
 		gameState = GAME_PREV_LEVEL;
 		break;
 	case KEYCODE_UP: //SHIFT-UP, inc runner 	
-		if(runnerLife < 10) {
+		if(playMode == PLAY_CLASSIC && runnerLife < 10) { //bug fixed: add check playMode, 12/15/2014
 			runnerLife++;	
 			drawLife();
 		}
+		break;	
+	case KEYCODE_X: //SHIFT-X 
+		toggleTrapTile();
+		break;
+	case KEYCODE_G: //SHIFT-G, toggle god mode
+		toggleGodMode();
 		break;	
 	default:		
 		if(runnerDebug) debugKeyPress(code);
@@ -38,9 +44,6 @@ function pressCtrlKey(code)
 	case KEYCODE_R: //CTRL-R : abort game
 		runnerLife = 1;	
 		gameState = GAME_RUNNER_DEAD;	
-		break;	
-	case KEYCODE_X: //CTRL-X 
-		toggleTrapTile();
 		break;	
 	case KEYCODE_S: //CTRL-S, toggle sound 
 		if( (soundOff ^= 1) == 1) {
@@ -95,6 +98,26 @@ function debugKeyPress(code)
 		shiftLevelNum = 50;	
 		gameState = GAME_PREV_LEVEL;
 		break;
+	}
+}
+
+var godMode = 0, godModeKeyPressed = 0;
+
+function initHotKeyVariable()
+{
+	godMode = 0;
+	godModeKeyPressed = 0;
+}
+
+function toggleGodMode()
+{
+	godModeKeyPressed = 1; //means player press the god-mod hot-key
+	
+	godMode ^= 1;
+	if(godMode) {
+		showTipsText("GOD MODE ON", 0);
+	} else {	
+		showTipsText("GOD MODE OFF", 0);
 	}
 }
 
@@ -163,7 +186,7 @@ function pressKey(code)
 		//debug("keycode = " + code);	
 		break;	
 	}
-  if(recordMode && code != KEYCODE_ESC) saveKeyCode(code);
+  if(recordMode && code != KEYCODE_ESC) saveKeyCode(code, keyAction);
 }
 
 function gameResume()

@@ -64,10 +64,11 @@ function showLoadingPage()
 		mainStage.addChild(coverBitmap);	
 		mainStage.update();	
 	}
+}
 
-	function createRunnerSpriteSheet(runnerImage)
-	{
-		runnerData = new createjs.SpriteSheet({
+function createRunnerSpriteSheet(runnerImage)
+{
+	runnerData = new createjs.SpriteSheet({
 		images: [runnerImage],
 		
 		frames: { regX:0, height: BASE_TILE_Y,  regY:0, width: BASE_TILE_X},
@@ -95,8 +96,7 @@ function showLoadingPage()
 			fallRight : 8,
 			fallLeft: 17
 		} 
-		});
-	}
+	});
 }
 
 //*****************************************************************************		
@@ -156,22 +156,22 @@ function preloadResource()
 		{ src: "image/no.png",      id: "no" },
 		
 	
-		{ src: "sound/born.mp3",    id:"reborn"},
-		{ src: "sound/dead.mp3",    id:"dead"},
-		{ src: "sound/dig.mp3",     id:"dig"},
-		{ src: "sound/getGold.mp3", id:"getGold"},
-		{ src: "sound/fall.mp3",    id:"fall"},
-		{ src: "sound/down.mp3",    id:"down"},
-		{ src: "sound/pass.mp3",    id:"pass"},
-		{ src: "sound/trap.mp3",    id:"trap"},
+		{ src: "sound/born.ogg",    id:"reborn"},
+		{ src: "sound/dead.ogg",    id:"dead"},
+		{ src: "sound/dig.ogg",     id:"dig"},
+		{ src: "sound/getGold.ogg", id:"getGold"},
+		{ src: "sound/fall.ogg",    id:"fall"},
+		{ src: "sound/down.ogg",    id:"down"},
+		{ src: "sound/pass.ogg",    id:"pass"},
+		{ src: "sound/trap.ogg",    id:"trap"},
 		
-		{ src: "sound/goldFinish.mp3",  id:"goldFinish"},
-		{ src: "sound/ending.mp3",      id:"ending"},
-		{ src: "sound/scoreBell.mp3",   id:"scoreBell"},
-		{ src: "sound/scoreCount.mp3",  id:"scoreCount"},
-		{ src: "sound/scoreEnding.mp3", id:"scoreEnding"},
+		{ src: "sound/goldFinish.ogg",  id:"goldFinish"},
+		{ src: "sound/ending.ogg",      id:"ending"},
+		{ src: "sound/scoreBell.ogg",   id:"scoreBell"},
+		{ src: "sound/scoreCount.ogg",  id:"scoreCount"},
+		{ src: "sound/scoreEnding.ogg", id:"scoreEnding"},
 		
-		{ src: "sound/beep.mp3", id:"beep"},
+		{ src: "sound/beep.ogg", id:"beep"},
 		
 		{ src: "cursor/openhand.cur", id:"openHand"}, //preload cursor
 		{ src: "cursor/closedhand.cur", id:"closeHand"}
@@ -179,7 +179,7 @@ function preloadResource()
 	];	
 	
 	preload = new createjs.LoadQueue(true);
-	createjs.Sound.alternateExtensions = ["ogg"];
+	createjs.Sound.alternateExtensions = ["mp3"];
 	preload.installPlugin(createjs.Sound);
 	preload.on("error", handleFileError);
 	preload.on("progress", handleProgress);
@@ -228,136 +228,11 @@ function preloadResource()
 	{
 		percentTxt.text = "100%";
 		mainStage.update();
-		createSpriteSheet();
+		createPreloadSpriteSheet();
 		createSoundInstance();
 		setTimeout(clearLoadingInfo, 500);
 	}
 	
-	function createSpriteSheet() 
-	{
-		guardData = new createjs.SpriteSheet({
-			images: [preload.getResult("guard")],
-		
-			frames: {regX:0, height: BASE_TILE_Y,  regY: 0, width: BASE_TILE_X},
-		
-			animations: { 
-				runRight: [0,2,  "runRight", GUARD_SPEED], 
-				runLeft : [3,5,  "runLeft",  GUARD_SPEED],
-				runUpDn : [6,7,  "runUpDn",  GUARD_SPEED],
-					 
-				barRight: {
-					frames: [ 11, 12, 12, 13, 13 ],
-					next:  "barRight",
-					speed: GUARD_SPEED
-				},
-					 
-				barLeft: {
-					frames: [ 14, 15, 15, 16, 16 ],
-					next:  "barLeft",
-					speed: GUARD_SPEED
-				},
-			
-				reborn: {
-					frames: [ 17, 17, 18 ],
-					speed: GUARD_SPEED
-				},
-					 
-				fallRight : 8,
-				fallLeft: 19,
-			
-				shakeRight: {
-					frames: [ 8, 8, 8, 8, 8, 8, 8,
-					          8, 8, 8, 8, 8, 8,
-					          9, 10, 9, 10, 8 ],
-					next: null,
-					speed: GUARD_SPEED
-				},
-			
-				shakeLeft: {
-					frames: [ 19, 19, 19, 19, 19, 19, 19,
-					          19, 19, 19, 19, 19, 19, 
-					          20, 21, 20, 21, 19],
-					next: null,
-					speed: GUARD_SPEED
-				}
-						
-			}
-		});
-	
-		holeData = new createjs.SpriteSheet( {
-			images: [preload.getResult("hole")],
-		
-			frames: [
-				//dig hole Left
-				[BASE_TILE_X*0,0,BASE_TILE_X,BASE_TILE_Y*2], //0 [x,y, width, height]
-				[BASE_TILE_X*1,0,BASE_TILE_X,BASE_TILE_Y*2], //1
-				[BASE_TILE_X*2,0,BASE_TILE_X,BASE_TILE_Y*2], //2
-				[BASE_TILE_X*3,0,BASE_TILE_X,BASE_TILE_Y*2], //3
-				[BASE_TILE_X*4,0,BASE_TILE_X,BASE_TILE_Y*2], //4
-				[BASE_TILE_X*5,0,BASE_TILE_X,BASE_TILE_Y*2], //5
-				[BASE_TILE_X*6,0,BASE_TILE_X,BASE_TILE_Y*2], //6
-				[BASE_TILE_X*7,0,BASE_TILE_X,BASE_TILE_Y*2], //7
-			
-				//dig hole right
-				[BASE_TILE_X*0,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //08
-				[BASE_TILE_X*1,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //09
-				[BASE_TILE_X*2,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //10
-				[BASE_TILE_X*3,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //11
-				[BASE_TILE_X*4,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //12
-				[BASE_TILE_X*5,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //13
-				[BASE_TILE_X*6,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //14
-				[BASE_TILE_X*7,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //15
-			
-				//fill hole
-				[BASE_TILE_X*8,0,            BASE_TILE_X,BASE_TILE_Y], //16
-				[BASE_TILE_X*8,BASE_TILE_Y,  BASE_TILE_X,BASE_TILE_Y], //17
-				[BASE_TILE_X*8,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y], //18
-				[BASE_TILE_X*8,BASE_TILE_Y*3,BASE_TILE_X,BASE_TILE_Y]  //19
-			],	
-		
-			animations: { 
-				digHoleLeft:  [0, 7, false, DIG_SPEED],
-				digHoleRight: [8,15, false, DIG_SPEED],
-				fillHole: { 
-					frames: [16, 16, 16, 16, 16, 16, 16, 16, 16,
-					         16, 16, 16, 16, 16, 16, 16, 16, 16,
-					         16, 16, 16, 16, 16, 16, 16, 16, 16,
-					         16, 16, 16, 16, 16, 16, 16, 16, 16, 
-					         16, 16, 16, 16, 16, 16, 16, 16, 16,
-					         17, 17, 18, 18, 19 ], //delay fill time for champLevel, 2014/04/12
-					next:  false,
-					speed: FILL_SPEED
-				}		
-			}
-		});
-	
-		holeObj.sprite = new createjs.Sprite(holeData, "digHoleLeft");
-		holeObj.action = ACT_STOP; //no digging 
-
-		textData = new createjs.SpriteSheet({
-			images: [preload.getResult("text")],
-		
-			frames: {regX:0, height: BASE_TILE_Y,  regY: 0, width: BASE_TILE_X},
-		
-			animations: { 
-				"N0": 0, "N1": 1, "N2": 2, "N3": 3, "N4": 4, 
-				"N5": 5, "N6": 6, "N7": 7, "N8": 8, "N9": 9,
-				"A": 10, "B": 11, "C": 12, "D": 13, "E": 14, "F": 15, "G": 16, "H": 17,
-				"I": 18, "J": 19, "K": 20, "L": 21, "M": 22, "N": 23, "O": 24, "P": 25,
-				"Q": 26, "R": 27, "S": 28, "T": 29, "U": 30, "V": 31, "W": 32, "X": 33,
-				"Y": 34, "Z": 35, 
-				"DOT": 36, "LT": 37, "GT": 38, "DASH": 39,
-				"@":40,  //gold
-				"#":41,  //trap
-				"SPACE":43, 
-				"FLASH": {
-					frames: [42, 42, 42, 43, 43, 43],
-					next: "FLASH",
-					speed: FLASH_SPEED
-				}
-			}
-		});
-	}
 	
 	function createSoundInstance()
 	{
@@ -401,10 +276,11 @@ function preloadResource()
 	function createMenuBitmapIcon()
 	{
 		mainMenuIconBitmap = new createjs.Bitmap(preload.getResult("menu"));
-		mainMenuIconObj = new mainMenuIconClass(screenX, screenY, tileScale, mainMenuIconBitmap);
+		mainMenuIconObj = new mainMenuIconClass(screenX1, screenY1, tileScale, mainMenuIconBitmap);
 		
 		selectIconBitmap = new  createjs.Bitmap(preload.getResult("select"));
-		selectIconObj = new selectIconClass(screenX, screenY, tileScale, selectIconBitmap); 
+		selectIconObj = new selectIconClass(screenX1, screenY1, tileScale, selectIconBitmap); 
+		
 		
 		checkBitmap = new  createjs.Bitmap(preload.getResult("check"));
 		
@@ -433,4 +309,168 @@ function preloadResource()
 		createjs.Ticker.off("tick", preloadTicker); //remove ticker of cover page
 		waitIdleDemo(4000); //wait user key or show demo level
 	}
+}
+
+//==============================
+// support different AI-version 
+//==============================
+
+var spriteSpeed = [
+	{ runnerSpeed: 0.65, guardSpeed: 0.3,  digSpeed: 0.68, fillSpeed: 0.24, xMoveBase: 8, yMoveBase: 8 }, //ver 1
+	{ runnerSpeed: 0.70, guardSpeed: 0.35, digSpeed: 0.68, fillSpeed: 0.27, xMoveBase: 8, yMoveBase: 9 }  //ver 2
+];
+
+var curAiVersion = AI_VERSION;		
+function setSpeedByAiVersion()
+{
+	var speedObj = spriteSpeed[curAiVersion-1];
+	
+	RUNNER_SPEED = speedObj.runnerSpeed;
+	GUARD_SPEED = speedObj.guardSpeed;
+	DIG_SPEED = speedObj.digSpeed;
+	FILL_SPEED = speedObj.fillSpeed;
+	
+	//xMove = speedObj.xMoveBase * tileScale; //8, 6, 4 (10, 7.5, 5)
+ 	//yMove = speedObj.yMoveBase * tileScale;	//8, 6, 4 (10, 7.5, 5)	
+	xMove = speedObj.xMoveBase; 
+ 	yMove = speedObj.yMoveBase;
+	
+	//W4 = (tileW/4|0)+ speedObj.w4; //no used
+	//H4 = (tileH/4|0)+ speedObj.h4;
+	
+	createSpriteSheet();
+}
+
+function createSpriteSheet()
+{
+	createRunnerSpriteSheet(coverPageLoad.getResult("runner"));
+	createPreloadSpriteSheet();
+}
+
+function createPreloadSpriteSheet() 
+{
+	guardData = new createjs.SpriteSheet({
+		images: [preload.getResult("guard")],
+		
+		frames: {regX:0, height: BASE_TILE_Y,  regY: 0, width: BASE_TILE_X},
+		
+		animations: { 
+			runRight: [0,2,  "runRight", GUARD_SPEED], 
+			runLeft : [3,5,  "runLeft",  GUARD_SPEED],
+			runUpDn : [6,7,  "runUpDn",  GUARD_SPEED],
+					 
+			barRight: {
+				frames: [ 11, 12, 12, 13, 13 ],
+				next:  "barRight",
+					speed: GUARD_SPEED
+			},
+				 
+			barLeft: {
+				frames: [ 14, 15, 15, 16, 16 ],
+				next:  "barLeft",
+				speed: GUARD_SPEED
+			},
+			
+			reborn: {
+				frames: [ 17, 17, 18 ],
+				speed: GUARD_SPEED
+			},
+					 
+			fallRight : 8,
+			fallLeft: 19,
+			
+			shakeRight: {
+				frames: [ 8, 8, 8, 8, 8, 8, 8,
+				          8, 8, 8, 8, 8, 8,
+				          9, 10, 9, 10, 8 ],
+				next: null,
+				speed: GUARD_SPEED
+			},
+			
+			shakeLeft: {
+				frames: [ 19, 19, 19, 19, 19, 19, 19,
+				          19, 19, 19, 19, 19, 19, 
+				          20, 21, 20, 21, 19],
+				next: null,
+				speed: GUARD_SPEED
+			}
+					
+		}
+	});
+	
+	holeData = new createjs.SpriteSheet( {
+		images: [preload.getResult("hole")],
+		
+		frames: [
+			//dig hole Left
+			[BASE_TILE_X*0,0,BASE_TILE_X,BASE_TILE_Y*2], //0 [x,y, width, height]
+			[BASE_TILE_X*1,0,BASE_TILE_X,BASE_TILE_Y*2], //1
+			[BASE_TILE_X*2,0,BASE_TILE_X,BASE_TILE_Y*2], //2
+			[BASE_TILE_X*3,0,BASE_TILE_X,BASE_TILE_Y*2], //3
+			[BASE_TILE_X*4,0,BASE_TILE_X,BASE_TILE_Y*2], //4
+			[BASE_TILE_X*5,0,BASE_TILE_X,BASE_TILE_Y*2], //5
+			[BASE_TILE_X*6,0,BASE_TILE_X,BASE_TILE_Y*2], //6
+			[BASE_TILE_X*7,0,BASE_TILE_X,BASE_TILE_Y*2], //7
+			
+			//dig hole right
+			[BASE_TILE_X*0,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //08
+			[BASE_TILE_X*1,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //09
+			[BASE_TILE_X*2,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //10
+			[BASE_TILE_X*3,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //11
+			[BASE_TILE_X*4,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //12
+			[BASE_TILE_X*5,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //13
+			[BASE_TILE_X*6,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //14
+			[BASE_TILE_X*7,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //15
+			
+			//fill hole
+			[BASE_TILE_X*8,0,            BASE_TILE_X,BASE_TILE_Y], //16
+			[BASE_TILE_X*8,BASE_TILE_Y,  BASE_TILE_X,BASE_TILE_Y], //17
+			[BASE_TILE_X*8,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y], //18
+			[BASE_TILE_X*8,BASE_TILE_Y*3,BASE_TILE_X,BASE_TILE_Y]  //19
+		],	
+		
+		animations: { 
+			digHoleLeft:  [0, 7, false, DIG_SPEED],
+			digHoleRight: [8,15, false, DIG_SPEED],
+			fillHole: { 
+				frames: [16, 16, 16, 16, 16, 16, 16, 16, 16,
+				         16, 16, 16, 16, 16, 16, 16, 16, 16,
+				         16, 16, 16, 16, 16, 16, 16, 16, 16,
+				         16, 16, 16, 16, 16, 16, 16, 16, 16, 
+				         16, 16, 16, 16, 16, 16, 16, 16, 16,
+				         17, 17, 18, 18, 19 ], //delay fill time for champLevel, 2014/04/12
+				next:  false,
+				speed: FILL_SPEED
+			}		
+		}
+	});
+	
+	holeObj.sprite = new createjs.Sprite(holeData, "digHoleLeft");
+	holeObj.action = ACT_STOP; //no digging 
+
+	textData = new createjs.SpriteSheet({
+		images: [preload.getResult("text")],
+		
+		frames: {regX:0, height: BASE_TILE_Y,  regY: 0, width: BASE_TILE_X},
+		
+		animations: { 
+			"N0": 0, "N1": 1, "N2": 2, "N3": 3, "N4": 4, 
+			"N5": 5, "N6": 6, "N7": 7, "N8": 8, "N9": 9,
+			"A": 10, "B": 11, "C": 12, "D": 13, "E": 14, "F": 15, "G": 16, "H": 17,
+			"I": 18, "J": 19, "K": 20, "L": 21, "M": 22, "N": 23, "O": 24, "P": 25,
+			"Q": 26, "R": 27, "S": 28, "T": 29, "U": 30, "V": 31, "W": 32, "X": 33,
+			"Y": 34, "Z": 35, 
+			"DOT": 36, "LT": 37, "GT": 38, "DASH": 39,
+			"@":40,  //gold
+			"#":41,  //trap
+			"SPACE":43, 
+			"FLASH": { //42 & 43 
+				frames: [42, 42, 42, 43, 43, 43],
+				next: "FLASH",
+				speed: FLASH_SPEED
+			},
+			"D0": 50, "D1": 51, "D2": 52, "D3": 53, "D4": 54,  //blue digit number for player name, 11/17/2014
+ 			"D5": 55, "D6": 56, "D7": 57, "D8": 58, "D9": 59
+		}
+	});
 }

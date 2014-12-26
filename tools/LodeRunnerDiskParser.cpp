@@ -37,6 +37,8 @@ value | Character | Type
   0x9 |     &     | Player	
 
 
+2014/10/18 add support dump Revenge_of_Lode_Runner disk
+2014/10/18 add support c64 codes
 **********************************************************************************/
 
 #include <stdio.h>
@@ -48,19 +50,28 @@ value | Character | Type
 #define READ_LEVEL_DATA_SIZE (256)
 #define ONE_LEVEL_DATA_SIZE (224)
 
-#if 1
+#define APPLE_DISK_NO (3)
+
+#if (APPLE_DISK_NO == 1)
 
 #define FILE_NAME "Lode_Runner_Apple-II.dsk"
 #define MAX_LEVEL (150)
 #define TITLE_NAME "Lode Runner (Apple-II 1983)"
 #define DATA_VAR_NAME "baseLevelData"
 
-#else
+#elif (APPLE_DISK_NO == 2)
 
 #define FILE_NAME "Lode_Runner_Championship _Apple-II.dsk"
 #define MAX_LEVEL (50)
 #define TITLE_NAME "Championship Lode Runner (Apple-II 1984)"
 #define DATA_VAR_NAME "champLevelData"
+
+#elif (APPLE_DISK_NO == 3)
+
+#define FILE_NAME "Revenge_of_Lode_Runner.dsk"
+#define MAX_LEVEL (25)
+#define TITLE_NAME "Revenge of Lode Runner (Apple-II 1986)"
+#define DATA_VAR_NAME "RevengeLevelData"
 
 #endif
 
@@ -82,14 +93,18 @@ int goodLevel(unsigned char *levelData)
 {
 	int i;
 	unsigned char leftTile, rightTile;
+	int allZero = 1;
 		
 	for(i = 0; i < ONE_LEVEL_DATA_SIZE; i++) {
+		//levelData[i] = levelData[i] ^ 0xFF;
 		leftTile = levelData[i] & 0xF;
 		rightTile = levelData[i] >> 0x04;
 		if(leftTile >= MAX_TILE_TYPE || rightTile >= MAX_TILE_TYPE) {
-						return 0;
+			return 0;
 		}
+		if(leftTile != 0 || rightTile != 0) allZero = 0;
 	}
+	return !allZero;
 	return 1; //OK
 }
 
@@ -150,13 +165,17 @@ int main(void)
 	FILE *fp;
 	unsigned char levelData[READ_LEVEL_DATA_SIZE];
 	int curLevel = 0;
+	int readSize= 0, isGood;
+	unsigned long curPos = 0x3000L;
+	unsigned long dspPos = curPos;
+	int doubleError = 0;
 	
-	if((fp = fopen(FILE_NAME, "r")) ==NULL) {
-		printf("Open file %d failed !\n", FILE_NAME);
+	if((fp = fopen(FILE_NAME, "rb")) ==NULL) {
+		printf("Open file \"%s\" failed !\n", FILE_NAME);
 		return 1;
 	}
 	
-	if(fseek(fp, 0x3000L, SEEK_SET) != 0) {
+	if(fseek(fp, curPos, SEEK_SET) != 0) {
 		printf("Fseek error ! @%d\n", __LINE__);
 		fclose(fp);
 		return 1;
@@ -165,13 +184,33 @@ int main(void)
 	dumpTitle();
 
 	printf("var %s = [\n", DATA_VAR_NAME);	
+#ifdef C64
+	do {
+#endif
 	while(curLevel < MAX_LEVEL && 
-	      fread(levelData, sizeof(char), READ_LEVEL_DATA_SIZE, fp) ==  READ_LEVEL_DATA_SIZE &&
-	      goodLevel(levelData)
+	      (readSize = fread(levelData, sizeof(char), READ_LEVEL_DATA_SIZE, fp)) ==  READ_LEVEL_DATA_SIZE &&
+	      (isGood = goodLevel(levelData))
 	){
 		//dumpLevel(++curLevel, levelData);
+		//printf("%x", dspPos);
 		dumpLevel4JavaScript(++curLevel, levelData);
+		dspPos += READ_LEVEL_DATA_SIZE;
+		doubleError=0;
 	}
+#ifdef C64
+		doubleError++;
+		if(!isGood) {
+			curPos += 0x1500L;
+			dspPos = curPos;
+			if(fseek(fp, curPos, SEEK_SET) != 0) {
+				printf("Fseek error ! @%d\n", __LINE__);
+				fclose(fp);
+				return 1;
+			}
+			
+		} else doubleError++;
+	} while(curLevel < MAX_LEVEL && doubleError <= 1);
+#endif
 	printf("];\n");
 	
 	fclose(fp);	

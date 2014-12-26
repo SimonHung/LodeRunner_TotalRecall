@@ -1,9 +1,9 @@
-<a target="_blank" href="http://goo.gl/0DrRSO">Lode Runner (超級運動員)</a>
+<a target="_blank" href="http://loderunnerwebgame.com/LodeRunner/">Lode Runner (超級運動員)</a>
 =======================================
 
 This program build with Javascript + [CreateJS](http://www.createjs.com).
 
-This game include <b>Lode Runner</b> (150 Levels)  & <b>Championship Lode Runner</b> (50 Levels).
+Game levels include <b>[Lode Runner (150 levels) & Championship Lode Runner (50 levels)](http://strategywiki.org/wiki/Lode_Runner/Walkthrough)</b>
 
 ### GAME Mode
 <table>
@@ -13,7 +13,7 @@ This game include <b>Lode Runner</b> (150 Levels)  & <b>Championship Lode Runner
 </tr>
 
 <tr>
-<td><b>TIME MODE</b></td> 
+<td><b>TRAINING MODE</b></td> 
 <td>Player can select levels</td>
 </tr>
 
@@ -30,6 +30,6 @@ This game include <b>Lode Runner</b> (150 Levels)  & <b>Championship Lode Runner
 </table>
 
 ### PLAY
-<a target="_blank" href="http://goo.gl/KgmXhh">http://loderunnerwebgame.com/game/</a>
+<a target="_blank" href="http://loderunnerwebgame.com/game/">http://loderunnerwebgame.com/game/</a>
 
 ------------------------------------

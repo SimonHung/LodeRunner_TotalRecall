@@ -159,7 +159,7 @@ function guardMoveStep( id, action)
 			map[x][y].act = curToken; //runner move to [x][y-1], so set [x][y].act to previous state
 			y--;
 			yOffset = tileH + yOffset;
-			if(map[x][y].act == RUNNER_T) gameState = GAME_RUNNER_DEAD; //collision
+			if(map[x][y].act == RUNNER_T) setRunnerDead(); //collision
 			//map[x][y].act = GUARD_T;
 		}
 		
@@ -195,7 +195,7 @@ function guardMoveStep( id, action)
 			map[x][y].act = curToken; //runner move to [x][y+1], so set [x][y].act to previous state
 			y++;
 			yOffset = yOffset - tileH;
-			if(map[x][y].act == RUNNER_T) gameState = GAME_RUNNER_DEAD; //collision
+			if(map[x][y].act == RUNNER_T) setRunnerDead(); //collision
 			//map[x][y].act = GUARD_T;
 		}
 		if(action == ACT_DOWN && yOffset >= 0 && yOffset < yMove) { //try drop gold
@@ -255,7 +255,7 @@ function guardMoveStep( id, action)
 			map[x][y].act = curToken; //runner move to [x-1][y], so set [x][y].act to previous state
 			x--;
 			xOffset = tileW + xOffset;
-			if(map[x][y].act == RUNNER_T) gameState = GAME_RUNNER_DEAD; //collision
+			if(map[x][y].act == RUNNER_T) setRunnerDead(); //collision
 			//map[x][y].act = GUARD_T;
 		}
 		if( xOffset <= 0 && xOffset > -xMove) {
@@ -279,7 +279,7 @@ function guardMoveStep( id, action)
 			map[x][y].act = curToken; //runner move to [x+1][y], so set [x][y].act to previous state
 			x++;
 			xOffset = xOffset - tileW;
-			if(map[x][y].act == RUNNER_T) gameState = GAME_RUNNER_DEAD; //collision
+			if(map[x][y].act == RUNNER_T) setRunnerDead(); //collision
 			//map[x][y].act = GUARD_T;
 		}
 		if( xOffset >= 0 && xOffset < xMove) {
@@ -303,8 +303,8 @@ function guardMoveStep( id, action)
 		}
 	} else {
 		if(curGuard.action == ACT_CLIMB_OUT) action = ACT_CLIMB_OUT;
-		curGuard.sprite.x = x * tileW + xOffset;
-		curGuard.sprite.y = y * tileH + yOffset;
+		curGuard.sprite.x = (x * tileW + xOffset) * tileScale | 0;
+		curGuard.sprite.y = (y * tileH + yOffset) * tileScale | 0;
 		curGuard.pos = { x:x, y:y, xOffset:xOffset, yOffset:yOffset};	
 		if(curShape != newShape) {
 			curGuard.sprite.gotoAndPlay(newShape);
@@ -730,8 +730,8 @@ function guardReborn(x, y)
 	var curGuard = guard[id];
 	
 	curGuard.pos = { x:bornX, y:bornY, xOffset:0, yOffset: 0 };
-	curGuard.sprite.x = bornX * tileW;
-	curGuard.sprite.y = bornY * tileH;
+	curGuard.sprite.x = bornX * tileWScale | 0;
+	curGuard.sprite.y = bornY * tileHScale | 0;
 	curGuard.sprite.on("animationend", function() { rebornComplete(id); });
 	curGuard.sprite.gotoAndPlay("reborn");
 	
@@ -745,7 +745,7 @@ function rebornComplete(id)
 	var x = guard[id].pos.x;
 	var y = guard[id].pos.y;
 
-	if( map[x][y].act == RUNNER_T) gameState = GAME_RUNNER_DEAD; //collision
+	if( map[x][y].act == RUNNER_T) setRunnerDead(); //collision
 	map[x][y].act  = GUARD_T; 
 	guard[id].sprite.removeAllEventListeners ("animationend");
 	guard[id].action = ACT_FALL;
@@ -753,4 +753,9 @@ function rebornComplete(id)
 	//guard[id].hasGold = 0;
 	guard[id].sprite.gotoAndPlay("fallRight");
 	soundPlay("reborn");
+}
+
+function setRunnerDead()
+{
+	if(!godMode) gameState = GAME_RUNNER_DEAD; 
 }

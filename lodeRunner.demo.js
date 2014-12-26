@@ -49,6 +49,10 @@ function getAutoDemoLevel(initValue)
 	demoGoldDrop = demoData[idx].goldDrop;
 	demoBornPos = demoData[idx].bornPos;
 	curLevel = demoData[idx].level;
+	
+	curAiVersion = demoData[idx].ai; //07/04/2014
+	if("godMode" in demoData[idx]) 
+		godMode = demoData[idx].godMode; //07/09/2014
 }
 
 var demoCountTime = 0, demoCountEnable = 0;
@@ -149,6 +153,10 @@ function initDemoInfo()
 	demoGoldDrop = demoData[idx].goldDrop;
 	demoBornPos = demoData[idx].bornPos;
 	assert(curLevel == demoData[idx].level, "curLevel != level of demoData");	
+	
+	curAiVersion = demoData[idx].ai; //07/04/2014
+	if("godMode" in demoData[idx]) 
+		godMode = demoData[idx].godMode; //07/09/2014
 }
 
 function getDemoInfo()
@@ -229,7 +237,8 @@ function updatePlayerDemoData(playData, demoDataInfo)
 				state: demoDataInfo.state,
 				action: demoDataInfo.action,
 				goldDrop: demoDataInfo.goldDrop,
-				bornPos: demoDataInfo.bornPos
+				bornPos: demoDataInfo.bornPos,
+				godMode: demoDataInfo.godMode //07/09/2014
 			};
 		} else {  // always update local data 
 			//if( playerDemoData[level-1].time >= demoDataInfo.time) { //only udate best time
@@ -242,6 +251,8 @@ function updatePlayerDemoData(playData, demoDataInfo)
 			playerDemoData[level-1].action = demoDataInfo.action;
 			playerDemoData[level-1].goldDrop = demoDataInfo.goldDrop;
 			playerDemoData[level-1].bornPos = demoDataInfo.bornPos;
+			playerDemoData[level-1].godMode = demoDataInfo.godMode; //07/09/2014
+			
 		}
 	}
 }
@@ -281,9 +292,18 @@ function initRecordVariable()
 	}
 }
 
-function saveKeyCode(code)
+var alwaysRecord = 0, keyPressed = 0;
+function saveKeyCode(code, keyAction)
 {
-	recordKeyCode = code
+	//-----------------------------------------------------------------------------
+	// Don't care repeat times, always record key when press dig-left or dig-right 
+	// fixed by Simon 12/12/2014
+	//-----------------------------------------------------------------------------
+	alwaysRecord = 0;
+	if(keyAction == ACT_DIG_LEFT || keyAction == ACT_DIG_RIGHT) alwaysRecord = 1;
+		
+	recordKeyCode = code;
+	keyPressed = 1;
 }
 
 function recordModeDump(state)
@@ -316,11 +336,13 @@ function processRecordKey()
 
 function recordKeyAction()
 {
-	if(recordKeyCode != lastKeyCode) {
+	if(!keyPressed) return;
+	if(recordKeyCode != lastKeyCode || alwaysRecord) {
 		playRecord.push(recordCount);
 		playRecord.push(recordKeyCode);
 		lastKeyCode = recordKeyCode;
 	}
+	keyPressed = 0;
 }
 
 var recordIdx;
@@ -405,6 +427,7 @@ function dumpRecord()
 	curDemoData.action = [];
 	curDemoData.goldDrop = [];
 	curDemoData.bornPos = [];
+	curDemoData.godMode = godModeKeyPressed; //07/09/2014
 
 	for(var i = 0; i < playRecord.length; i++) {
 		curDemoData.action[i] = playRecord[i];
@@ -424,6 +447,7 @@ function dumpRecord()
 	debug("		ai: " + AI_VERSION + ","); 
 	debug("		time: " + playRecordTime + ",");
 	debug("		state: " + recordState + ",");
+	debug("		godMode: " + godModeKeyPressed + ","); //07/09/2014
 
 	if(playRecord.length > 0) {
 		txtStr = "		action: [ " + playRecord[0];

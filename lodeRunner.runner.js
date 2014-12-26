@@ -158,7 +158,7 @@ function runnerMoveStep(action, stayCurrPos )
 			map[x][y].act = curToken; //runner move to [x][y-1], so set [x][y].act to previous state
 			y--;
 			yOffset = tileH + yOffset;
-			if(map[x][y].act == GUARD_T) gameState = GAME_RUNNER_DEAD; //collision
+			if(map[x][y].act == GUARD_T && guardAlive(x,y)) setRunnerDead(); //collision
 		}
 		newShape = "runUpDn";
 	}
@@ -189,7 +189,7 @@ function runnerMoveStep(action, stayCurrPos )
 			map[x][y].act = curToken; //runner move to [x][y+1], so set [x][y].act to previous state
 			y++;
 			yOffset = yOffset - tileH;
-			if(map[x][y].act == GUARD_T) gameState = GAME_RUNNER_DEAD; //collision
+			if(map[x][y].act == GUARD_T && guardAlive(x,y)) setRunnerDead(); //collision
 		}
 		
 		if(action == ACT_DOWN) { 
@@ -227,7 +227,7 @@ function runnerMoveStep(action, stayCurrPos )
 			map[x][y].act = curToken; //runner move to [x-1][y], so set [x][y].act to previous state
 			x--;
 			xOffset = tileW + xOffset;
-			if(map[x][y].act == GUARD_T) gameState = GAME_RUNNER_DEAD; //collision
+			if(map[x][y].act == GUARD_T && guardAlive(x,y)) setRunnerDead(); //collision
 		}
 		if(curToken == BAR_T) newShape = "barLeft";
 		else newShape = "runLeft";
@@ -247,7 +247,7 @@ function runnerMoveStep(action, stayCurrPos )
 			map[x][y].act = curToken; //runner move to [x+1][y], so set [x][y].act to previous state
 			x++;
 			xOffset = xOffset - tileW;
-			if(map[x][y].act == GUARD_T) gameState = GAME_RUNNER_DEAD; //collision
+			if(map[x][y].act == GUARD_T && guardAlive(x,y)) setRunnerDead(); //collision
 		}
 		if(curToken == BAR_T) newShape = "barRight";
 		else newShape = "runRight";
@@ -268,8 +268,8 @@ function runnerMoveStep(action, stayCurrPos )
 			runner.action = ACT_STOP;
 		}
 	} else {
-		runner.sprite.x = x * tileW + xOffset;
-		runner.sprite.y = y * tileH + yOffset;
+		runner.sprite.x = (x * tileW + xOffset) * tileScale | 0;
+		runner.sprite.y = (y * tileH + yOffset) * tileScale | 0;
 		runner.pos = { x:x, y:y, xOffset:xOffset, yOffset:yOffset};	
 		if(curShape != newShape) {
 			runner.sprite.gotoAndPlay(newShape);
@@ -339,7 +339,7 @@ function addGold(x, y)
 	
 	map[x][y].base = GOLD_T;
 	tile = map[x][y].bitmap = new createjs.Bitmap(preload.getResult("gold"));
-	tile.setTransform(x * tileW, y * tileH,tileScale, tileScale); //x,y, scaleX, scaleY 
+	tile.setTransform(x * tileWScale, y * tileHScale,tileScale, tileScale); //x,y, scaleX, scaleY 
 	mainStage.addChild(tile); 
 	
 	moveSprite2Top(); //reset runner, guard & fill hole object order
@@ -391,30 +391,21 @@ function checkCollision(runnerX, runnerY)
 			if( guard[i].pos.x == x && guard[i].pos.y == y) break;
 		}
 		assert( (i < guardCount), "checkCollision design error !");
-		if(guard[i].action != ACT_REBORN) {
-			var dw = Math.abs(runner.sprite.x - guard[i].sprite.x);
-			var dh = Math.abs(runner.sprite.y - guard[i].sprite.y);
-			//debug (" dw = " + dw +"(" + tileW  + ") dh = " + dh + "(" + tileH + ")" );
-			/*
-			debug("runner:" + runner.pos.x + ","
-				                + runner.pos.y + "," 
-				+ "guard:"  + guard[i].pos.x + "," 
-				                + guard[i].pos.y + "," 
-				  
-			    + "runner:"	+ runner.pos.xOffset + "," 
-				             + runner.pos.yOffset + ","
-				+ "guard:"   + guard[i].pos.xOffset + "," 
-				                    + guard[i].pos.yOffset 
-				 );
-			*/	 
-		/*	
-			if( Math.abs(runner.sprite.x - guard[i].sprite.x) < tileW && 
-		    	Math.abs(runner.sprite.y - guard[i].sprite.y) < tileH) 
-		*/		
-			if( Math.abs(runner.sprite.x - guard[i].sprite.x) <= W4*3 && 
-		    	Math.abs(runner.sprite.y - guard[i].sprite.y) <= H4*3 ) 
-			{
-				gameState = GAME_RUNNER_DEAD;
+		if(guard[i].action != ACT_REBORN) { //only guard alive need check collection
+			//var dw = Math.abs(runner.sprite.x - guard[i].sprite.x);
+			//var dh = Math.abs(runner.sprite.y - guard[i].sprite.y);
+			
+      //change detect method ==> don't depend on scale 
+			var runnerPosX = runner.pos.x*tileW+runner.pos.xOffset;
+			var runnerPosY = runner.pos.y*tileH+runner.pos.yOffset;
+			var guardPosX = guard[i].pos.x*tileW+guard[i].pos.xOffset;
+			var guardPosY = guard[i].pos.y*tileH+guard[i].pos.yOffset;
+
+			var dw = Math.abs(runnerPosX - guardPosX);
+			var dh = Math.abs(runnerPosY - guardPosY);
+			
+			if( dw <= W4*3 && dh <= H4*3 ) {
+				setRunnerDead(); //07/04/2014
 				//debug("runner dead!");
 			}
 		}
@@ -477,7 +468,7 @@ function digHole(action)
 	holeObj.sprite.gotoAndPlay(holeShape);
 	holeObj.action = ACT_DIGGING;
 	holeObj.pos = { x: x, y: y };
-	holeObj.sprite.setTransform(x * tileW, y * tileH,tileScale, tileScale);
+	holeObj.sprite.setTransform(x * tileWScale, y * tileHScale,tileScale, tileScale);
 		
 	// the callback is called each time a sequence completes:
 	holeObj.sprite.on("animationend", digComplete);
@@ -567,7 +558,8 @@ function fillHole(x, y)
 {
 	var fillSprite = new createjs.Sprite(holeData, "fillHole");
 	
-	fillSprite.setTransform(x * tileW, y * tileH,tileScale, tileScale);
+	fillSprite.pos = { x:x, y:y }; //save position 11/18/2014
+	fillSprite.setTransform(x * tileWScale, y * tileHScale, tileScale, tileScale);
 	fillSprite.on("animationend", fillComplete);
 	fillSprite.play();
 	mainStage.addChild(fillSprite); 
@@ -583,8 +575,11 @@ function moveFillHoleObj2Top()
 
 function fillComplete()
 {
-	var x = this.x / tileW | 0; //this : scope default to the dispatcher
-	var y = this.y / tileH | 0;
+	//don't use "divide command", it will cause loss of accuracy while scale changed (ex: tileScale = 0.6...)
+	//var x = this.x / tileWScale | 0; //this : scope default to the dispatcher
+	//var y = this.y / tileHScale | 0;
+
+	var x = this.pos.x, y = this.pos.y; //get position 
 
 	map[x][y].bitmap.set({alpha:1}); //display block
 	this.removeAllEventListeners ("animationend");
@@ -597,7 +592,7 @@ function fillComplete()
 		gameState = GAME_RUNNER_DEAD;
 		runner.sprite.set({alpha:0}); //hidden runner --> dead
 		break;
-	case GUARD_T:
+	case GUARD_T: //guard dead
 		var id = getGuardId(x,y);
 		if(guard[id].hasGold > 0) { //guard has gold and not fall into the hole
 			decGold(); 
@@ -624,4 +619,20 @@ function removeFillHoleObj(spriteObj)
 		}
 	}
 	debug("removeFillHoleObj: design error!");
+}
+
+//==================================
+// Check guard is alive or not 
+// 2014/10/31
+//==================================
+function guardAlive(x, y)
+{
+	for(var i = 0; i < guardCount; i++) {
+		if( guard[i].pos.x == x && guard[i].pos.y == y) break;
+	}
+	assert( (i < guardCount), "guardAlive() design error !");
+	
+	if(guard[i].action != ACT_REBORN) return 1; //alive
+	
+	return 0; //reborn
 }

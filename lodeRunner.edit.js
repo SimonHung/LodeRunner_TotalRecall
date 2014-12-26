@@ -106,9 +106,9 @@ function canvasEditReSize()
 	for (var scale = MAX_SCALE; scale >= MIN_SCALE; scale -= 0.25) {
 		canvasX = (BASE_SCREEN_X+BASE_TILE_X*2) * scale+ EDIT_PADDING * (NO_OF_TILES_X+1);
 		canvasY =  BASE_SCREEN_Y * scale + EDIT_PADDING * (NO_OF_TILES_Y+1);
-		if (canvasX <= screenX && canvasY <= screenY || scale <= MIN_SCALE) break;
+		if (canvasX <= screenX1 && canvasY <= screenY1 || scale <= MIN_SCALE) break;
 	}
-	//debug("screenX = " + screenX + " screenY = " + screenY + "scale = " + scale);
+	//debug("screenX1 = " + screenX1 + " screenY1 = " + screenY1 + "scale = " + scale);
 
 	canvas = document.getElementById('canvas');
 
@@ -116,8 +116,8 @@ function canvasEditReSize()
 	canvas.height = canvasY;
 	
 	//Set canvas top left position
-	var left = ((screenX - canvasX)/2|0),
-		top  = ((screenY - canvasY)/2|0);
+	var left = ((screenX1 - canvasX)/2|0),
+		top  = ((screenY1 - canvasY)/2|0);
 	canvas.style.left = (left>0?left:0) + "px";
 	canvas.style.top =  (top>0?top:0) + "px";
 	canvas.style.position = "absolute";

@@ -338,7 +338,7 @@ function closeIconClass(_width, _height, _stage, _scale, _activeColor, _callBack
 // < 4 > : SLIDE_GAP_X
 
 
-function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _screenX, _screenY, 
+function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _screenX1, _screenY1, 
 					   _parentStage, _scale, _activeFun, _closeFun, _postFun)	
 {
 	var TITLE_TEXT_SIZE = 36 * _scale;
@@ -462,8 +462,8 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 		canvas1.width  = CANVAS_SIZE_X;
 		canvas1.height = CANVAS_SIZE_Y;
 	
-		var left = ((_screenX - canvas1.width)/2|0),
-			top  = ((_screenY - canvas1.height)/2|0);
+		var left = ((_screenX1 - canvas1.width)/2|0),
+			top  = ((_screenY1 - canvas1.height)/2|0);
 		canvas1.style.left = (left>0?left:0) + "px";
 		canvas1.style.top =  (top>0?top:0) + "px";
 		canvas1.style.position = "absolute";
@@ -1265,7 +1265,6 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 			
 			////debug("delete level = " + level);
 		}
-////////////////////////////////////////////	
 	}
 	
 	function createTitle()
@@ -1316,8 +1315,8 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeCallBack, _args
 	
 	var CLOSE_ICON_ACTIVE_COLOR = "#ff5050";
 	
-	var screenX = _stage.canvas.width;
-	var screenY = _stage.canvas.height;
+	var screenX1 = _stage.canvas.width;
+	var screenY1 = _stage.canvas.height;
 	
 	var titleTextObj, titleWidth, titleHeight;
 	var	itemText = [], maxItemTextWidth, itemTextHeight;
@@ -1348,7 +1347,7 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeCallBack, _args
 	function coverParentStage()
 	{
 		coverBackgroundObj = new createjs.Shape();
-		coverBackgroundObj.graphics.beginFill(COVER_BACKGROUND_COLOR).drawRect(0, 0, screenX, screenY).endFill();
+		coverBackgroundObj.graphics.beginFill(COVER_BACKGROUND_COLOR).drawRect(0, 0, screenX1, screenY1).endFill();
 		coverBackgroundObj.alpha = 0.6;
 		_stage.addChild(coverBackgroundObj);		
 	}
@@ -1373,8 +1372,8 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeCallBack, _args
 		menuX = (maxItemTextWidth > titleWidth? maxItemTextWidth: titleWidth) + TITLE_TEXT_SIZE * 2;
 		menuY = TITLE_AREA_Y + BOTTOM_AREA_Y + (ITEM_AREA_Y+ITEM_GAP_Y)*_itemList.length; 
 		
-		startX = (screenX-menuX)/2|0;
-		startY = (screenY-menuY)/2|0;
+		startX = (screenX1-menuX)/2|0;
+		startY = (screenY1-menuY)/2|0;
 	}
 	
 	function creatBackground()
@@ -1501,7 +1500,7 @@ function mainMenu(callbackFun)
 {
 	var mainMenuList = [
 		{ name: "CLASSIC MODE", activeFun: classicMenu },
-		{ name: "TIME MODE", activeFun:  modernMenu },
+		{ name: "TRAINING MODE", activeFun:  modernMenu },
 		{ name: "EDIT MODE", activeFun:  editMenu },
 		{ name: "HELP", activeFun: helpMenu }
 	];
@@ -1539,7 +1538,7 @@ function modernMenu(id, callbackFun)
 		modernMenuList.push({ name: USER_CREATED_NAME, activeFun: modernPlay}); 
 	}
 	
-	menuDialog(" TIME MODE ", modernMenuList, mainStage, tileScale, mainMenu, callbackFun);
+	menuDialog(" TRAINING MODE ", modernMenuList, mainStage, tileScale, mainMenu, callbackFun);
 }
 
 function demoMenu(id, callbackFun)
@@ -1640,7 +1639,7 @@ function helpMenuClose(callbackFun)
 
 /////////////////////////////////////////////////////
 
-function mainMenuIconClass( _screenX, _screenY, _scale, _mainMenuBitmap)
+function mainMenuIconClass( _screenX1, _screenY1, _scale, _mainMenuBitmap)
 {
 	//_scale = _scale*2/3;
 	var border = 4 * _scale + 2;
@@ -1709,8 +1708,8 @@ function mainMenuIconClass( _screenX, _screenY, _scale, _mainMenuBitmap)
 		mainMainCanvas.width  = bitmapX+border*2;
 		mainMainCanvas.height = bitmapY+border*2;
 	
-		var left = (_screenX - mainMainCanvas.width - bitmapX/3),
-			top  = (_screenY - mainMainCanvas.height - bitmapY/4);
+		var left = (_screenX1 - mainMainCanvas.width - bitmapX/3),
+			top  = (_screenY1 - mainMainCanvas.height - bitmapY/4);
 			//top  = bitmapY/4|0;
 		mainMainCanvas.style.left = left + "px";
 		mainMainCanvas.style.top =  top + "px";
@@ -1794,7 +1793,7 @@ function activeSelectMenu(activeFun, postFun)
 	if(playMode == PLAY_EDIT) {
 		var editLevel = testLevelInfo.level> editLevels?0:testLevelInfo.level;
 		
-		selectDialog(USER_CREATED_NAME, checkBitmap, editLevelData, editLevel, screenX, screenY, 
+		selectDialog(USER_CREATED_NAME, checkBitmap, editLevelData, editLevel, screenX1, screenY1, 
 				mainStage, tileScale, activeFun, editSelectMenuClose, postFun)		
 	} else {
 		//var	titleName = (playData==1)?LODERUNNER_NAME1:((playData==2)?LODERUNNER_NAME2:USER_CREATED_NAME);
@@ -1820,12 +1819,12 @@ function activeSelectMenu(activeFun, postFun)
 			break;	
 		}
 		
-		selectDialog(titleName, checkBitmap, levelData, curLevel, screenX, screenY, 
+		selectDialog(titleName, checkBitmap, levelData, curLevel, screenX1, screenY1, 
 				mainStage, tileScale, activeFun, null, postFun)		
 	}
 }		
 
-function selectIconClass( _screenX, _screenY, _scale, _bitmap)
+function selectIconClass( _screenX1, _screenY1, _scale, _bitmap)
 {
 	//_scale = _scale*2/3;
 	var border = 4 * _scale + 2;
@@ -1894,9 +1893,9 @@ function selectIconClass( _screenX, _screenY, _scale, _bitmap)
 		selectCanvas.width  = bitmapX+border*2;
 		selectCanvas.height = bitmapY+border*2;
 	
-		var left = (_screenX - selectCanvas.width - bitmapX/3),
+		var left = (_screenX1 - selectCanvas.width - bitmapX/3),
 			top  = bitmapY/4|0;
-			//top  = (_screenY - selectCanvas.height - bitmapY/4);
+			//top  = (_screenY1 - selectCanvas.height - bitmapY/4);
 		selectCanvas.style.left = left + "px";
 		selectCanvas.style.top =  top + "px";
 		selectCanvas.style.position = "absolute";
@@ -2053,8 +2052,8 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 		hiScoreNameObj, hiScoreTextObj;
 	
 	var coverBackgroundObj, background1Obj, background2Obj, menuButtonObj;
-	var screenX = _stage.canvas.width;
-	var screenY = _stage.canvas.height;
+	var screenX1 = _stage.canvas.width;
+	var screenY1 = _stage.canvas.height;
 	
 	var menuX, menuY, startX, startY
 	var timeNameX, maxTextSize;
@@ -2105,14 +2104,14 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 		menuX = maxTextSize + TITLE_TEXT_SIZE * 5;
 		menuY = TITLE_TEXT_SIZE * 2 + (ITEM_TEXT_SIZE+TEXT_GAP_Y) * 5 + buttonY*3;
 
-		startX = (screenX-menuX)/2|0;
-		startY = (screenY-menuY)/2|0;
+		startX = (screenX1-menuX)/2|0;
+		startY = (screenY1-menuY)/2|0;
 	}
 	
 	function coverParentStage()
 	{
 		coverBackgroundObj = new createjs.Shape();
-		coverBackgroundObj.graphics.beginFill(COVER_BACKGROUND_COLOR).drawRect(0, 0, screenX, screenY).endFill();
+		coverBackgroundObj.graphics.beginFill(COVER_BACKGROUND_COLOR).drawRect(0, 0, screenX1, screenY1).endFill();
 		coverBackgroundObj.alpha = 0.6;
 		_stage.addChild(coverBackgroundObj);		
 	}
@@ -2423,8 +2422,8 @@ function yesNoDialog(_txtMsg, _yesBitmap, _noBitmap, _stage, _scale, _callBack)
 	var textObj;
 	
 	var coverBackgroundObj, background1Obj, background2Obj;
-	var screenX = _stage.canvas.width;
-	var screenY = _stage.canvas.height;
+	var screenX1 = _stage.canvas.width;
+	var screenY1 = _stage.canvas.height;
 	
 	var buttonX = _yesBitmap.getBounds().width * _scale,
 	   	buttonY = _yesBitmap.getBounds().height * _scale;
@@ -2474,14 +2473,14 @@ function yesNoDialog(_txtMsg, _yesBitmap, _noBitmap, _stage, _scale, _callBack)
 		menuY = (TEXT_GAP_Y + TEXT_MSG_SIZE) * _txtMsg.length + TEXT_MSG_SIZE * 2 + buttonY;
 		menuX =	maxTextSize + TEXT_MSG_SIZE * 2;
 		
-		startX = (screenX-menuX)/2|0;
-		startY = (screenY-menuY)/2|0;
+		startX = (screenX1-menuX)/2|0;
+		startY = (screenY1-menuY)/2|0;
 	}
 	
 	function coverParentStage()
 	{
 		coverBackgroundObj = new createjs.Shape();
-		coverBackgroundObj.graphics.beginFill(COVER_BACKGROUND_COLOR).drawRect(0, 0, screenX, screenY).endFill();
+		coverBackgroundObj.graphics.beginFill(COVER_BACKGROUND_COLOR).drawRect(0, 0, screenX1, screenY1).endFill();
 		coverBackgroundObj.alpha = 0.6;
 		_stage.addChild(coverBackgroundObj);		
 	}	

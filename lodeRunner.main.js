@@ -16,10 +16,11 @@
  * ============================================================================= 
  */
 
-var screenX, screenY;
+var screenX1, screenY1;
 var canvasX, canvasY;
 
 var tileW, tileH; //tile width & tile height
+var tileWScale, tileHScale; //tile width/height with scale
 var W2, W4;       //W2: 1/2 tile-width,  W4: 1/4 tile width
 var H2, H4;       //H2: 1/2 tile-height, H4: 1/4 tile height
 
@@ -33,7 +34,7 @@ var loadingTxt;
 var gameState, lastGameState ;
 var tileScale, xMove, yMove;
 
-var speedMode = [18, 22, 26, 30, 34]; //slow   normal  fast 
+var speedMode = [16, 20, 25, 30, 35]; //slow   normal  fast 
 var speedText = ["VERY SLOW", "SLOW", "NORMAL", "FAST", "VERY FAST"];
 var speed = 2; //normal 
 var demoSpeed = 40;
@@ -49,8 +50,8 @@ var curTime = MAX_TIME_COUNT;
 function init() 
 {
 	var screenSize = getScreenSize();
-	screenX = screenSize.x;
-	screenY = screenSize.y;
+	screenX1 = screenSize.x;
+	screenY1 = screenSize.y;
 	
 	loadDataJS(); //load demo data file
 	canvasReSize();
@@ -83,9 +84,9 @@ function canvasReSize()
 	for (var scale = MAX_SCALE; scale >= MIN_SCALE; scale -= 0.25) {
 		canvasX = BASE_SCREEN_X * scale;
 		canvasY = BASE_SCREEN_Y * scale;
-		if (canvasX <= screenX && canvasY <= screenY || scale <= MIN_SCALE) break;
+		if (canvasX <= screenX1 && canvasY <= screenY1 || scale <= MIN_SCALE) break;
 	}
-	//debug("screenX = " + screenX + " screenY = " + screenY + "scale = " + scale);
+	//debug("screenX1 = " + screenX1 + " screenY1 = " + screenY1 + "scale = " + scale);
 
 	canvas = document.getElementById('canvas');
 
@@ -93,16 +94,21 @@ function canvasReSize()
 	canvas.height = canvasY;
 	
 	//Set canvas top left position
-	var left = ((screenX - canvasX)/2|0),
-		top  = ((screenY - canvasY)/2|0);
+	var left = ((screenX1 - canvasX)/2|0),
+		top  = ((screenY1 - canvasY)/2|0);
 	canvas.style.left = (left>0?left:0) + "px";
 	canvas.style.top =  (top>0?top:0) + "px";
 	canvas.style.position = "absolute";
 	
 	//initial constant value
 	tileScale = scale;
-	tileW = BASE_TILE_X * scale;
-	tileH = BASE_TILE_Y * scale;
+	
+	//tileW = BASE_TILE_X * scale;
+	//tileH = BASE_TILE_Y * scale;
+	tileW = BASE_TILE_X; //tileW and tileH for detection so don't change scale
+	tileH = BASE_TILE_Y;
+	tileWScale = BASE_TILE_X * scale;
+	tileHScale = BASE_TILE_Y * scale;
 	
 	W2 = (tileW/2|0); //20, 15, 10,
 	H2 = (tileH/2|0); //22, 16, 11 
@@ -110,8 +116,9 @@ function canvasReSize()
 	W4 = (tileW/4|0); //10, 7, 5,
 	H4 = (tileH/4|0); //11, 8, 5,
 	
- 	xMove = 4 * tileScale * 2;
- 	yMove = 4 * tileScale * 2;		
+	//xMove and yMove initial by setSpeedByAiVersion() 
+ 	//xMove = 4 * tileScale * 2;
+ 	//yMove = 4 * tileScale * 2;		
 }
 
 function createStage() 
@@ -280,6 +287,9 @@ function startGame()
 	startPlayTicker();
 	changingLevel = 1;
 	
+	curAiVersion = AI_VERSION; //07/04/2014
+	initHotKeyVariable();      //07/09/2014
+	
 	switch(playMode) {
 	case PLAY_CLASSIC:
 		getClassicInfo();	
@@ -325,6 +335,8 @@ function initVariable()
 	initGuardVariable();
 	initInfoVariable();
 	initCycVariable();
+	
+	setSpeedByAiVersion(); //07/04/2014
 }
 
 function buildLevelMap(levelMap) 
@@ -422,7 +434,7 @@ function buildLevelMap(levelMap)
 				runner = {};	
 				curTile = runner.sprite = new createjs.Sprite(runnerData, "runRight");
 				runner.pos = { x:x, y:y, xOffset:0, yOffset:0};	
-				runner.action = ACT_STOP;	
+				runner.action = ACT_UNKNOWN;	
 				runner.shape = "runRight";	
 				runner.lastLeftRight = "ACT_RIGHT";
 				//curTile.gotoAndPlay();	
@@ -430,7 +442,7 @@ function buildLevelMap(levelMap)
 				//curTile.framerate = 60;	
 				break;	
 			}
-			curTile.setTransform(x * tileW, y * tileH,tileScale, tileScale); //x,y, scaleX, scaleY 
+			curTile.setTransform(x * tileWScale, y * tileHScale, tileScale, tileScale); //x,y, scaleX, scaleY 
 			mainStage.addChild(curTile); 
 		}
 	}
@@ -470,7 +482,7 @@ function drawGround()
 	groundTile = [];
 	for(var x = 0; x < NO_OF_TILES_X; x++) {
 		groundTile[x] = new createjs.Bitmap(preload.getResult("ground"));
-		groundTile[x].setTransform(x * tileW, NO_OF_TILES_Y*tileH , tileScale, tileScale);
+		groundTile[x].setTransform(x * tileWScale, NO_OF_TILES_Y * tileHScale, tileScale, tileScale);
 		mainStage.addChild(groundTile[x]); 
 	}
 }
@@ -565,7 +577,7 @@ function drawScoreTxt()
 
 function drawLifeTxt()
 {
-	lifeTxt = drawText(13*tileW, infoY, "MEN", mainStage);
+	lifeTxt = drawText(13*tileWScale, infoY, "MEN", mainStage);
 }
 
 function drawLevelTxt()
@@ -575,29 +587,29 @@ function drawLevelTxt()
 	//if(playMode == PLAY_CLASSIC || playMode == PLAY_AUTO) xOffset = 20;
 	//else xOffset = 19;
 	
-	levelTxt = drawText(xOffset*tileW, infoY, "LEVEL", mainStage);
+	levelTxt = drawText(xOffset*tileWScale, infoY, "LEVEL", mainStage);
 }
 
 //for demo mode
 function drawDemoTxt()
 {
-	demoTxt = drawText(14*tileW, infoY, "DEMO", mainStage);
+	demoTxt = drawText(14*tileWScale, infoY, "DEMO", mainStage);
 }
 
 //for time & edit mode
 function drawGoldTxt()
 {
-	goldTxt = drawText(0*tileW, infoY, "@", mainStage);
+	goldTxt = drawText(0*tileWScale, infoY, "@", mainStage);
 }
 
 function drawGuardTxt()
 {
-	guardTxt = drawText((5+2/3)*tileW, infoY, "#", mainStage);
+	guardTxt = drawText((5+2/3)*tileWScale, infoY, "#", mainStage);
 }
 
 function drawTimeTxt()
 {
-	timeTxt = drawText((11+1/3)*tileW, infoY, "TIME", mainStage);
+	timeTxt = drawText((11+1/3)*tileWScale, infoY, "TIME", mainStage);
 }
 
 // draw score number 
@@ -612,7 +624,7 @@ function drawScore(addScore)
 	//if(playMode == PLAY_CLASSIC || playMode == PLAY_AUTO) digitNo = 7;
 	//else digitNo = 6
 	
-	scoreTile = drawText(5*tileW, infoY, ("000000"+curScore).slice(-7), mainStage);
+	scoreTile = drawText(5*tileWScale, infoY, ("000000"+curScore).slice(-7), mainStage);
 }
 
 function drawLife()
@@ -620,7 +632,7 @@ function drawLife()
 	for(var i = 0; i < lifeTile.length; i++) 
 		mainStage.removeChild(lifeTile[i]);
 
-	lifeTile = drawText(16*tileW, infoY, ("00"+runnerLife).slice(-3), mainStage);
+	lifeTile = drawText(16*tileWScale, infoY, ("00"+runnerLife).slice(-3), mainStage);
 }
 
 function drawLevel()
@@ -630,11 +642,11 @@ function drawLevel()
 	
 	switch(playMode) {
 	case PLAY_AUTO:	
-		levelTile = drawText(25*tileW, infoY, ("00"+demoLevel).slice(-3), mainStage);
+		levelTile = drawText(25*tileWScale, infoY, ("00"+demoLevel).slice(-3), mainStage);
 		break;	
 	case PLAY_CLASSIC: 
 	default:		
-		levelTile = drawText(25*tileW, infoY, ("00"+curLevel).slice(-3), mainStage);
+		levelTile = drawText(25*tileWScale, infoY, ("00"+curLevel).slice(-3), mainStage);
 		break;	
 	}
 }
@@ -645,7 +657,7 @@ function drawGold(addGold)
 	for(var i = 0; i < goldTile.length; i++) 
 		mainStage.removeChild(goldTile[i]);
 	
-	goldTile = drawText(1*tileW, infoY, ("00"+curGetGold).slice(-3), mainStage);
+	goldTile = drawText(1*tileWScale, infoY, ("00"+curGetGold).slice(-3), mainStage);
 }
 
 function drawGuard(addGuard)
@@ -655,7 +667,7 @@ function drawGuard(addGuard)
 	for(var i = 0; i < guardTile.length; i++) 
 		mainStage.removeChild(guardTile[i]);
 	
-	guardTile = drawText((6+2/3)*tileW, infoY, ("00"+curGuardDeadNo).slice(-3), mainStage);
+	guardTile = drawText((6+2/3)*tileWScale, infoY, ("00"+curGuardDeadNo).slice(-3), mainStage);
 }
 
 
@@ -668,7 +680,7 @@ function drawTime(decTime)
 	for(var i = 0; i < timeTile.length; i++) 
 		mainStage.removeChild(timeTile[i]);
 
-	timeTile = drawText((15+1/3)*tileW, infoY, ("00"+curTime).slice(-3), mainStage);
+	timeTile = drawText((15+1/3)*tileWScale, infoY, ("00"+curTime).slice(-3), mainStage);
 }
 
 function setGroundInfoOrder()
@@ -702,17 +714,19 @@ function setGroundInfoOrder()
 	for(i = 0; i < levelTile.length; i++) moveChild2Top(mainStage, levelTile[i]);
 }
 
-function drawText(x, y, str, parentObj)
+function drawText(x, y, str, parentObj, numberType)
 {
 	var text = str.toUpperCase();
 	var textTile = [];
+	
+	if(typeof numberType == "undefined") numberType = "N";
 	
 	for(var i = 0; i < text.length; i++) {
 		var code = text.charCodeAt(i);
 		
 		switch(true) {
-		case (code >=48 && code <=57):
-			textTile[i] = new createjs.Sprite(textData,"N"+String.fromCharCode(code));	
+		case (code >=48 && code <=57): //N0 ~ N9 or D0 ~ D9 
+			textTile[i] = new createjs.Sprite(textData, numberType+String.fromCharCode(code));	
 			break;
 		case (code >=65 && code <= 90):
 			textTile[i] = new createjs.Sprite(textData, String.fromCharCode(code));	
@@ -739,7 +753,7 @@ function drawText(x, y, str, parentObj)
 			textTile[i] = new createjs.Sprite(textData, "SPACE");	
 			break;
 		}
-		textTile[i].setTransform(x + i*tileW, y, tileScale, tileScale).stop();
+		textTile[i].setTransform(x + i*tileWScale, y, tileScale, tileScale).stop();
 		parentObj.addChild(textTile[i]); 
 	}
 	return textTile;	
@@ -773,7 +787,8 @@ function showLevel(levelMap)
 {
 	mainStage.removeAllChildren();
 	
-	loadingTxt.text = ""
+	loadingTxt.text = "";
+	//loadingTxt.text = tileScale;  //for debug
 	mainStage.addChild(loadingTxt); //for debug
 
 	initVariable();	
@@ -807,7 +822,7 @@ function showTipsText(text, always)
 		width = height = 0;
 	}
 	x = tipsText.x = (canvas.width - width) / 2 | 0;
-	y = tipsText.y = (NO_OF_TILES_Y*tileH - height) / 2 | 0;
+	y = tipsText.y = (NO_OF_TILES_Y*tileHScale - height) / 2 | 0;
 	tipsText.shadow = new createjs.Shadow("white", 2, 2, 1);
 	
 	tipsRect = new createjs.Shape();
@@ -841,6 +856,13 @@ function toggleTrapTile()
 			}
 		}
 	}
+	
+	if(dspTrapTile) {		
+		showTipsText("SHOW TRAP TILE", 0);
+	} else {
+		showTipsText("HIDE TRAP TILE", 0);
+	}
+	
 }
 
 function startAllSpriteObj()
@@ -888,8 +910,8 @@ function gameOverAnimation()
 {
 	var gameOverImage = new createjs.Bitmap(preload.getResult("over"));
 	var bound = gameOverImage.getBounds();
-	var x = (NO_OF_TILES_X*tileW)/2|0;
-	var y = (NO_OF_TILES_Y*tileH)/2|0;
+	var x = (NO_OF_TILES_X*tileWScale)/2|0;
+	var y = (NO_OF_TILES_Y*tileHScale)/2|0;
 	var regX = (bound.width)/2|0;
 	var regY = (bound.height)/2|0;
 	
@@ -926,8 +948,8 @@ var cycScreen, cycMaxRadius, cycDiff, cycX, cycY
 
 function initCycVariable()
 {
-	cycX = NO_OF_TILES_X * tileW/2;
-	cycY = NO_OF_TILES_Y * tileH/2;
+	cycX = NO_OF_TILES_X * tileWScale/2;
+	cycY = NO_OF_TILES_Y * tileHScale/2;
 	cycMaxRadius = Math.sqrt(cycX*cycX+cycY*cycY)|0+1;
 	cycDiff = (cycMaxRadius/CLOSE_SCREEN_SPEED)|0;
 }
@@ -968,6 +990,10 @@ function closingScreen(r)
 		setTimeout(function() { closingScreen(r);}, 5);
 	} else {
 		var levelMap;
+		
+		curAiVersion = AI_VERSION; //07/04/2014
+		initHotKeyVariable();      //07/09/2014
+		
 		if(playMode == PLAY_AUTO) getAutoDemoLevel(0);
 		if(playMode == PLAY_DEMO) getNextDemoLevel();
 /*		
@@ -980,7 +1006,6 @@ function closingScreen(r)
 		} else {
 			levelMap = levelData[curLevel-1];
 		}
-		
 		showLevel(levelMap);
 		addCycScreen();
 		setTimeout(function() { openingScreen(cycDiff*2);}, 5);
@@ -1174,8 +1199,10 @@ function mainTick(event)
 		break;
 	case GAME_RUNNER_DEAD:
 		//mainStage.update();
-		//if(recordMode) recordModeToggle(GAME_RUNNER_DEAD);
+
+		//if(recordMode) recordModeToggle(GAME_RUNNER_DEAD); //for debug only (if enable it must disable below statement)
 		if(recordMode == RECORD_KEY) recordModeDump(GAME_RUNNER_DEAD);	
+			
 		soundStop(soundFall);
 		stopAllSpriteObj();	
 		soundPlay("dead");
@@ -1266,8 +1293,11 @@ function mainTick(event)
 			debug("design error!");	
 			break;	
 		}
+
+		//if(recordMode) recordModeToggle(GAME_FINISH); //for debug only (if enable it must comment below if statement)
 		if(recordMode == RECORD_KEY) {
 			recordModeDump(GAME_FINISH);	
+			
 			if((playMode == PLAY_CLASSIC || playMode == PLAY_MODERN) && playData <= 2) {
 				updatePlayerDemoData(playData, curDemoData); //update current player demo data
 			}

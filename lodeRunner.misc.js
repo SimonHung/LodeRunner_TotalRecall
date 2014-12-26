@@ -71,11 +71,11 @@ function showTipsMsg(_tipsTxt, _stage, _scale)
 	var TEXT_SIZE = 72* _scale;
 	var TEXT_COLOR = "#ff2020";
 	var tipsText = new createjs.Text(_tipsTxt, "bold " +  TEXT_SIZE + "px Helvetica", TEXT_COLOR);
-	var screenX = _stage.canvas.width;
-	var screenY = _stage.canvas.height;
+	var screenX1 = _stage.canvas.width;
+	var screenY1 = _stage.canvas.height;
 
-	tipsText.x = (screenX) / 2 | 0;
-	tipsText.y = screenY/2 - tipsText.getBounds().height*5/4 | 0;
+	tipsText.x = (screenX1) / 2 | 0;
+	tipsText.y = screenY1/2 - tipsText.getBounds().height*5/4 | 0;
 	tipsText.shadow = new createjs.Shadow("white", 3, 3, 2);
 	tipsText.textAlign = "center";
 	
@@ -104,6 +104,7 @@ function soundPlay(name)
 	if(typeof name == "string") {
 		return createjs.Sound.play(name);
 	} else {
+		name.stop(); //12/21/2014 , for support soundJS 0.6.0
 		name.play();
 	}
 }

@@ -1,5 +1,5 @@
-var VERSION = "0.99n";
-var AI_VERSION = 1;
+var VERSION = "1.00c";
+var AI_VERSION = 2;
 
 var NO_OF_TILES_X = 28,
 	NO_OF_TILES_Y = 16;
@@ -30,7 +30,9 @@ var KEYCODE_BKSPACE = 8, //backspace
 	KEYCODE_RIGHT = 39, //move right
 	KEYCODE_UP    = 38, //move up
 	KEYCODE_DOWN  = 40, //move down
-	
+
+	KEYCODE_SUBTRACT = 109,  //Add KEYCODE_SUBTRACT & KEYCODE_HYPHEN for support fireFox 'dash' keycode
+	KEYCODE_HYPHEN   = 173,  //
 	KEYCODE_DASH = 189, //'-'
 	KEYCODE_DOT  = 190, //'.'
 
@@ -47,6 +49,7 @@ var KEYCODE_BKSPACE = 8, //backspace
 	
 	KEYCODE_A = 65, //'A'
 	KEYCODE_C = 67, //'C'
+	KEYCODE_G = 71, //'G'	
 	KEYCODE_R = 82, //'R'
 	KEYCODE_S = 83, //'S'
 	KEYCODE_T = 84, //'T'
