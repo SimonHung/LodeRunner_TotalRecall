@@ -61,10 +61,14 @@ This program build with Javascript + [CreateJS](http://www.createjs.com).
 ### * Provide 2 Theme
 <table>
 <tr>
-<td>(1)<img src="image/apple2.png">APPLE-II</td> 
+<td valign="middle">(1)</td>
+<td valign="middle"><img src="image/apple2.png" height="23" width="20"></td>
+<td><b>APPLE-II</b></td> 
 </tr>
 <tr>
-<td>(2)<img src="image/commodore64.png">Commodore 64</td> 
+<td valign="middle">(2)</td>
+<td valign="middle"><img src="image/commodore64.png" height="23" width="20"></td>
+<td valign="middle"><b>Commodore 64</b></td> 
 </tr>
 </table>
 
@@ -72,10 +76,14 @@ This program build with Javascript + [CreateJS](http://www.createjs.com).
 
 <table>
 <tr>
-<td>(1)<img src="image/repeatOn.png">Repeat Actions On: Like APPLE-II keyboard behavior</td> 
+<td valign="middle">(1)</td>
+<td valign="middle"><img src="image/repeatOn.png" height="24" width="24"></td>
+<td valign="middle"><b>Repeat Actions On:</b> Like APPLE-II keyboard behavior</td> 
 </tr>
 <tr>
-<td>(2)<img src="image/repeatOff.png">Repeat Actions Off: Like NES keyboard behavior</td> 
+<td valign="middle">(2)</td>
+<td valign="middle"><img src="image/repeatOff.png" height="24" width="24"></td>
+<td valign="middle"><b>Repeat Actions Off:</b> Like NES keyboard behavior</td> 
 </tr>
 </table>
 
