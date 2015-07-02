@@ -1,35 +1,86 @@
-<a target="_blank" href="http://loderunnerwebgame.com/LodeRunner/">Lode Runner (超級運動員)</a>
+<a target="_blank" href="http://loderunnerwebgame.com/LodeRunner/">Lode Runner - Total Recall</a>
 =======================================
+## (超級運動員 - 全面回憶)
 
 This program build with Javascript + [CreateJS](http://www.createjs.com).
 
-Game levels include <b>[Lode Runner (150 levels) & Championship Lode Runner (50 levels)](http://strategywiki.org/wiki/Lode_Runner/Walkthrough)</b>
-
-### GAME Mode
+### * 3 GAME Mode & 1 DEMO Mode
 <table>
 <tr>
-<td><b>CLASSIC MODE</b></td> 
-<td>Same as APPLE-II play mode</td>
+<td><b>(1) Challenge Mode</b></td> 
+<td>Compete with other players.</td>
 </tr>
-
 <tr>
-<td><b>TRAINING MODE</b></td> 
-<td>Player can select levels</td>
+<td><b>(2) Training Mode</b></td> 
+<td>Player can select any levels</td>
 </tr>
-
 <tr>
-<td><b>EDIT MODE</b></td> 
-<td>Player can create self-levels</td>
+<td><b>(3) Edit Mode</b></td> 
+<td>Player can create custom levels</td>
 </tr>
-
 <tr>
-<td><b>DEMO MODE</b></td> 
-<td>Replay passed levels</td>
+<td><b>(4) Demo Mode</b></td> 
+<td>Demo passed levels</td>
 </tr>
 
 </table>
 
-### PLAY
+###* Include 5 Game Versions
+<table>
+<tr>
+<td><b>(1) <a target="_blank" href="https://en.wikipedia.org/wiki/Lode_Runner">Classic Lode Runner</a></b></td>
+<td>(150 Levels)</td>
+<td>Difficulty: 3</td>
+</tr>
+
+<tr>
+<td><b>(2) <a target="_blank" href="http://www.gb64.com/game.php?id=5906&d=42">Professional Lode Runner</a></b></td> 
+<td>(150 Levels)</td>
+<td>Difficulty: 4</td>
+</tr>
+
+<tr>
+<td><b>(3) <a target="_blank" href="http://www.vizzed.com/play/revenge-of-lode-runner-appleii-online-apple-ii-6223-game">Revenge of Lode Runner</a></b></td> 
+<td>(17 Levels)</td>
+<td>Difficulty: 4</td>
+</tr>
+
+<tr>
+<td><b>(4) <a target="_blank" href="http://www.spoonbillsoftware.com.au/loderunner.htm">Lode Runner Fan Book</a></b></td> 
+<td>(66 Levels)</td>
+<td>Difficulty: 5</td>
+</tr>
+
+<tr>
+<td><b>(5) <a target="_blank" href="https://en.wikipedia.org/wiki/Championship_Lode_Runner">Championship Lode Runner</a></b></td> 
+<td>(51 Levels)</td>
+<td>Difficulty: 5</td>
+</tr>
+</table>
+
+### * Provide 2 Theme
+<table>
+<tr>
+<td>(1)<img src="image/apple2.png">APPLE-II</td> 
+</tr>
+<tr>
+<td>(2)<img src="image/commodore64.png">Commodore 64</td> 
+</tr>
+</table>
+
+### * 2 Keyboard control mode
+
+<table>
+<tr>
+<td>(1)<img src="image/repeatOn.png">Repeat Actions On: Like APPLE-II keyboard behavior</td> 
+</tr>
+<tr>
+<td>(2)<img src="image/repeatOff.png">Repeat Actions Off: Like NES keyboard behavior</td> 
+</tr>
+</table>
+
+
+### * PLAY
 <a target="_blank" href="http://loderunnerwebgame.com/game/">http://loderunnerwebgame.com/game/</a>
 
 ------------------------------------

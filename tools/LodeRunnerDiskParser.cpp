@@ -50,30 +50,137 @@ value | Character | Type
 #define READ_LEVEL_DATA_SIZE (256)
 #define ONE_LEVEL_DATA_SIZE (224)
 
-#define APPLE_DISK_NO (3)
+#define PLAYER_ID (0x09)
 
-#if (APPLE_DISK_NO == 1)
+//#define APPLE_DISK_NO (5)
+#define C64_DISK_NO (1)
 
-#define FILE_NAME "Lode_Runner_Apple-II.dsk"
-#define MAX_LEVEL (150)
-#define TITLE_NAME "Lode Runner (Apple-II 1983)"
-#define DATA_VAR_NAME "baseLevelData"
+#ifdef APPLE_DISK_NO //APPLE-II
 
-#elif (APPLE_DISK_NO == 2)
+	#define MAP_START_POSITION (0x3000L)
 
-#define FILE_NAME "Lode_Runner_Championship _Apple-II.dsk"
-#define MAX_LEVEL (50)
-#define TITLE_NAME "Championship Lode Runner (Apple-II 1984)"
-#define DATA_VAR_NAME "champLevelData"
+	#if (APPLE_DISK_NO == 1)
+	
+		#define FILE_NAME "./apple2.dsk/Lode_Runner_Apple-II.dsk"
+		#define MAX_LEVEL (150)
+		#define TITLE_NAME "Classic Lode Runner (Apple-II 1983)"
+		#define DATA_VAR_NAME "classicLevelData"
 
-#elif (APPLE_DISK_NO == 3)
+	#elif (APPLE_DISK_NO == 2)
 
-#define FILE_NAME "Revenge_of_Lode_Runner.dsk"
-#define MAX_LEVEL (25)
-#define TITLE_NAME "Revenge of Lode Runner (Apple-II 1986)"
-#define DATA_VAR_NAME "RevengeLevelData"
+		#define FILE_NAME "./apple2.dsk/Lode_Runner_Championship _Apple-II.dsk"
+		#define MAX_LEVEL (50)
+		#define TITLE_NAME "Championship Lode Runner (Apple-II 1984)"
+		#define DATA_VAR_NAME "champLevelData"
 
-#endif
+	#elif (APPLE_DISK_NO == 3)
+
+		#define FILE_NAME "./apple2.dsk/Revenge_of_Lode_Runner.dsk"
+		#define MAX_LEVEL (25)
+		#define TITLE_NAME "Revenge of Lode Runner (Apple-II 1986)"
+		#define DATA_VAR_NAME "revengeLevelData"
+
+	#elif (APPLE_DISK_NO == 4)
+
+		#define FILE_NAME "./apple2.dsk/Lode Runner Fan Book (4 Levels).do"
+		#define MAX_LEVEL (4)
+		#define TITLE_NAME "Lode Runner Fan Book (4 levels)"
+		#define TITLE_NOTES "Image got from: http://ww3.tiki.ne.jp/~maclr/lr/lr.html"
+		#define DATA_VAR_NAME "fanBookLevelData"
+		
+	#elif (APPLE_DISK_NO == 5)	
+	
+		#define FILE_NAME "./apple2.dsk/MYLODE.DSK"
+		#define MAX_LEVEL (54)
+		#define TITLE_NAME "Peter Ferrie's My Lode"
+		#define TITLE_NOTES "Image got from: http://pferrie.host22.com/misc/appleii.htm"
+		#define DATA_VAR_NAME "FerrieLevelData"
+
+	#endif
+
+#elif defined C64_DISK_NO //C64
+
+	#define MAP_START_POSITION (0x2A00L)
+
+	#define START_GOOD_BYTE  0x0D
+	#define START_SKIP_BYTE1 0x4B
+
+	#if (C64_DISK_NO == 1)
+
+		#define FILE_NAME "./C64.dsk/Professional Lode Runner (1985)(Dodosoft).fixed.d64"
+		
+		//#define FILE_NAME "./C64.dsk/LODERUNNER[amg].fix.D64"
+		
+		//#define FILE_NAME "./C64.dsk/Lode Runner (1983)(Broderbund).d64"
+		#define START_ALL_ISGOOD 1
+
+		#define MAX_LEVEL (200)
+		#define TITLE_NAME "Lode Runner I (C64)"
+		#define DATA_VAR_NAME "c64ver1"
+
+	#elif (C64_DISK_NO == 2)
+
+		#define FILE_NAME "./C64.dsk/LODERUN2.D64"
+		
+		#define MAX_LEVEL (21)
+		#define TITLE_NAME "Lode Runner II (C64)"
+		#define DATA_VAR_NAME "c64ver2"
+
+	#elif (C64_DISK_NO == 3)
+	
+		#define FILE_NAME "./C64.dsk/Atlantis Lode Runner (19xx)(-)[cr TBC].d64"
+		
+		#define START_SKIP_BYTE2 0x48
+		#define START_SKIP_BYTE3 0x4D     //Level 140: BAD SECTOR
+		
+		#define MAX_LEVEL (150)
+		#define TITLE_NAME "Atlantis Lode Runner (C64)"
+		#define DATA_VAR_NAME "c64Atlantis"
+	
+	#elif (C64_DISK_NO == 4)
+
+		#define FILE_NAME "./C64.dsk/LODERUN4.D64"
+		#define MAX_LEVEL (200)
+		#define TITLE_NAME "Lode Runner IV (C64)"
+		#define DATA_VAR_NAME "c64ver4"
+
+	#elif (C64_DISK_NO == 5)
+
+		#define FILE_NAME "./C64.dsk/LODERUN5.D64"
+		#define MAX_LEVEL (200)
+		#define TITLE_NAME "Lode Runner V (C64)"
+		#define DATA_VAR_NAME "c64ver5"
+		
+	#elif (C64_DISK_NO == 6)
+	
+		#define FILE_NAME "./c64.dsk/Lode Runner (1983)(Broderbund).d64"
+		
+		#define START_ALL_ISGOOD 1
+		#define START_SKIP_BYTE2 0x02
+		#define START_SKIP_BYTE3 0x03
+		
+		#define MAX_LEVEL (176)
+		#define TITLE_NAME "Lode Runner Fans version (C64)"
+		#define DATA_VAR_NAME "c64Fans"
+		
+	#elif (C64_DISK_NO == 7)
+	
+		#define FILE_NAME "./C64.dsk/LODERUN_CHAMP(FF).D64"
+		
+		#define START_ALL_ISGOOD 1
+		#define DATA_XOR_VALUE   0xFF
+		
+		#define MAX_LEVEL (50)
+		#define TITLE_NAME "Championship Lode Runner (C64)"
+		#define DATA_VAR_NAME "c64Champ"
+		
+	#endif
+
+#else  //Error
+
+	#error Please define "APPLE_DISK_NO" or "C64_DISK_NO"
+	
+#endif 
 
 char tileType[] = {
 	' ', //0x00: Empty space
@@ -88,22 +195,39 @@ char tileType[] = {
 	'&'  //0x09:Player	
 };
 
+int allZero(unsigned char *levelData)
+{
+	int i;
+		
+	for(i = 0; i < ONE_LEVEL_DATA_SIZE; i++) {
+		if(levelData[i]) return 0;
+	}
+	return 1; //all zero
+}
 
 int goodLevel(unsigned char *levelData)
 {
 	int i;
 	unsigned char leftTile, rightTile;
 	int allZero = 1;
+	int playerNo = 0; 
+	
 		
 	for(i = 0; i < ONE_LEVEL_DATA_SIZE; i++) {
-		//levelData[i] = levelData[i] ^ 0xFF;
+#ifdef DATA_XOR_VALUE		
+		levelData[i] = levelData[i] ^ DATA_XOR_VALUE;
+#endif		
 		leftTile = levelData[i] & 0xF;
 		rightTile = levelData[i] >> 0x04;
 		if(leftTile >= MAX_TILE_TYPE || rightTile >= MAX_TILE_TYPE) {
 			return 0;
 		}
+		if(leftTile == PLAYER_ID) playerNo++;
+		if(rightTile == PLAYER_ID) playerNo++;
+		
 		if(leftTile != 0 || rightTile != 0) allZero = 0;
 	}
+	if(playerNo != 1) return 0;
 	return !allZero;
 	return 1; //OK
 }
@@ -113,7 +237,10 @@ void dumpTitle(void)
 	printf("//************************************************************\n");
 	printf("//* All levels extract from: \n");
 	printf("//* %s DISK IMAGE\n",TITLE_NAME );
-	printf("//* by Simon Hung 2014/02/20\n");
+#ifdef TITLE_NOTES
+	printf("//* %s\n",TITLE_NOTES );
+#endif	
+	printf("//* by Simon Hung 2015/01/05\n");
 	printf("//************************************************************\n\n");
 }
 
@@ -163,12 +290,12 @@ void dumpLevel4JavaScript(int level, unsigned char *levelData)
 int main(void)
 {
 	FILE *fp;
-	unsigned char levelData[READ_LEVEL_DATA_SIZE];
+	unsigned char levelBuf[READ_LEVEL_DATA_SIZE];
+	unsigned char *levelData;
 	int curLevel = 0;
-	int readSize= 0, isGood;
-	unsigned long curPos = 0x3000L;
+	int readSize= 0, isGood = 1;
+	unsigned long curPos = MAP_START_POSITION;
 	unsigned long dspPos = curPos;
-	int doubleError = 0;
 	
 	if((fp = fopen(FILE_NAME, "rb")) ==NULL) {
 		printf("Open file \"%s\" failed !\n", FILE_NAME);
@@ -184,33 +311,58 @@ int main(void)
 	dumpTitle();
 
 	printf("var %s = [\n", DATA_VAR_NAME);	
-#ifdef C64
-	do {
+
+	while(
+#ifndef START_ALL_ISGOOD	
+		   isGood &&
 #endif
-	while(curLevel < MAX_LEVEL && 
-	      (readSize = fread(levelData, sizeof(char), READ_LEVEL_DATA_SIZE, fp)) ==  READ_LEVEL_DATA_SIZE &&
-	      (isGood = goodLevel(levelData))
+		   curLevel < MAX_LEVEL && 
+	       (readSize = fread(levelBuf, sizeof(char), READ_LEVEL_DATA_SIZE, fp)) ==  READ_LEVEL_DATA_SIZE 
 	){
-		//dumpLevel(++curLevel, levelData);
-		//printf("%x", dspPos);
-		dumpLevel4JavaScript(++curLevel, levelData);
-		dspPos += READ_LEVEL_DATA_SIZE;
-		doubleError=0;
-	}
-#ifdef C64
-		doubleError++;
-		if(!isGood) {
-			curPos += 0x1500L;
-			dspPos = curPos;
-			if(fseek(fp, curPos, SEEK_SET) != 0) {
-				printf("Fseek error ! @%d\n", __LINE__);
-				fclose(fp);
-				return 1;
+		levelData = levelBuf;	
+#ifdef START_GOOD_BYTE
+		unsigned char startByte = *(levelData++);
+		
+		switch(startByte) {
+		case START_SKIP_BYTE1:
+#ifdef START_SKIP_BYTE2			
+		case START_SKIP_BYTE2:
+#endif			
+#ifdef START_SKIP_BYTE3
+		case START_SKIP_BYTE3:
+#endif			
+#ifdef START_SKIP_BYTE4
+		case START_SKIP_BYTE4:
+#endif			
+			//printf("SKIP0 - %x\n", dspPos);
+			break;
+		case 0:	 //good if not allzero
+			if(allZero(levelData)){
+				//printf("SKIP1 - %x\n", dspPos);
+				break;
 			}
-			
-		} else doubleError++;
-	} while(curLevel < MAX_LEVEL && doubleError <= 1);
-#endif
+#ifdef START_ALL_ISGOOD			
+		default:	
+#endif		
+		case START_GOOD_BYTE:
+#endif	       
+			if((isGood = goodLevel(levelData))) {
+				//dumpLevel(++curLevel, levelData);
+				//printf("%x", dspPos);
+				dumpLevel4JavaScript(++curLevel, levelData);
+			}
+#ifdef START_GOOD_BYTE
+			break;
+#ifndef START_ALL_ISGOOD
+		default:
+			isGood = 0;
+			printf("%x", dspPos);
+			break;
+#endif			
+		}
+#endif	
+		dspPos += READ_LEVEL_DATA_SIZE;
+	}
 	printf("];\n");
 	
 	fclose(fp);	

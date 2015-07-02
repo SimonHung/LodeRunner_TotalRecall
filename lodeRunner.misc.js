@@ -3,13 +3,20 @@
 //============
 var DEBUG = 0;
 var demoSoundOff = 1;
-function debug(string) {
+
+function debug(string) 
+{
 	if(DEBUG) console.log(string);
 }
 
 function assert(expression, msg)
 {
-	if(DEBUG) console.assert(expression, msg);
+	console.assert(expression, msg);
+}
+
+function error(funName, string) 
+{
+	console.log("Error In " + funName + "( ): " + string);
 }
 
 function getScreenSize() 
@@ -37,36 +44,10 @@ function getScreenSize()
 	return {x:x, y:y};
 }
 
-//==============================
-// Too many user created Levels
-//==============================
-var editWarningText = null;
-function editWarningMsg(hidden)
-{
-	var x, y, width, height;
-
-	if(editWarningText == null) 
-		editWarningText = new createjs.Text("Too many user created levels !", 
-											"bold " +  (64*tileScale) + "px Helvetica", "#fc5c1c");
-	
-	width = editWarningText.getBounds().width;
-	height = editWarningText.getBounds().height;
-	x = editWarningText.x = (NO_OF_TILES_X*(tileW+EDIT_PADDING) - width) / 2 | 0;
-	y = editWarningText.y = (NO_OF_TILES_Y*tileH - height) / 2 | 0;
-	editWarningText.shadow = new createjs.Shadow("white", 2, 2, 1);
-	
-	if(hidden) {
-		mainStage.removeChild(editWarningText);
-	} else {
-		mainStage.addChild(editWarningText);
-	}
-	mainStage.update();
-}
-
 //================================
 // show tips messgae
 //===============================
-function showTipsMsg(_tipsTxt, _stage, _scale)
+function showTipsMsg(_tipsTxt, _stage, _scale, _tipsTxt1)
 {
 	var TEXT_SIZE = 72* _scale;
 	var TEXT_COLOR = "#ff2020";
@@ -81,8 +62,24 @@ function showTipsMsg(_tipsTxt, _stage, _scale)
 	
 	_stage.addChild(tipsText);
 	
-	createjs.Tween.get(tipsText).set({alpha:1}).wait(50).to({scaleX:1.2, scaleY:1.2, alpha:0}, 2000)
+	createjs.Tween.get(tipsText).set({alpha:1}).wait(50).to({scaleX:1.2, scaleY:1.2, alpha:0}, 3500)
 		.call(function(){_stage.removeChild(tipsText);});
+		
+	if(_tipsTxt1 != null) {
+		// two tips 
+		var tipsText1 = new createjs.Text(_tipsTxt1, "bold " +  TEXT_SIZE + "px Helvetica", TEXT_COLOR);
+		
+		tipsText1.x = (screenX1) / 2 | 0;
+		tipsText1.y = screenY1/2 | 0;
+		tipsText1.shadow = new createjs.Shadow("white", 3, 3, 2);
+		tipsText1.textAlign = "center";
+
+		_stage.addChild(tipsText1);
+		
+		createjs.Tween.get(tipsText1).set({alpha:1}).wait(50).to({scaleX:1.2, scaleY:1.2, alpha:0}, 3500)
+			.call(function(){_stage.removeChild(tipsText1);});
+		
+	}
 }
 
 //==========================================
@@ -97,9 +94,22 @@ function moveChild2Top(stage, obj)
 // BEGIN for Sound function
 //==========================
 var soundOff = 0;
+
+function themeSoundPlay(name) 
+{
+	soundPlay(name + curTheme);
+}
+
+function soundDisable()
+{
+	if(playMode == PLAY_AUTO) return 1;
+	if(playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) return demoSoundOff;
+	else return soundOff;
+}
+
 function soundPlay(name)
 {
-	if(soundOff || playMode == PLAY_AUTO || (playMode == PLAY_DEMO && demoSoundOff)) return;
+	if(soundDisable()) return;
 	
 	if(typeof name == "string") {
 		return createjs.Sound.play(name);
@@ -111,7 +121,7 @@ function soundPlay(name)
 
 function soundStop(name)
 {
-	if(soundOff || playMode == PLAY_AUTO || (playMode == PLAY_DEMO && demoSoundOff)) return;
+	//if(soundDisable()) return;
 	
 	if(typeof name == "string") {
 		return createjs.Sound.stop(name);
@@ -122,7 +132,7 @@ function soundStop(name)
 
 function soundPause(name)
 {
-	if(soundOff || playMode == PLAY_AUTO || (playMode == PLAY_DEMO && demoSoundOff)) return;
+	if(soundDisable()) return;
 	
 	if(typeof name == "string") {
 		return createjs.Sound.pause(name);
@@ -133,13 +143,43 @@ function soundPause(name)
 
 function soundResume(name)
 {
-	if(soundOff || playMode == PLAY_AUTO || (playMode == PLAY_DEMO && demoSoundOff)) return;
+	if(soundDisable()) return;
 	
 	if(typeof name == "string") {
 		return createjs.Sound.resume(name);
 	} else {
 		name.resume();
 	}
+}
+
+//==============================
+// get time zone for php format
+//==============================
+function phpTimeZone()
+{
+	var d = new Date()
+	var n = d.getTimezoneOffset();
+	var n1 = Math.abs(n);
+
+	//------------------------------------------------------------------------------------
+	// AJAX POST and Plus Sign ( + ) — How to Encode:
+	// Use encodeURIComponent() in JS and in PHP you should receive the correct values.
+	// http://stackoverflow.com/questions/1373414/ajax-post-and-plus-sign-how-to-encode
+	//------------------------------------------------------------------------------------
+	
+	//+0:00, +1:00, +8:00, -8:00 ....
+	return ((n <=0)?encodeURIComponent("+"):"-")+ (n1/60|0) + ":" + ("0"+n1%60).slice(-2);
+}
+
+//========================================
+// get local time (YYYY-MM-DD HH:MM:SS)
+//========================================
+function getLocalTime()
+{
+	var d = new Date();
+	
+	return (("000"+d.getFullYear()).slice(-4)+ "-" +("0"+(d.getMonth() + 1)).slice(-2)+ "-" +("0"+d.getDate()).slice(-2)+ " " +	
+	       ("0"+d.getHours()).slice(-2) + ":" + ("0"+d.getMinutes()).slice(-2) + ":"  + ("0"+d.getSeconds()).slice(-2));
 }
 
 //===============
@@ -210,4 +250,32 @@ function  rangeRandom(minValue, maxValue, seedValue)
 	items = max - min + 1;
 	
 	rndStart();
+}
+
+//======================================
+// get demo data by playData (wData.js)
+//======================================
+function getDemoData(playData) 
+{
+	wDemoData = [];	
+	switch(playData) {
+	case 1:
+		if(	typeof wfastDemoData1 !== "undefined" ) wDemoData = wfastDemoData1;
+		break;
+	case 2:
+		if(	typeof wfastDemoData2 !== "undefined" ) wDemoData = wfastDemoData2;
+		break;
+	case 3:
+		if(	typeof wfastDemoData3 !== "undefined" ) wDemoData = wfastDemoData3;
+		break;
+	case 4:
+		if(	typeof wfastDemoData4 !== "undefined" ) wDemoData = wfastDemoData4;
+		break;
+	case 5:
+		if(	typeof wfastDemoData5 !== "undefined" ) wDemoData = wfastDemoData5;
+		break;
+	}
+	for(var i = 0; i < wDemoData.length; i++) { //temp
+		playerDemoData[wDemoData[i].level-1] = wDemoData[i]; 
+	}
 }

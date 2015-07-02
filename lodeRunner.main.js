@@ -2,7 +2,7 @@
  * @license ============================================================================= 
  * Lode Runner main program
  *
- * This program is a HTML5 remake of the Lode Runner games (APPLE II version).
+ * This program is a HTML5 remake of the Lode Runner games (APPLE II & C64 version).
  *
  * The program code base on CreateJS JavaScript libraries !
  * http://www.createjs.com/
@@ -12,12 +12,15 @@
  * 
  * Source Code: https://github.com/SimonHung/LodeRunner
  *
- * by Simon Hung 2014/06/20 (http://simonsays-tw.com)
+ * by Simon Hung 2014/06/20, 2015/06/13 (http://simonsays-tw.com)
  * ============================================================================= 
  */
 
+window.name = 'lodeRunnerParent'; //for world high score switch back 5/31/2015
+
 var screenX1, screenY1;
 var canvasX, canvasY;
+var screenBorder;
 
 var tileW, tileH; //tile width & tile height
 var tileWScale, tileHScale; //tile width/height with scale
@@ -34,18 +37,24 @@ var loadingTxt;
 var gameState, lastGameState ;
 var tileScale, xMove, yMove;
 
-var speedMode = [16, 20, 25, 30, 35]; //slow   normal  fast 
+var speedMode = [15, 20, 25, 30, 35]; //slow   normal  fast 
 var speedText = ["VERY SLOW", "SLOW", "NORMAL", "FAST", "VERY FAST"];
 var speed = 2; //normal 
-var demoSpeed = 40;
+var demoSpeed = 35;
 
-var levelData = levelData1; //Lode Runner 1
+var levelData = defaultLevelData(); //Classic Lode Runner
 
-var curLevel = 1, maxLevel = 1;
+var curLevel = 1, maxLevel = 1, passedLevel = 0;
 var playMode = PLAY_CLASSIC;
-var playData = 1; //1: lode runner 1,           2: lode runner 2, 3: user created, 
-                  //4: lode runner 1 demo mode, 5: lode runner 2 demo mode
-var curTime = MAX_TIME_COUNT;
+var playData = 1; //classic lode runner
+var curTime = 0; //count from 0 to MAX_TIME_COUNT
+
+var playerName = "";
+var playerUId = "";
+
+var curTheme = THEME_APPLE2; //support 2 themes: apple2 & C64
+
+var dbName="LodeRunner";
 
 function init() 
 {
@@ -53,41 +62,76 @@ function init()
 	screenX1 = screenSize.x;
 	screenY1 = screenSize.y;
 	
-	loadDataJS(); //load demo data file
+	//loadDataJS(); //load demo data file
 	canvasReSize();
 	createStage();
 	setBackground();
 	initAutoDemoRnd(); //init auto demo random levels
-	//initDemoModeVariable(); //for user to select demo level 06/11/2014, move to lodeDataJS() 06/14/2014
+	
+	loadStoreVariable(); //load data from localStorage
+	initMenuVariable();  //init menu variable
+	
+	getLastPlayInfo();
+	initDemoData(); //get demo data from server
+	
 	////genUserLevel(MAX_EDIT_LEVEL); //for debug only
 	getEditLevelInfo(); //load edit levels
 	showLoadingPage(); //preload function 
 }
 
+/*
 function loadDataJS()
 {
+	var arg = getUrlArgument();
 	var js = document.createElement('script');
 	
 	js.type = "text/javascript";
-	js.src = "lodeRunner.wData.js";
+	
+	////js.src = "lodeRunner.wData.jss" + ((arg == null)?"": ("?" + arg));
+	js.src = "lodeRunner.wData.jss" + ("?dbName=" + dbName) + ((arg == null)? "" : ("&" + arg)); //add set dbName
 	//console.log(js.src);
+	
 	js.onload = function() {
+		loadStoreVariable(); //load data from localStorage
+		initMenuVariable();  //init menu variable
 		initDemoModeVariable();
 		debug('demo data load complete');
 	}; 
 	//document.body.appendChild(js);
 	document.getElementsByTagName('head')[0].appendChild(js);
 }
+*/
+
+function loadStoreVariable()
+{
+	playerName = getPlayerName();
+	if( ((playerUid = getUid()) == "" || playerUid.length != 32) && typeof(uId) != "undefined" ) {
+		playerUid = uId; //uId variable in lodeRunner.wData.jss
+		setUid(playerUid);
+	}
+	curTheme = getThemeMode();
+	getRepeatAction();
+}
 
 function canvasReSize() 
 {
-	for (var scale = MAX_SCALE; scale >= MIN_SCALE; scale -= 0.25) {
-		canvasX = BASE_SCREEN_X * scale;
-		canvasY = BASE_SCREEN_Y * scale;
-		if (canvasX <= screenX1 && canvasY <= screenY1 || scale <= MIN_SCALE) break;
+	var iconSizeX;
+	for (var scale = MAX_SCALE*100; scale >= MIN_SCALE*100; scale -= 25) {
+		tileScale = scale / 100;
+		canvasX = BASE_SCREEN_X * tileScale;
+		canvasY = BASE_SCREEN_Y * tileScale;
+		if (canvasX <= screenX1 && canvasY <= screenY1 || tileScale <= MIN_SCALE) break;
+		iconSizeX = BASE_ICON_X * 2 * tileScale;
+		if( (canvasX+iconSizeX) <= screenX1 && canvasY <= screenY1 || tileScale <= MIN_SCALE) break;
 	}
+	debug("SCALE=" + tileScale);
 	//debug("screenX1 = " + screenX1 + " screenY1 = " + screenY1 + "scale = " + scale);
-
+	
+	screenBorder = (screenX1 - (canvasX+iconSizeX))/2;
+	if(screenBorder > ICON_BORDER*2) screenBorder = ICON_BORDER*2; 
+	else if (screenBorder < 0) screenBorder = 0;
+	screenBorder = (screenBorder * tileScale) | 0;
+	
 	canvas = document.getElementById('canvas');
 
 	canvas.width = canvasX;
@@ -100,15 +144,10 @@ function canvasReSize()
 	canvas.style.top =  (top>0?top:0) + "px";
 	canvas.style.position = "absolute";
 	
-	//initial constant value
-	tileScale = scale;
-	
-	//tileW = BASE_TILE_X * scale;
-	//tileH = BASE_TILE_Y * scale;
 	tileW = BASE_TILE_X; //tileW and tileH for detection so don't change scale
 	tileH = BASE_TILE_Y;
-	tileWScale = BASE_TILE_X * scale;
-	tileHScale = BASE_TILE_Y * scale;
+	tileWScale = BASE_TILE_X * tileScale;
+	tileHScale = BASE_TILE_Y * tileScale;
 	
 	W2 = (tileW/2|0); //20, 15, 10,
 	H2 = (tileH/2|0); //22, 16, 11 
@@ -147,6 +186,7 @@ function showCoverPage()
 	clearIdleDemoTimer();
 	mainStage.removeAllChildren();	
 	mainStage.addChild(coverBitmap);
+	mainStage.addChild(signetBitmap);
 	mainStage.addChild(remakeBitmap);
 	mainStage.update();	
 	waitIdleDemo(3000);
@@ -168,6 +208,7 @@ function anyKeyStopDemo()
 
 function stopDemoAndPlay()
 {
+	var showStartMsg = 1;
 	if(changingLevel) return false;
 	clearIdleDemoTimer();
 	disableStageClickEvent();
@@ -175,11 +216,11 @@ function stopDemoAndPlay()
 	soundStop(soundFall);		
 	stopAllSpriteObj();
 	
-	if(playMode == PLAY_DEMO) selectIconObj.disable(1); 
-	
+	if(playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) selectIconObj.disable(1); 
+	if(playMode == PLAY_DEMO_ONCE) showStartMsg = 0;
 	////genUserLevel(MAX_EDIT_LEVEL); //for debug only
 	////getEditLevelInfo(); //load edit levels
-	selectGame();
+	selectGame(showStartMsg);
 }
 
 var stageClickListener = null, stagePressListener = null;
@@ -224,8 +265,7 @@ function anyKeyDown()
 
 function checkIdleTime(maxIdleTime)
 {
-	var curTime = new Date();
-	var idleTime = (curTime - startIdleTime);
+	var idleTime = (new Date() - startIdleTime);
 		
 	if(idleTime > maxIdleTime){ //start demo
 		clearIdleDemoTimer();
@@ -235,7 +275,10 @@ function checkIdleTime(maxIdleTime)
 	}
 }
 
-function selectGame()
+//==========================
+// Get playMode & playData
+//==========================
+function getLastPlayInfo()
 {
 	var infoJSON = getStorage(STORAGE_LASTPLAY_MODE);
 	playMode = PLAY_NONE;
@@ -243,17 +286,26 @@ function selectGame()
 	if(infoJSON) {
 		var infoObj = JSON.parse(infoJSON);
 		playMode = infoObj.m; //mode= 1: classic, 2:time 
-		playData = infoObj.d; //data= 1: lode runner 1, 2: lode runner 2
+		playData = infoObj.d; //1: classic lode runner, 2: professional lode runner, 3: lode runner 3 ....
 	}
 	
-	if( (playMode != PLAY_CLASSIC && playMode != PLAY_MODERN) ||
-	    (playData != 1 && playData != 2 && playData != 3) )
-	{
+	if( (playMode != PLAY_CLASSIC && playMode != PLAY_MODERN) || 
+	    (playData < 1 || (playData > maxPlayId && playData != PLAY_DATA_USERDEF) )
+	){
+	    //(playData != PLAY_DATA_1 && playData != PLAY_DATA_2 && playData != PLAY_DATA_3 && playData != PLAY_DATA_USERDEF) )
+	    //{
 		playMode = PLAY_CLASSIC;
-		playData = 1; //lode runner 1
+		playData = 1; //classic lode runner
 	}
+}
+
+function selectGame(showDataMsg)
+{
+	getLastPlayInfo();
+	playData2GameVersionMenuId();
 	document.onkeydown = handleKeyDown;
-	initShowDataMsg();
+	document.onkeyup = handleKeyUp;
+	initShowDataMsg(showDataMsg);
 	startGame();	
 }
 
@@ -263,7 +315,7 @@ function startPlayTicker()
 {
 	stopPlayTicker();
 	//createjs.Ticker.timingMode = createjs.Ticker.RAF;
-	if(playMode == PLAY_AUTO || playMode == PLAY_DEMO) {
+	if(playMode == PLAY_AUTO || playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) {
 		//createjs.Ticker.setFPS(speedMode[speedMode.length-1]); //very fast
 		createjs.Ticker.setFPS(demoSpeed); //06/12/2014
 	} else {
@@ -280,7 +332,7 @@ function stopPlayTicker()
 	}
 }
 
-function startGame()
+function startGame(noCycle)
 {
 	var levelMap;
 	gameState = GAME_WAITING;
@@ -294,6 +346,9 @@ function startGame()
 	case PLAY_CLASSIC:
 		getClassicInfo();	
 		levelMap = levelData[curLevel-1];	
+		if(curLevel >= levelData.length && (passedLevel+1) >= levelData.length) {
+			loadEndingMusic(); //6/15/2015, music prepare for winner
+		}
 		break;
 	case PLAY_MODERN:
 		getModernInfo();	
@@ -306,14 +361,22 @@ function startGame()
 		getDemoInfo();	
 		levelMap = levelData[curLevel-1];
 		break;	
+	case PLAY_DEMO_ONCE:
+		getDemoOnceInfo();	
+		levelMap = levelData[curLevel-1];
+		break;	
 	case PLAY_AUTO:
 		getAutoDemoLevel(1);
 		levelMap = levelData[curLevel-1];	
 		break;
 	}
 	showLevel(levelMap);
-	addCycScreen();
-	setTimeout(function() { openingScreen(cycDiff*2);}, 5);
+	if(noCycle) {
+		beginPlay();
+	} else {
+		addCycScreen();
+		setTimeout(function() { openingScreen(cycDiff*2);}, 5);
+	}
 }
 
 var maxTileX = NO_OF_TILES_X - 1, maxTileY = NO_OF_TILES_Y - 1;
@@ -336,7 +399,10 @@ function initVariable()
 	initInfoVariable();
 	initCycVariable();
 	
+	initStillFrameVariable(); //05/01/2015 replace sprite with still frame image 
 	setSpeedByAiVersion(); //07/04/2014
+	
+	debug("curAiVersion = " + curAiVersion);
 }
 
 function buildLevelMap(levelMap) 
@@ -352,11 +418,17 @@ function buildLevelMap(levelMap)
 
 	
 	//(2) draw map
+/*	
 	var index = 0;
 	for(var y = 0; y < NO_OF_TILES_Y; y++) {
 		for(var x = 0; x < NO_OF_TILES_X; x++) {
 			var id = levelMap.charAt(index++);
-
+*/	
+	var index = NO_OF_TILES_Y * NO_OF_TILES_X - 1;
+	for(var y = NO_OF_TILES_Y-1; y >= 0; y--) {
+		for(var x = NO_OF_TILES_X-1; x >= 0; x--) {
+			var id = levelMap.charAt(index--);
+			
 			var curTile;	
 			switch(id) {
 			default:		
@@ -368,49 +440,49 @@ function buildLevelMap(levelMap)
 			case '#': //Normal Brick
 				map[x][y].base = BLOCK_T;
 				map[x][y].act = BLOCK_T;	
-				curTile = map[x][y].bitmap = new createjs.Bitmap(preload.getResult("brick"));
+				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("brick"));
 				break;	
 			case '@': //Solid Brick
 				map[x][y].base = SOLID_T;
 				map[x][y].act  = SOLID_T;
-				curTile = map[x][y].bitmap = new createjs.Bitmap(preload.getResult("solid"));
+				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("solid"));
 				break;	
 			case 'H': //Ladder
 				map[x][y].base =LADDR_T;
 				map[x][y].act  =LADDR_T;
-				curTile = map[x][y].bitmap = new createjs.Bitmap(preload.getResult("ladder"));
+				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("ladder"));
 				break;	
 			case '-': //Line of rope
 				map[x][y].base = BAR_T;
 				map[x][y].act  = BAR_T;
-				curTile = map[x][y].bitmap = new createjs.Bitmap(preload.getResult("rope"));
+				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("rope"));
 				break;	
 			case 'X': //False brick
 				map[x][y].base = TRAP_T; //behavior same as empty
 				map[x][y].act  = TRAP_T; 
-				curTile = map[x][y].bitmap = new createjs.Bitmap(preload.getResult("brick"));
+				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("brick"));
 				break;
 			case 'S': //Ladder appears at end of level
 				map[x][y].base = HLADR_T; //behavior same as empty before end of level
 				map[x][y].act  = EMPTY_T; //behavior same as empty before end of level
-				curTile = map[x][y].bitmap = new createjs.Bitmap(preload.getResult("ladder"));
+				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("ladder"));
 				curTile.set({alpha:0});	//hide the laddr
 				break;
 			case '$': //Gold chest
 				map[x][y].base = GOLD_T; //keep gold on base map
 				map[x][y].act  = EMPTY_T;
-				curTile = map[x][y].bitmap = new createjs.Bitmap(preload.getResult("gold"));
+				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("gold"));
 				goldCount++;	
 				break;	
 			case '0': //Guard
 				map[x][y].base = EMPTY_T;
 				map[x][y].act  = GUARD_T;  
 				map[x][y].bitmap = null;
-				if(guardCount >= MAX_GUARD) {
+				if(guardCount >= maxGuard) {
 					map[x][y].act = EMPTY_T;
 					continue;  //too many guard , set this tile as empty
 				}
-				
+/*				
 				guard[guardCount] = {};	
 				curTile = guard[guardCount].sprite = new createjs.Sprite(guardData, "runLeft");
 				guard[guardCount].pos = { x:x, y:y, xOffset:0, yOffset:0};	
@@ -418,6 +490,19 @@ function buildLevelMap(levelMap)
 				guard[guardCount].shape = "runLeft";
 				guard[guardCount].lastLeftRight = "ACT_LEFT";
 				guard[guardCount].hasGold = 0;
+					
+*/
+				//for backward compatible guard order must same as old, so add to beginning of array					
+				curTile = new createjs.Sprite(guardData, "runLeft");
+				guard.unshift({ 
+					sprite: curTile,
+					pos: { x:x, y:y, xOffset:0, yOffset:0}, 
+					action: ACT_STOP,
+					shape: "runLeft",
+					lastLeftRight: "ACT_LEFT",
+					hasGold: 0
+				});
+
 				guardCount++;	
 				//curTile.gotoAndPlay();	
 				curTile.stop();	
@@ -457,7 +542,7 @@ function moveSprite2Top()
 	}
 	
 	if(runner == null) {
-		console.log(" Without runner ???");
+		error(arguments.callee.name, "Without runner ???");
 	} else {
 		//move runner to top (z index)
 		moveChild2Top(mainStage, runner.sprite); 
@@ -481,7 +566,7 @@ function drawGround()
 {
 	groundTile = [];
 	for(var x = 0; x < NO_OF_TILES_X; x++) {
-		groundTile[x] = new createjs.Bitmap(preload.getResult("ground"));
+		groundTile[x] = new createjs.Bitmap(getThemeImage("ground"));
 		groundTile[x].setTransform(x * tileWScale, NO_OF_TILES_Y * tileHScale, tileScale, tileScale);
 		mainStage.addChild(groundTile[x]); 
 	}
@@ -491,6 +576,7 @@ function drawGround()
 var runnerLife = RUNNER_LIFE;
 var curScore = 0;
 var curGetGold = 0, curGuardDeadNo = 0; //for modern mode 
+var sometimePlayInGodMode = 0; //if sometime play in god mode then don't save to hi-scoe, 12/23/2014
 
 var infoY;
 var scoreTxt, scoreTile,
@@ -507,8 +593,8 @@ var goldTxt, goldTile,
 //=============================
 function initModernVariable()
 {
-	curTime = MAX_TIME_COUNT;
-	curGetGold = curGuardDeadNo = 0;
+	//curTime = MAX_TIME_COUNT;
+	curTime = curGetGold = curGuardDeadNo = 0;
 }
 
 function initInfoVariable()
@@ -671,12 +757,16 @@ function drawGuard(addGuard)
 }
 
 
-function drawTime(decTime)
+function countTime(addTime)
 {
-	if(curTime <= 0) return;
-	if(decTime) curTime--;
-	if(curTime < 0) { curTime = 0;}
-	
+	if(curTime >= MAX_TIME_COUNT) return;
+	if(addTime) curTime++;
+	if(curTime > MAX_TIME_COUNT) { curTime = MAX_TIME_COUNT;}
+}
+
+function drawTime(addTime)
+{
+	countTime(addTime);
 	for(var i = 0; i < timeTile.length; i++) 
 		mainStage.removeChild(timeTile[i]);
 
@@ -699,7 +789,7 @@ function setGroundInfoOrder()
 			for(i = 0; i < lifeTxt.length; i++) moveChild2Top(mainStage, lifeTxt[i]);
 			for(i = 0; i < lifeTile.length; i++) moveChild2Top(mainStage, lifeTile[i]);
 		}
-	} else {
+	} else { //PLAY_MODERN, PLAY_DEMO_ONCE
 		for(i = 0; i < goldTxt.length; i++) moveChild2Top(mainStage, goldTxt[i]);
 		for(i = 0; i < goldTile.length; i++) moveChild2Top(mainStage, goldTile[i]);
 
@@ -743,6 +833,12 @@ function drawText(x, y, str, parentObj, numberType)
 		case (code == 45): //'-'
 			textTile[i] = new createjs.Sprite(textData, "DASH");	
 			break;
+		case (code == 58): //':'
+			textTile[i] = new createjs.Sprite(textData, "COLON");	
+			break;
+		case (code == 95): //'_'
+			textTile[i] = new createjs.Sprite(textData, "UNDERLINE");	
+			break;
 		case (code == 35): //'#': guard dead in trap hole
 			textTile[i] = new createjs.Sprite(textData, String.fromCharCode(code));	
 			break;
@@ -769,15 +865,23 @@ function playGame(deltaS)
 	
 	if(++playTickTimer >= TICK_COUNT_PER_TIME) {
 		if(playMode != PLAY_CLASSIC && playMode != PLAY_AUTO && playMode != PLAY_DEMO) drawTime(1);
+		else countTime(1);
 		playTickTimer = 0;
 	}
 	
  	//runner.xMove = 4 * tileScale * 2;
  	//runner.yMove = 4 * tileScale * 2;
-	if(playMode == PLAY_AUTO || playMode == PLAY_DEMO) playDemo();
+	if(playMode == PLAY_AUTO || playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) playDemo();
 	if(recordMode) processRecordKey();
 	if(!isDigging()) moveRunner();
+	else processDigHole();
 	if(gameState != GAME_RUNNER_DEAD) moveGuard();
+	
+	if(curAiVersion >= 3) {
+		processGuardShake();
+		processFillHole();
+		processReborn();
+	}
 }
 
 //***********************
@@ -799,9 +903,9 @@ function showLevel(levelMap)
 	buildGroundInfo();
 }
 
-var tipsText = null;
-var tipsRect = null;
-function showTipsText(text, always)
+var tipsText = null, tipsRect = null;
+var tipsText1 = null, tipsRect1 = null;
+function showTipsText(text, time, text1)
 {
 	var x, y, width, height;
 	
@@ -810,6 +914,16 @@ function showTipsText(text, always)
 	}
 	if(tipsRect != null) {
 		mainStage.removeChild(tipsRect);
+	}	
+
+	if(tipsText1 != null) {
+		mainStage.removeChild(tipsText1);
+		tipsText1 = null;
+	}
+	
+	if(tipsRect1 != null) {
+		mainStage.removeChild(tipsRect1);
+		tipsRect1 = null;
 	}	
 	
 	tipsText = new createjs.Text("test", "bold " +  (48*tileScale) + "px Helvetica", "#ee1122");
@@ -828,15 +942,44 @@ function showTipsText(text, always)
 	tipsRect = new createjs.Shape();
     tipsRect.graphics.beginFill("#020722");
     tipsRect.graphics.drawRect(-1, -1,width+2, height+2);	
-	tipsRect.setTransform(x, y+5).set({alpha:0.8});
+	tipsRect.setTransform(x, y).set({alpha:0.8});
 
 	mainStage.addChild(tipsRect);
 	mainStage.addChild(tipsText);
 	
-	if(!always){
-		createjs.Tween.get(tipsRect,{override:true}).set({alpha:0.8}).to({alpha:0}, 1000);
-		createjs.Tween.get(tipsText,{override:true}).set({alpha:1}).to({alpha:0}, 1000);
+	if(time){
+		createjs.Tween.get(tipsRect,{override:true}).set({alpha:0.8}).to({alpha:0}, time);
+		createjs.Tween.get(tipsText,{override:true}).set({alpha:1}).to({alpha:0}, time);
 	}
+	
+	if(text1 != null) { //second tips 
+		tipsText1 = new createjs.Text("test", "bold " +  (48*tileScale) + "px Helvetica", "#ee1122");
+		tipsText1.text = text1;
+		tipsText1.set({alpha:1});
+		if(text1.length) {
+			width = tipsText1.getBounds().width;
+			height = tipsText1.getBounds().height;
+		} else {
+			width = height = 0;
+		}
+		x = tipsText1.x = (canvas.width - width) / 2 | 0;
+		y = tipsText1.y = (NO_OF_TILES_Y*tileHScale - height) / 2  + tipsText.getBounds().height*2 | 0;
+		tipsText1.shadow = new createjs.Shadow("white", 2, 2, 1);
+	
+		tipsRect1 = new createjs.Shape();
+    	tipsRect1.graphics.beginFill("#020722");
+    	tipsRect1.graphics.drawRect(-1, -1,width+2, height+2);	
+		tipsRect1.setTransform(x, y).set({alpha:0.8});
+
+		mainStage.addChild(tipsRect1);
+		mainStage.addChild(tipsText1);
+	
+		if(time){
+			createjs.Tween.get(tipsRect1,{override:true}).set({alpha:0.8}).to({alpha:0}, time);
+			createjs.Tween.get(tipsText1,{override:true}).set({alpha:1}).to({alpha:0}, time);
+		}
+	}	
+	
 	mainStage.update();
 }
 
@@ -858,9 +1001,9 @@ function toggleTrapTile()
 	}
 	
 	if(dspTrapTile) {		
-		showTipsText("SHOW TRAP TILE", 0);
+		showTipsText("SHOW TRAP TILE", 2000);
 	} else {
-		showTipsText("HIDE TRAP TILE", 0);
+		showTipsText("HIDE TRAP TILE", 2000);
 	}
 	
 }
@@ -875,12 +1018,14 @@ function startAllSpriteObj()
 		if(!guard[i].paused) guard[i].sprite.play();
 	}
 	
-	//(3) fill hole stop
-	for(var i = 0; i < fillHoleObj.length; i++)
-		fillHoleObj[i].play();
+	if(curAiVersion < 3) { //for sprite only
+		//(3) fill hole stop
+		for(var i = 0; i < fillHoleObj.length; i++)
+			fillHoleObj[i].play();
 	
-	//(4) hole digging
-	if(holeObj.action == ACT_DIGGING) holeObj.sprite.play();
+		//(4) hole digging
+		if(holeObj.action == ACT_DIGGING) holeObj.sprite.play();
+	}
 }
 
 function stopAllSpriteObj()
@@ -897,18 +1042,20 @@ function stopAllSpriteObj()
 		guard[i].sprite.stop();
 	}
 	
-	//(3) fill hole stop
-	for(var i = 0; i < fillHoleObj.length; i++)
-		fillHoleObj[i].stop();
+	if(curAiVersion < 3) { //for sprite only
+		//(3) fill hole stop
+		for(var i = 0; i < fillHoleObj.length; i++)
+			fillHoleObj[i].stop();
 	
-	//(4) hole digging
-	if(holeObj.action == ACT_DIGGING) holeObj.sprite.stop();
+		//(4) hole digging
+		if(holeObj.action == ACT_DIGGING) holeObj.sprite.stop();
+	}
 	
 }
 
 function gameOverAnimation()
 {
-	var gameOverImage = new createjs.Bitmap(preload.getResult("over"));
+	var gameOverImage = new createjs.Bitmap(getThemeImage("over"));
 	var bound = gameOverImage.getBounds();
 	var x = (NO_OF_TILES_X*tileWScale)/2|0;
 	var y = (NO_OF_TILES_Y*tileHScale)/2|0;
@@ -995,7 +1142,7 @@ function closingScreen(r)
 		initHotKeyVariable();      //07/09/2014
 		
 		if(playMode == PLAY_AUTO) getAutoDemoLevel(0);
-		if(playMode == PLAY_DEMO) getNextDemoLevel();
+		if(playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) getNextDemoLevel();
 /*		
 		if(playMode == PLAY_MODERN || playMode == PLAY_EDIT) {
 			curScore = 0; curGetGold = 0; curGuardDeadNo = 0;
@@ -1018,6 +1165,15 @@ function menuIconEnable()
 	if(playMode == PLAY_MODERN || playMode == PLAY_DEMO) {
 		selectIconObj.enable();
 	}
+	if(playMode == PLAY_MODERN) demoIconObj.enable();
+	if(playMode != PLAY_EDIT) {
+		soundIconObj.enable();
+		soundIconObj.updateSoundImage();
+		repeatActionIconObj.enable();
+	}
+	infoIconObj.enable();
+	helpIconObj.enable();
+	themeIconObj.enable();
 }
 
 function menuIconDisable(hidden)
@@ -1026,43 +1182,76 @@ function menuIconDisable(hidden)
 	if(playMode == PLAY_MODERN) {
 		selectIconObj.disable(hidden);
 	}
+	demoIconObj.disable(hidden);
+	soundIconObj.disable(hidden);
+	infoIconObj.disable(hidden);
+	helpIconObj.disable(hidden);
+	repeatActionIconObj.disable(hidden);
+	themeIconObj.disable(hidden);
 }
 
-var showStartTipsMsg = 0;
-function initShowDataMsg()
+var showStartTipsMsg = 1;
+function initShowDataMsg(showMsg)
 {
-	showStartTipsMsg = 0;
+	if(typeof showMsg == "undefined") showMsg = 1;
+	showStartTipsMsg = showMsg;
 }
 
 function showDataMsg()
 {
-	if(!showStartTipsMsg) {
+	if(showStartTipsMsg) {
 		var nameTxt = null;
-		switch(playData) {
-		case 1:
-			nameTxt = "Lode Runner 1";
+		var nameTxt1 = null;
+		
+		nameTxt = playDataToTitleName(playData);
+
+		switch(playMode) {
+		case PLAY_EDIT:
+			nameTxt1 = "Edit Mode";
 			break;
-		case 2:		
-			nameTxt = "Lode Runner 2";
+		case PLAY_TEST:		
+			nameTxt1 = "Test Mode";	
 			break;	
-		case 3:
-			if(playMode == PLAY_TEST) {
-				nameTxt = "Test Mode";
-			} else {
-				nameTxt = "User Created";
-			}
+		case PLAY_DEMO:
+			nameTxt1 = "Demo Mode";
 			break;	
-		case 4:
-			nameTxt = "DEMO: Lode Runner 1";
+		case PLAY_CLASSIC:
+			if(playData != PLAY_DATA_USERDEF) nameTxt1 = "Challenge Mode";
+			else nameTxt1 = "Play Mode";	
 			break;
-		case 5:
-			nameTxt = "DEMO: Lode Runner 2";
-			break;
+		case PLAY_MODERN:
+			if(playData != PLAY_DATA_USERDEF) nameTxt1 = "Training Mode";
+			else nameTxt1 = "Play Mode";	
+			break;	
 		}
-		if(nameTxt)	showTipsMsg(nameTxt, mainStage, tileScale);
-		showStartTipsMsg = 1;
+		
+		if(nameTxt)	showTipsMsg(nameTxt, mainStage, tileScale, nameTxt1);
+		showStartTipsMsg = 0;
 	}
 }
+
+function showHelpMenu()
+{
+	if(firstPlay) { 
+		helpObj.showHelp(0, initForPlay, null); 
+		setFirstPlayInfo();
+	} else {	
+		initForPlay();
+	}	
+}
+
+/* Don't show main menu  
+var first = 1
+function showMainMenu()
+{
+	if(firstPlay && first) {
+		mainMenu(null);
+	} else {
+		showHelpMenu();
+	}
+	first = 0;
+}
+*/ 
 
 function initForPlay()
 {
@@ -1083,42 +1272,58 @@ function openingScreen(r)
 		setTimeout(function() { openingScreen(r);}, 5);
 	} else {
 		removeCycScreen();
-		gameState = GAME_START;
-		keyAction = ACT_STOP;
-		runner.sprite.gotoAndPlay();
-		changingLevel = 0;
+		beginPlay();
+	}
+}
+
+function beginPlay()
+{
+	gameState = GAME_START;
+	keyAction = ACT_STOP;
+	runner.sprite.gotoAndPlay();
+	changingLevel = 0;
 		
-		if(recordMode) initRecordVariable();
-		if(playMode == PLAY_AUTO || playMode == PLAY_DEMO) {
-			initPlayDemo();
-			if(playMode == PLAY_DEMO) initForPlay();
-		} else { 
-			if(firstPlay) { 
-				firstPlay = 0;
-				helpObj.showHelp(0, initForPlay, null); 
-			} else {	
-				initForPlay();
-			}
-			if(playMode != PLAY_TEST) {
-				enableAutoDemoTimer(); //while start game and idle too long will into demo mode
-			}
+	if(recordMode) initRecordVariable();
+	if(playMode == PLAY_AUTO || playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) {
+		initPlayDemo();
+		if(playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) initForPlay();
+	} else { 
+/*	Don't display GAME VERSION SELECTION , 6/7/2015		
+		if(playerName == "") {
+			inputPlayerName(mainStage, showMainMenu);
+		} else {
+			showMainMenu();
+		}
+*/
+		if(playerName == "") {
+			inputPlayerName(mainStage, showHelpMenu);
+		} else {
+			showHelpMenu();
+		}
+			
+		
+		if(playMode != PLAY_TEST && playMode != PLAY_EDIT) {
+			enableAutoDemoTimer(); //while start game and idle too long will into demo mode
 		}
 	}
 }
 
-function incLevel(incValue)
+function incLevel(incValue, passed)
 {
+	var wrap = 0;
 	curLevel += incValue;
-	while (curLevel > levelData.length) curLevel-= levelData.length;
-	if(playMode == PLAY_CLASSIC) setClassicInfo();
+	while (curLevel > levelData.length) { curLevel-= levelData.length; wrap = 1; }
+	if(playMode == PLAY_CLASSIC) setClassicInfo(passed);
 	if(playMode == PLAY_MODERN) setModernInfo();
+	
+	return wrap;
 }
 
 function decLevel(decValue)
 {
 	curLevel -= decValue
 	while (curLevel <= 0) curLevel += levelData.length;
-	if(playMode == PLAY_CLASSIC) setClassicInfo();
+	if(playMode == PLAY_CLASSIC) setClassicInfo(0);
 	if(playMode == PLAY_MODERN) setModernInfo();
 }
 
@@ -1126,10 +1331,10 @@ function decLevel(decValue)
 function updateModernScoreInfo()
 {
 	var lastHiScore = modernScoreInfo[curLevel-1];
-	var levelScore = (curTime + curGetGold + curGuardDeadNo) * SCORE_VALUE_PER_POINT;
+	var levelScore = ((MAX_TIME_COUNT - curTime) + curGetGold + curGuardDeadNo) * SCORE_VALUE_PER_POINT;
 	
 	if(lastHiScore < levelScore) {
-		modernScoreInfo[curLevel-1] = (curTime + curGetGold + curGuardDeadNo) * SCORE_VALUE_PER_POINT;
+		modernScoreInfo[curLevel-1] = levelScore;
 		setModernScoreInfo();
 	}
 	
@@ -1161,7 +1366,7 @@ function gameFinishCallback(selectMode)
 		activeSelectMenu(gameFinishActiveNew, gameFinishCloseIcon, null)	
 		break;
 	case 2: //new level
-		incLevel(1);	
+		incLevel(1,0);	
 		gameState = GAME_NEW_LEVEL;
 		break;
 	default:
@@ -1184,13 +1389,17 @@ function mainTick(event)
 	
 	switch(gameState) {
 	case GAME_START:
+		//if(demoDataLoading) { showGameLoading(); break }	
+	
 		//if(playMode == PLAY_AUTO) initPlayDemo();
 		//if(recordMode) initRecordVariable();
 		countAutoDemoTimer();	
 		if(keyAction != ACT_STOP && keyAction != ACT_UNKNOWN) {
 			disableAutoDemoTimer();	
 			gameState = GAME_RUNNING;
-			playTickTimer = 0;
+			//if(playMode != PLAY_DEMO && playMode != PLAY_DEMO_ONCE) themeIconObj.disable(1);
+			if(playMode == PLAY_MODERN) demoIconObj.disable(1);
+			playTickTimer = 0; //modern mode time counter
 			if(goldCount <= 0) showHideLaddr();
 		}
 		break;	
@@ -1199,13 +1408,13 @@ function mainTick(event)
 		break;
 	case GAME_RUNNER_DEAD:
 		//mainStage.update();
-
+		//console.log("Time=" + curTime + ", Tick= " + playTickTimer);
 		//if(recordMode) recordModeToggle(GAME_RUNNER_DEAD); //for debug only (if enable it must disable below statement)
 		if(recordMode == RECORD_KEY) recordModeDump(GAME_RUNNER_DEAD);	
 			
 		soundStop(soundFall);
 		stopAllSpriteObj();	
-		soundPlay("dead");
+		themeSoundPlay("dead");
 		switch(playMode) {
 		case PLAY_CLASSIC:
 		case PLAY_AUTO:
@@ -1220,12 +1429,21 @@ function mainTick(event)
 				//stopAllSpriteObj();
 				setTimeout(function() {gameState = GAME_NEW_LEVEL; }, 500);
 				gameState = GAME_WAITING;	
-				if(playMode == PLAY_CLASSIC) setClassicInfo();
+				if(playMode == PLAY_CLASSIC) setClassicInfo(0);
 			}
 			break;
 		case PLAY_DEMO:	
-			console.log("DEMO dead level=" + curLevel);	
-			setTimeout(function() {incLevel(1); gameState = GAME_NEW_LEVEL; }, 500);
+			error(arguments.callee.name, "DEMO dead level=" + curLevel);
+				
+			setTimeout(function() {incLevel(1,0); gameState = GAME_NEW_LEVEL; }, 500);
+			gameState = GAME_WAITING;	
+			break;	
+		case PLAY_DEMO_ONCE:
+			error(arguments.callee.name, "DEMO dead level=" + curLevel);
+				
+			disableStageClickEvent();
+			document.onkeydown = handleKeyDown;
+			setTimeout(function() {playMode = PLAY_MODERN; startGame(); }, 500);
 			gameState = GAME_WAITING;	
 			break;	
 		case PLAY_MODERN:		
@@ -1247,17 +1465,19 @@ function mainTick(event)
 	case GAME_OVER:
 		////getClassicInfo();
 		var scoreInfo = null;	
-		if(playMode == PLAY_CLASSIC) {	
+		if(playMode == PLAY_CLASSIC && !sometimePlayInGodMode) {	
 			//try to set hi-score record
-			scoreInfo = {s:curScore, l:(curLevel>maxLevel)?curLevel:maxLevel};
+			//scoreInfo = {s:curScore, l:(curLevel>maxLevel)?curLevel:maxLevel};
+			scoreInfo = {s:curScore, l: passedLevel+1 };
 		}	
 			
-		showScoreTable(playData-1, scoreInfo , function() { showCoverPage();});	
+		showScoreTable(playData, scoreInfo , function() { showCoverPage();});	
 		//setTimeout(function(){ showCoverPage();}, 2000);
 		gameState = GAME_WAITING;	
 		return;
 	case GAME_FINISH: 
 		stopAllSpriteObj();
+		//console.log("Time=" + curTime + ", Tick= " + playTickTimer);
 			
 		switch(playMode) {
 		case PLAY_CLASSIC:
@@ -1271,6 +1491,13 @@ function mainTick(event)
 			drawScore(scoreIncValue);
 			gameState = GAME_FINISH_SCORE_COUNT;	
 			break;
+		case PLAY_DEMO_ONCE:
+			soundPlay(soundEnding);
+			disableStageClickEvent();
+			document.onkeydown = handleKeyDown;
+			setTimeout(function() {playMode = PLAY_MODERN; startGame(); }, 500);
+			gameState = GAME_WAITING;
+			break;
 		case PLAY_MODERN:
 			soundPlay(soundEnding);
 			var lastHiScore = lastHiScore = updateModernScoreInfo();
@@ -1281,16 +1508,11 @@ function mainTick(event)
 			break;
 		case PLAY_TEST:
 			soundPlay(soundEnding);
-				
-			setTimeout(function() { 
-				////playMode = GAME_EDITING; 
-				back2EditMode(1);
-			},500);	
-				
+			setTimeout(function() { back2EditMode(1);},500);	
 			gameState = GAME_WAITING;
 			break;
 		default:
-			debug("design error!");	
+			error(arguments.callee.name, "design error, playMode =" + playMode);
 			break;	
 		}
 
@@ -1298,7 +1520,7 @@ function mainTick(event)
 		if(recordMode == RECORD_KEY) {
 			recordModeDump(GAME_FINISH);	
 			
-			if((playMode == PLAY_CLASSIC || playMode == PLAY_MODERN) && playData <= 2) {
+			if( (playMode == PLAY_CLASSIC || playMode == PLAY_MODERN) && playData <= maxPlayId ) {
 				updatePlayerDemoData(playData, curDemoData); //update current player demo data
 			}
 		}
@@ -1309,25 +1531,28 @@ function mainTick(event)
 			if(curScore + scoreIncValue >= finalScore) {
 				curScore = finalScore;
 				drawScore(0);
-				
-				if(playMode == PLAY_TEST) {
-					back2EditMode(1);
-					break;
-				} 
-				if(playMode == PLAY_CLASSIC) {
-					if(++runnerLife > RUNNER_MAX_LIFE) runnerLife = RUNNER_MAX_LIFE;	
-				}
 				gameState = GAME_NEW_LEVEL;
-
-				if(playMode == PLAY_AUTO) {
+				
+				switch(playMode) {
+				case PLAY_TEST:		
+					setTimeout(function() { back2EditMode(1);},500);	
+					break;
+				case PLAY_CLASSIC:
+					if(++runnerLife > RUNNER_MAX_LIFE) runnerLife = RUNNER_MAX_LIFE;	
+					break;	
+				case PLAY_AUTO:
 					if(demoCount >= demoMaxCount) {
 						setTimeout(function(){ showCoverPage();}, 500);	
-						gameState = GAME_WAITING;	
+						gameState = GAME_WAITING;
 					}
+					break;	
 				}
+
 				if(recordMode != RECORD_PLAY) {
-					incLevel(1);
+					if(incLevel(1, 1) && playMode == PLAY_CLASSIC && passedLevel >= levelData.length) 
+						gameState = GAME_WIN;
 				}
+				
 			} else {
 				drawScore(scoreIncValue);
 			}
@@ -1336,7 +1561,7 @@ function mainTick(event)
 	case GAME_NEXT_LEVEL:
 		soundStop(soundFall);		
 		stopAllSpriteObj();
-		incLevel(shiftLevelNum);
+		incLevel(shiftLevelNum, 0);
 		gameState = GAME_NEW_LEVEL; 
 		return;
 	case GAME_PREV_LEVEL:
@@ -1349,6 +1574,15 @@ function mainTick(event)
 		gameState = GAME_WAITING;	
 		newLevel();	
 		break;
+	case GAME_WIN:		
+		var scoreInfo = {s:curScore, l: levelData.length, w:1 }; //winner	
+		menuIconDisable(1);
+		clearClassicInfo();
+		showScoreTable(playData, scoreInfo , function() { showCoverPage();});	
+		gameState = GAME_WAITING;	
+		return;			
+	case GAME_LOADING:
+		break;	
 	case GAME_PAUSE:
 	default:
 		return;	

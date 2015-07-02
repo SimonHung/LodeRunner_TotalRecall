@@ -261,7 +261,7 @@ function runnerMoveStep(action, stayCurrPos )
 	if(action == ACT_STOP ) {
 		if(runner.action == ACT_FALL) {
 			soundStop(soundFall);
-			soundPlay("down");
+			themeSoundPlay("down");
 		}
 		if(runner.action != ACT_STOP){
 			runner.sprite.stop();
@@ -278,7 +278,7 @@ function runnerMoveStep(action, stayCurrPos )
 		if(action != runner.action){
 			if(runner.action == ACT_FALL) {
 				soundStop(soundFall);
-				soundPlay("down");
+				themeSoundPlay("down");
 			} else if ( action == ACT_FALL) {
 				soundPlay(soundFall);
 			}
@@ -298,7 +298,7 @@ function runnerMoveStep(action, stayCurrPos )
 	  )  
 	{
 		removeGold(x,y);
-		soundPlay("getGold");
+		themeSoundPlay("getGold");
 		decGold();
 		//debug("gold = " + goldCount);
 		if(playMode == PLAY_CLASSIC || playMode == PLAY_AUTO || playMode == PLAY_DEMO) {
@@ -318,10 +318,12 @@ function runnerMoveStep(action, stayCurrPos )
 function decGold()
 {
 	if(--goldCount <= 0) {
-		//if(!showHideLaddr() && runner.pos.y > 0) {
 		showHideLaddr();
-		if(runner.pos.y > 0 && playMode != PLAY_CLASSIC && playMode != PLAY_AUTO && playMode != PLAY_DEMO) {
-			soundPlay("goldFinish");
+		if(runner.pos.y > 0) {
+			if(curTheme == "C64")  soundPlay("goldFinish" + ((curLevel-1)%6+1)); //six sounds
+			else if (playMode == PLAY_MODERN || playMode == PLAY_TEST || playMode == PLAY_DEMO_ONCE) {
+				soundPlay("goldFinish"); //TIME MODE
+			}
 		}
 	}
 }
@@ -338,7 +340,7 @@ function addGold(x, y)
 	var tile;
 	
 	map[x][y].base = GOLD_T;
-	tile = map[x][y].bitmap = new createjs.Bitmap(preload.getResult("gold"));
+	tile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("gold"));
 	tile.setTransform(x * tileWScale, y * tileHScale,tileScale, tileScale); //x,y, scaleX, scaleY 
 	mainStage.addChild(tile); 
 	
@@ -441,6 +443,30 @@ function ok2Dig(nextMove)
 	return rc;
 }
 
+//=======================
+// BEGIN NEW DIG METHOD
+//=======================
+var digHoleLeft =	[ 0, 1,  2,  2,  3,  4,  4,  5,  6,  6,  7 ];
+var digHoleRight =	[ 8, 9, 10, 10, 11, 12, 12, 13, 14, 14, 15 ];
+
+function processDigHole()
+{
+	if(curAiVersion < 3) return;
+	
+	if(++holeObj.curFrameIdx < holeObj.shapeFrame.length) {
+		// change frame
+		holeObj.sprite.gotoAndStop(holeObj.shapeFrame[holeObj.curFrameIdx]);
+		holeObj.sprite.currentAnimationFrame = holeObj.curFrameIdx;
+	} else { //dig complete
+		digComplete();
+	}
+}
+//========================
+// END NEW DIG METHOD 
+//========================
+
+var digTimeStart, shakeTimeStart;       //for debug       
+var fillHoleTimeStart, rebornTimeStart; //for debug
 function digHole(action)
 {
 	var x,y, holeShape;
@@ -465,17 +491,28 @@ function digHole(action)
 	map[x][y+1].bitmap.set({alpha:0}); //hide block (replace with digging image)
 	runner.sprite.gotoAndPlay(runner.shape);
 		
-	holeObj.sprite.gotoAndPlay(holeShape);
 	holeObj.action = ACT_DIGGING;
 	holeObj.pos = { x: x, y: y };
 	holeObj.sprite.setTransform(x * tileWScale, y * tileHScale,tileScale, tileScale);
-		
-	// the callback is called each time a sequence completes:
-	holeObj.sprite.on("animationend", digComplete);
+	
+	digTimeStart = recordCount; //for debug
+	
+	if(curAiVersion < 3) {
+		holeObj.sprite.gotoAndPlay(holeShape);
+		holeObj.sprite.on("animationend", digComplete);
+	} else {
+		if(action == ACT_DIG_LEFT) holeShape = digHoleLeft;
+		else holeShape = digHoleRight; 
+			
+		holeObj.sprite.gotoAndStop(holeShape[0]);
+		holeObj.shapeFrame = holeShape;
+		holeObj.curFrameIdx = 0;
+	}
 
-	mainStage.addChild(holeObj.sprite); 
+	mainStage.addChild(holeObj.sprite);
 }
 
+var DEBUG_DIG=0;
 function isDigging()
 {
 	var rc = 0;
@@ -484,21 +521,29 @@ function isDigging()
 		var x = holeObj.pos.x, y = holeObj.pos.y;
 		if(map[x][y].act == GUARD_T) { //guard come close to the digging hole !
 			var id = getGuardId(x, y);
-			if(holeObj.sprite.currentAnimationFrame < 6 && guard[id].pos.yOffset > -H4) {
+			if(holeObj.sprite.currentAnimationFrame < holeObj.digLimit && guard[id].pos.yOffset > -H4) {
+				if(DEBUG_DIG) loadingTxt.text = "dig : " + holeObj.sprite.currentAnimationFrame + " (X)";
+
 				stopDigging(x,y);
-			}		
+			} else {
+				if(DEBUG_DIG) loadingTxt.text = "dig : " + holeObj.sprite.currentAnimationFrame + " (O)";
+				if(curAiVersion >= 3) { //This is a bug while AI VERSION < 3
+					map[x][y+1].act = EMPTY_T; //assume hole complete
+					rc = 1;
+				}
+			}
 		} else {
 			switch( runner.shape ) {
 			case "digLeft":
 				if(holeObj.sprite.currentAnimationFrame > 2 ) {
-					runner.sprite.gotoAndStop("runLeft");
+					runner.sprite.gotoAndStop("runLeft"); //change shape
 					runner.shape = "runLeft";
 					runner.action = ACT_STOP;
 				}
 				break;
 			case "digRight":
 				if(holeObj.sprite.currentAnimationFrame > 2) {
-					runner.sprite.gotoAndStop("runRight");
+					runner.sprite.gotoAndStop("runRight"); //change shape
 					runner.shape = "runRight";
 					runner.action = ACT_STOP;
 				}
@@ -549,7 +594,9 @@ function digComplete()
 	holeObj.sprite.removeAllEventListeners ("animationend");
 	holeObj.action = ACT_STOP; //no digging
 	mainStage.removeChild(holeObj.sprite); 
-
+	
+	if(DEBUG_TIME) loadingTxt.text = "DigTime = " + (recordCount - digTimeStart);
+	
 	fillHole(x, y);
 }
 
@@ -560,10 +607,19 @@ function fillHole(x, y)
 	
 	fillSprite.pos = { x:x, y:y }; //save position 11/18/2014
 	fillSprite.setTransform(x * tileWScale, y * tileHScale, tileScale, tileScale);
-	fillSprite.on("animationend", fillComplete);
-	fillSprite.play();
+	
+	if(curAiVersion < 3) {
+		fillSprite.on("animationend", fillComplete, null, false, {obj:fillSprite} );
+		fillSprite.play();
+	} else {
+		fillSprite.curFrameIdx  =   0;
+		fillSprite.curFrameTime =  -1;
+		fillSprite.gotoAndStop(fillHoleFrame[0]);
+	}
 	mainStage.addChild(fillSprite); 
 	fillHoleObj.push(fillSprite);
+	
+	fillHoleTimeStart = recordCount; //for debug
 }
 
 function moveFillHoleObj2Top()
@@ -573,18 +629,19 @@ function moveFillHoleObj2Top()
 	}
 }
 
-function fillComplete()
+function fillComplete(evt, data)
 {
 	//don't use "divide command", it will cause loss of accuracy while scale changed (ex: tileScale = 0.6...)
 	//var x = this.x / tileWScale | 0; //this : scope default to the dispatcher
 	//var y = this.y / tileHScale | 0;
-
-	var x = this.pos.x, y = this.pos.y; //get position 
+	
+	var fillObj = data.obj;
+	var x = fillObj.pos.x, y = fillObj.pos.y; //get position 
 
 	map[x][y].bitmap.set({alpha:1}); //display block
-	this.removeAllEventListeners ("animationend");
-	mainStage.removeChild(this);
-	removeFillHoleObj(this);
+	fillObj.removeAllEventListeners ("animationend");
+	mainStage.removeChild(fillObj);
+	removeFillHoleObj(fillObj);
 	
 	switch(map[x][y].act) {
 	case RUNNER_T : // runner dead
@@ -594,6 +651,7 @@ function fillComplete()
 		break;
 	case GUARD_T: //guard dead
 		var id = getGuardId(x,y);
+		if(curAiVersion >= 3 && guard[id].action == ACT_IN_HOLE) removeFromShake(id);	
 		if(guard[id].hasGold > 0) { //guard has gold and not fall into the hole
 			decGold(); 
 			guard[id].hasGold = 0;
@@ -608,6 +666,8 @@ function fillComplete()
 		break;
 	}
 	map[x][y].act = BLOCK_T;
+	
+	if(DEBUG_TIME) loadingTxt.text = "FillHoleTime = " + (recordCount - fillHoleTimeStart); //for debug
 }
 
 function removeFillHoleObj(spriteObj)
@@ -618,8 +678,47 @@ function removeFillHoleObj(spriteObj)
 			return;
 		}
 	}
-	debug("removeFillHoleObj: design error!");
+	error(arguments.callee.name, "design error !");
 }
+
+//=======================================
+// BEGIN NEW fill Hold (Ai version >= 3)
+//=======================================
+
+var fillHoleFrame = [  16, 17, 18, 19];
+var fillHoleTime  = [ 166,  8,  8,  4];
+
+function initFillHoleVariable()
+{
+	fillHoleObj = [];
+}
+
+function processFillHole()
+{
+	var curIdx, curFillObj;
+	
+	for(var i = 0; i < fillHoleObj.length;) {
+		curFillObj = fillHoleObj[i];
+		curIdx = curFillObj.curFrameIdx;
+		
+		if(++curFillObj.curFrameTime >= fillHoleTime[curIdx]) {
+			if(++curFillObj.curFrameIdx < fillHoleFrame.length) {
+				//change frame
+				curFillObj.curFrameTime = 0;
+				curFillObj.gotoAndStop(fillHoleFrame[curFillObj.curFrameIdx]);
+			} else {
+				//fill hole complete 
+				fillComplete(null, {obj: curFillObj});
+				continue;
+			}
+				
+		}
+		i++;
+	}
+}
+//====================
+// END NEW fill Hold 
+//====================
 
 //==================================
 // Check guard is alive or not 

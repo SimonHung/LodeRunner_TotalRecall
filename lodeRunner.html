@@ -13,31 +13,44 @@
 	*
 	* The AI algorithm reference book:
 	* http://www.kingstone.com.tw/book/book_page.asp?kmcode=2014710650538
+	* http://www.amazon.co.jp/Lode-Runnerで学ぶ実践C言語-ビー・エヌ・エヌ企画部/dp/4893690116
 	* 
 	* Source Code: https://github.com/SimonHung/LodeRunner
 	*
-	* by Simon Hung 06/20/2014, 11/23/2014  (http://simonsays-tw.com)
+	* by Simon Hung 06/20/2014, 11/23/2014, 06/29/2015 (http://simonsays-tw.com)
 	* ============================================================================= 
 	-->
+	<meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="chrome=1, IE=edge">
-	<meta name="description" content="An HTML5 remake game, include Lode Runner & Championship Lode Runner">
+	
 	<link href="lodeRunner.ico"  rel="shortcut icon" >
 	
 	<style>#canvas { position:absolute; left:0; top:0; }</style>
 
+	<script type="text/javascript" src="lodeRunner.wData.js"></script>
+	
 	<script type="text/javascript" src="./lib/preloadjs-0.6.0.min.js"></script>
 	<script type="text/javascript" src="./lib/soundjs-0.6.0.min.js"></script>
 	<script type="text/javascript" src="./lib/tweenjs-0.6.0.min.js"></script>
 	<script type="text/javascript" src="./lib/easeljs-0.7.1.min.js"></script>
+	
+	<script type="text/javascript" src="flag32Id.js"></script>
+	<script type="text/javascript" src="lodeRunner.gameVerName.js"></script>
 
-	<script type="text/javascript" src="lodeRunner.baseLevel.js"></script>
-	<script type="text/javascript" src="lodeRunner.champLevel.js"></script>
+	<script type="text/javascript" src="lodeRunner.v.classic.js"></script>
+	<script type="text/javascript" src="lodeRunner.v.professional.js"></script>
+	<script type="text/javascript" src="lodeRunner.v.revenge.js"></script>
+	<script type="text/javascript" src="lodeRunner.v.fanBookMod.js"></script>
+	<script type="text/javascript" src="lodeRunner.v.championship.js"></script>
+	
 	<script type="text/javascript" src="lodeRunner.storage.js"></script>
 	<script type="text/javascript" src="lodeRunner.def.js"></script>
 	<script type="text/javascript" src="lodeRunner.key.js"></script>
 	<script type="text/javascript" src="lodeRunner.misc.js"></script>
 	<script type="text/javascript" src="lodeRunner.hiscore.js"></script>
+	<script type="text/javascript" src="lodeRunner.info.js"></script>
 	<script type="text/javascript" src="lodeRunner.menu.js"></script>
+	<script type="text/javascript" src="lodeRunner.iconClass.js"></script>
 	<script type="text/javascript" src="lodeRunner.runner.js"></script>
 	<script type="text/javascript" src="lodeRunner.guard.js"></script>
 	<script type="text/javascript" src="lodeRunner.demo.js"></script>
@@ -45,10 +58,12 @@
 	<script type="text/javascript" src="lodeRunner.edit.js"></script>
 	<script type="text/javascript" src="lodeRunner.preload.js"></script>
 	<script type="text/javascript" src="lodeRunner.main.js"></script>
+	<script type="text/javascript" src="lodeRunner.win.js"></script>
+	
 </head>
 <body onload="init();">	
-	<div class="canvas">
-		<canvas id="canvas" width="960" height="400"></canvas>
-	</div>
+<div class="canvas">
+	<canvas id="canvas" width="960" height="400"></canvas>
+</div>
 </body>	
 </html>

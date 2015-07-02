@@ -1,5 +1,5 @@
-var VERSION = "1.00c";
-var AI_VERSION = 2;
+var VERSION = "2.01a";
+var AI_VERSION = 3;
 
 var NO_OF_TILES_X = 28,
 	NO_OF_TILES_Y = 16;
@@ -17,6 +17,9 @@ var BASE_SCREEN_Y = (NO_OF_TILES_Y * BASE_TILE_Y + GROUND_TILE_Y + TEXT_TILE_Y);
 
 var MIN_SCALE = 0.5,
 	MAX_SCALE = 2;
+
+var MENU_ICON_X = 40, MENU_ICON_Y = 36, ICON_BORDER = 4;
+var BASE_ICON_X = (MENU_ICON_X + ICON_BORDER * 2);
 
 var KEYCODE_BKSPACE = 8, //backspace
 	KEYCODE_ENTER = 13,
@@ -43,7 +46,7 @@ var KEYCODE_BKSPACE = 8, //backspace
 	KEYCODE_L = 76,  //move right
 	KEYCODE_I = 73,  //move up
 	KEYCODE_K = 75,  //move down
-
+	
 	KEYCODE_PERIOD = 190, //'.'
 	KEYCODE_COMMA  = 188, //',' 
 	
@@ -73,15 +76,16 @@ var SCORE_COMPLETE_LEVEL = 1500, SCORE_COUNTER = 15;
 
 var SCORE_VALUE_PER_POINT = 100; //for modern & edit mode
 
-var PLAY_NONE = 0, PLAY_CLASSIC = 1, PLAY_MODERN = 2, PLAY_DEMO = 3, PLAY_EDIT = 4, PLAY_TEST = 5, PLAY_AUTO = 6;
-
+var PLAY_NONE = 0, PLAY_CLASSIC = 1, PLAY_MODERN = 2, PLAY_DEMO = 3, 
+	PLAY_EDIT = 4, PLAY_TEST = 5, PLAY_AUTO = 6, PLAY_DEMO_ONCE = 7;
 
 var GAME_START = 0,          GAME_RUNNING = 1, 
 	GAME_FINISH = 2,         GAME_FINISH_SCORE_COUNT= 3, 
 	GAME_WAITING = 4,        GAME_PAUSE = 5,
 	GAME_NEW_LEVEL = 6,      GAME_RUNNER_DEAD = 7, 
 	GAME_OVER_ANIMATION = 8, GAME_OVER = 9,
-	GAME_NEXT_LEVEL = 10,    GAME_PREV_LEVEL = 11;
+	GAME_NEXT_LEVEL = 10,    GAME_PREV_LEVEL = 11,
+	GAME_LOADING = 12,       GAME_WIN = 13;
 
 var ACT_UNKNOWN = -1, ACT_STOP = 0, 
 	ACT_LEFT = 1,     ACT_RIGHT = 2, 
@@ -120,42 +124,60 @@ var REBORN_T = 0x10; //template: for reborn
 
 var CLOSE_SCREEN_SPEED = 35; //20 ~ 80
 
-var MAX_GUARD = 6;     //maximum number of guards
+var MAX_OLD_GUARD = 6;   //maximum number of guards for AI Version 1 and 2
+var MAX_NEW_GUARD = 5;   //for AI Version >= 3
+
 var RUNNER_LIFE = 5;   //number of runner life
 var RUNNER_MAX_LIFE = 100;
 
 var MAX_TIME_COUNT = 999; //for moden mode
 var TICK_COUNT_PER_TIME = 16;
-var MAX_DEMO_WAIT_COUNT = 150 * TICK_COUNT_PER_TIME;
+var MAX_DEMO_WAIT_COUNT = 200 * TICK_COUNT_PER_TIME;
 
 var MAX_EDIT_LEVEL = 120;
 
-var MAX_HISCORE_RECORD = 10, MAX_HISCORE_NAME_LENGTH = 10;
+var MAX_HISCORE_RECORD = 10, MAX_HISCORE_NAME_LENGTH = 12;
+
+//===========================
+// Define value for playData 
+//===========================
+var PLAY_DATA_USERDEF = 999;
+
+//================================================
+// Define themes string also as theme folder name 
+//================================================
+var THEME_APPLE2 = "APPLE2"; 
+var THEME_C64    = "C64";
+
+//================================
+// Below defined for LocalStorage
+//================================
 
 var STORAGE_LASTPLAY_MODE = "loderunner_lastplay";
 
-var STORAGE_CLASSIC_INFO1 = "loderunner_classicInfo1";
-var STORAGE_CLASSIC_INFO2 = "loderunner_classicInfo2";
+var STORAGE_CLASSIC_INFO = "loderunner_classicInfo";
 
-var STORAGE_MODERN_INFO1 = "loderunner_modernInfo1";
-var STORAGE_MODERN_INFO2 = "loderunner_modernInfo2";
+var STORAGE_MODERN_INFO = "loderunner_modernInfo";
 
-var STORAGE_DEMO_INFO1 = "loderunner_demoInfo1";
-var STORAGE_DEMO_INFO2 = "loderunner_demoInfo2";
+var STORAGE_DEMO_INFO = "loderunner_demoInfo";
 
 var STORAGE_FIRST_PLAY  = "loderunner_firstRun";
 
-var STORAGE_MODERN_SCORE_INFO1 = "loderunner_modernScore1";
-var STORAGE_MODERN_SCORE_INFO2 = "loderunner_modernScore2";
+var STORAGE_MODERN_SCORE_INFO = "loderunner_modernScore";
 
 var STORAGE_USER_INFO = "loderunner_userInfo"; //user created 
 var STORAGE_USER_SCORE_INFO = "loderunner_userScore"; //user created
-
 
 var STORAGE_EDIT_INFO = "loderunner_editInfo";
 
 var STORAGE_USER_LEVEL = "loderunner_userLevel";
 var STORAGE_TEST_LEVEL  = "loderunner_testlevel";
 
-var STORAGE_HISCORE_INFO1 = "loderunner_hiScore1";
-var STORAGE_HISCORE_INFO2 = "loderunner_hiScore2";
+var STORAGE_HISCORE_INFO = "loderunner_hiScore";
+
+var STORAGE_PLAYER_NAME = "loderunner_player";
+var STORAGE_UID = "loderunner_uid";
+
+var STORAGE_THEME_MODE = "loderunner_theme";
+
+var STORAGE_REPEAT_ACTION = "loderunner_actRepeat";

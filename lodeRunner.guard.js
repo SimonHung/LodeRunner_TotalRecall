@@ -3,22 +3,24 @@
 // http://www.kingstone.com.tw/book/book_page.asp?kmcode=2014710650538
 //=============================================================================
 
-var movePolicy = [ [0, 0, 0], //* move_map is used to find *//
-                   [0, 1, 1], //* wheather to move a enm   *//
-                   [1, 1, 1], //* by indexing into it with *//
-                   [1, 2, 1], //* enm_byte + num_enm +     *//
-                   [1, 2, 2], //* set_num to get a byte.   *//
-                   [2, 2, 2], //* then that byte is checked*//
-                   [2, 2, 3], //* for !=0 and then decrmnt *//
-                   [2, 3, 3], //* for next test until = 0  *// 
-                   [3, 3, 3], 
-                   [3, 3, 4],
-                   [3, 4, 4],
-                   [4, 4, 4]
+var movePolicy = [ [0, 0, 0, 0, 0, 0], //* move_map is used to find *//
+                   [0, 1, 1, 0, 1, 1], //* wheather to move a enm   *//
+                   [1, 1, 1, 1, 1, 1], //* by indexing into it with *//
+                   [1, 2, 1, 1, 2, 1], //* enm_byte + num_enm +     *//
+                   [1, 2, 2, 1, 2, 2], //* set_num to get a byte.   *//
+                   [2, 2, 2, 2, 2, 2], //* then that byte is checked*//
+                   [2, 2, 3, 2, 2, 3], //* for !=0 and then decrmnt *//
+                   [2, 3, 3, 2, 3, 3], //* for next test until = 0  *// 
+                   [3, 3, 3, 3, 3, 3], 
+                   [3, 3, 4, 3, 3, 4],
+                   [3, 4, 4, 3, 4, 4],
+                   [4, 4, 4, 4, 4, 4]
 				 ];	
 
 var moveOffset = 0;
 var moveId = 0;    //current guard id
+
+var numOfMoveItems = movePolicy[0].length;
 
 //********************************
 //initial guard start move value 
@@ -36,7 +38,7 @@ function moveGuard()
 	
 	if(!guardCount) return; //no guard
 	
-	if( ++moveOffset >= 3 ) moveOffset = 0;
+	if( ++moveOffset >= numOfMoveItems ) moveOffset = 0;
 	moves = movePolicy[guardCount][moveOffset];  // get next moves 
  
 	while ( moves-- > 0) {                       // slows guard relative to runner
@@ -198,7 +200,11 @@ function guardMoveStep( id, action)
 			if(map[x][y].act == RUNNER_T) setRunnerDead(); //collision
 			//map[x][y].act = GUARD_T;
 		}
-		if(action == ACT_DOWN && yOffset >= 0 && yOffset < yMove) { //try drop gold
+		
+		//add condition: AI version >= 3 will decrease drop count while guard fall
+		if( ((curAiVersion >= 3 && action == ACT_FALL) || action == ACT_DOWN) && 
+		     yOffset >= 0 && yOffset < yMove) 
+		{ 	//try drop gold
 			dropGold(id); //decrease count
 		}
 		
@@ -213,10 +219,16 @@ function guardMoveStep( id, action)
 						decGold(); //gold disappear 
 				}
 				curGuard.hasGold = 0;
-				curGuard.sprite.on("animationend", function() { climbOut(id); });
-				soundPlay("trap");
 				if( curShape == "fallRight") newShape = "shakeRight";
 				else newShape = "shakeLeft";
+				themeSoundPlay("trap");
+				shakeTimeStart = recordCount; //for debug
+				if(curAiVersion < 3) {
+					curGuard.sprite.on("animationend", function() { climbOut(id); });
+				} else {
+					add2GuardShakeQueue(id, newShape);
+				}
+				
 				if(playMode == PLAY_CLASSIC || playMode == PLAY_AUTO || playMode == PLAY_DEMO) {
 					drawScore(SCORE_IN_HOLE);
 				} else {
@@ -326,8 +338,10 @@ function guardMoveStep( id, action)
 		)
 	  )  
 	{
-		curGuard.hasGold = ((Math.random()*26)+14)|0; //14 - 39 
-		if(playMode == PLAY_AUTO || playMode == PLAY_DEMO) getDemoGold(curGuard);
+		//curGuard.hasGold = ((Math.random()*26)+14)|0; //14 - 39 
+		curGuard.hasGold = ((Math.random()*26)+12)|0; //12 - 37 change gold drop steps
+		
+		if(playMode == PLAY_AUTO || playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) getDemoGold(curGuard);
 		if(recordMode) processRecordGold(curGuard);
 		removeGold(x, y);
 		//debug ("get, (x,y) = " + x + "," + y + ", offset = " + xOffset); 
@@ -368,6 +382,95 @@ function dropGold(id)
 	}
 }
 
+
+//=============================================
+// BEGIN NEW SHAKE METHOD for AI version >= 3
+//=============================================
+var DEBUG_TIME = 0;
+var shakeRight  = [  8,  9, 10,  9, 10,  8 ];
+var shakeLeft   = [ 19, 20, 21, 20, 21, 19 ];
+var shakeTime   = [ 36,  3,  3,  3,  3,  3 ];
+
+var shakingGuardList = [];
+
+function initStillFrameVariable()
+{
+	initGuardShakeVariable();
+	initFillHoleVariable();
+	initRebornVariable();
+}
+
+function initGuardShakeVariable()
+{
+	shakingGuardList = [];
+}
+
+function add2GuardShakeQueue(id, shape)
+{
+	var curGuard = guard[id];
+	
+	if(shape == "shakeRight") {
+		curGuard.shapeFrame = shakeRight;	
+	} else { 
+		curGuard.shapeFrame = shakeLeft;	
+	}
+	
+	curGuard.curFrameIdx  =  0;
+	curGuard.curFrameTime = -1; //for init
+		
+	shakingGuardList.push(id);
+	//error(arguments.callee.name, "push id =" + id + "(" + shakingGuardList + ")" );
+	
+}
+
+function processGuardShake()
+{
+	var curGuard, curIdx;
+	for(var i = 0; i < shakingGuardList.length;) {
+		curGuard = guard[shakingGuardList[i]];
+		curIdx = curGuard.curFrameIdx;
+		
+		if( curGuard.curFrameTime < 0) { //start shake => set still frame
+			curGuard.curFrameTime = 0;
+			curGuard.sprite.gotoAndStop(curGuard.shapeFrame[curIdx]);
+		} else {
+			if(++curGuard.curFrameTime >= shakeTime[curIdx]) {
+				if(++curGuard.curFrameIdx < curGuard.shapeFrame.length) {
+					//change frame
+					curGuard.curFrameTime = 0;
+					curGuard.sprite.gotoAndStop(curGuard.shapeFrame[curGuard.curFrameIdx]);
+				} else {
+					//shake time out 
+				
+					var id = shakingGuardList[i];
+					shakingGuardList.splice(i, 1); //remove from list
+					//error(arguments.callee.name, "remove id =" + id + "(" + shakingGuardList + ")" );
+					climbOut(id); //climb out
+					continue;
+				}
+				
+			}
+		}
+		i++;
+	}
+}
+
+function removeFromShake(id)
+{
+	for(var i = 0; i < shakingGuardList.length;i++) {
+		if(shakingGuardList[i] == id) {
+			shakingGuardList.splice(i, 1); //remove from list
+			//error(arguments.callee.name, "remove id =" + id + "(" + shakingGuardList + ")" );
+			return;
+		}
+	}
+	error(arguments.callee.name, "design error id =" + id + "(" + shakingGuardList + ")" );
+}
+
+//======================
+// END NEW SHAKE METHOD 
+//======================
+
 function climbOut(id)
 {
 	var curGuard = guard[id]
@@ -377,6 +480,8 @@ function climbOut(id)
 	curGuard.sprite.gotoAndPlay("runUpDn");
 	curGuard.shape = "runUpDn";
 	curGuard.holePos = {x: curGuard.pos.x, y: curGuard.pos.y };
+	
+	if(DEBUG_TIME) loadingTxt.text = "ShakeTime = " + (recordCount - shakeTimeStart); //for debug
 }
 
 function bestMove(id)
@@ -704,14 +809,17 @@ function guardReborn(x, y)
 	var bornX = bornRndX.get();
 	var rndStart = bornX;
 	
-	while(map[bornX][bornY].act != EMPTY_T) { //BUG FIXED for level 115 (can not reborn at bornX=27)
-		if( (bornX = bornRndX.get()) == rndStart) {
+	
+	while(map[bornX][bornY].act != EMPTY_T || map[bornX][bornY].base == GOLD_T || map[bornX][bornY].base == BLOCK_T ) { 
+		//BUG FIXED for level 115 (can not reborn at bornX=27)
+		//don't born at gold position & diged position, 2/24/2015
+		if( (bornX = bornRndX.get()) == rndStart) {                               
 			bornY++;
 		}
 		assert(bornY <= maxTileY, "Error: Born Y too large !");
 	}
 	//debug("bornX = " + bornX);
-	if(playMode == PLAY_AUTO || playMode == PLAY_DEMO) {
+	if(playMode == PLAY_AUTO || playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) {
 		var bornPos = getDemoBornPos();
 		bornX = bornPos.x;
 		bornY = bornPos.y;
@@ -732,9 +840,15 @@ function guardReborn(x, y)
 	curGuard.pos = { x:bornX, y:bornY, xOffset:0, yOffset: 0 };
 	curGuard.sprite.x = bornX * tileWScale | 0;
 	curGuard.sprite.y = bornY * tileHScale | 0;
-	curGuard.sprite.on("animationend", function() { rebornComplete(id); });
-	curGuard.sprite.gotoAndPlay("reborn");
 	
+	rebornTimeStart = recordCount;
+	if(curAiVersion < 3) {
+		curGuard.sprite.on("animationend", function() { rebornComplete(id); });
+		curGuard.sprite.gotoAndPlay("reborn");
+	} else {
+		add2RebornQueue(id);
+	}
+
 	curGuard.shape = "reborn";
 	curGuard.action = ACT_REBORN;
 	
@@ -752,10 +866,66 @@ function rebornComplete(id)
 	guard[id].shape = "fallRight";
 	//guard[id].hasGold = 0;
 	guard[id].sprite.gotoAndPlay("fallRight");
-	soundPlay("reborn");
+	themeSoundPlay("reborn");
+	
+	if(DEBUG_TIME) loadingTxt.text = "rebornTime = " + (recordCount - rebornTimeStart); //for debug
 }
 
 function setRunnerDead()
 {
 	if(!godMode) gameState = GAME_RUNNER_DEAD; 
 }
+
+//===============================================
+// BEGIN NEW FOR REBORN (ai version >= 3)
+//===============================================
+var rebornFrame = [ 17, 18 ];
+var rebornTime  = [  6,  2 ];
+
+var rebornGuardList = [];
+
+function initRebornVariable()
+{
+	rebornGuardList = [];
+}
+
+function add2RebornQueue(id)
+{
+	var curGuard = guard[id];
+	
+	curGuard.sprite.gotoAndStop("reborn");
+	curGuard.curFrameIdx  =   0;
+	curGuard.curFrameTime =  -1;
+		
+	rebornGuardList.push(id);
+}
+
+function processReborn()
+{
+	var curGuard, curIdx;
+	
+	for(var i = 0; i < rebornGuardList.length;) {
+		curGuard = guard[rebornGuardList[i]];
+		curIdx = curGuard.curFrameIdx;
+		
+		if(++curGuard.curFrameTime >= rebornTime[curIdx]) {
+			if(++curGuard.curFrameIdx < rebornFrame.length) {
+				//change frame
+				curGuard.curFrameTime = 0;
+				curGuard.sprite.gotoAndStop(rebornFrame[curGuard.curFrameIdx]);
+			} else {
+				//reborn 
+				
+				var id = rebornGuardList[i];
+				rebornGuardList.splice(i, 1); //remove from list
+				rebornComplete(id);
+				continue;
+			}
+				
+		}
+		i++;
+	}
+}
+//====================
+// END NEW FOR REBORN 
+//====================

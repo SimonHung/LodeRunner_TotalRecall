@@ -6,17 +6,26 @@ var GUARD_SPEED = 0.3;
 var FLASH_SPEED = 0.25; //for flash cursor (hi-score input mode)
 
 var COVER_PROGRESS_BAR_H = 32;
-var COVER_PROGRESS_UNDER_Y = 116;
-var COVER_RUNNER_UNDER_Y = 164;
+var COVER_PROGRESS_UNDER_Y = 90;
+var COVER_RUNNER_UNDER_Y = 136;
 var COVER_SIDE_X = 56;		
+
+var SIGNET_UNDER_X = 30;
+var SIGNET_UNDER_Y = 30;
 
 //*********************
 // preload cover page
 //*********************
-var coverBitmap, remakeBitmap;
-var helpObj, helpBitmap, editHelpBitmap, demoHelpBitmap;
+var coverBitmap, remakeBitmap, signetBitmap;
+var helpObj, helpBitmap, editHelpBitmap;
 var mainMenuIconBitmap, mainMenuIconObj;
 var selectIconBitmap, selectIconObj;
+var demoIconBitmap, demoIconObj;
+var soundOnIconBitmap, soundOffIconBitmap, soundIconObj;
+var helpIconBitmap, helpIconObj;
+var infoObj, infoIconBitmap, infoIconObj;
+var repeatActionOnIconBitmap, repeatActionOffIconBitmap, repeatActionIconObj;
+var apple2IconBitmap, C64IconBitmap, themeIconObj;
 var checkBitmap;
 var returnBitmap, select1Bitmap, nextBitmap;
 var yesBitmap, noBitmap;
@@ -26,7 +35,7 @@ function showLoadingPage()
 {
 	var coverPageImages = [
 		{ src: "image/cover.png",  id: "cover" },
-		{ src: "image/runner.png",  id: "runner" }
+		{ src: themeImagePath + THEME_APPLE2 + "/runner.png",  id: "runner" }
 	];
 		
 	coverPageLoad = new createjs.LoadQueue(true);
@@ -108,8 +117,12 @@ var firstPlay = 0;
 var runnerData, guardData;
 var holeData, holeObj = {};
 var textData;
+var countryFlagData;
 
 var soundFall, soundDig, soundPass, soundEnding;
+
+var themeImagePath = "image/Theme/";
+var themeSoundPath = "sound/Theme/";
 
 function preloadResource() 
 {
@@ -120,29 +133,50 @@ function preloadResource()
 
 	var resource = [
 		{ src: "image/remake.png",  id: "remake" },
+		{ src: "image/signet.png",  id: "signet" },
 
-		{ src: "image/empty.png",   id: "empty" },
-		{ src: "image/brick.png",   id: "brick" },
-		{ src: "image/block.png",   id: "solid" },
-		{ src: "image/ladder.png",  id: "ladder" },
-		{ src: "image/rope.png",    id: "rope" },
-		{ src: "image/trap.png",    id: "trapBrick" },
-		{ src: "image/hladder.png", id: "hladder" },
-		{ src: "image/gold.png",    id: "gold" },
-		{ src: "image/guard1.png",  id: "guard1" },
-		{ src: "image/runner1.png", id: "runner1" },
+		{ src: themeImagePath + THEME_APPLE2 + "/empty.png",   id: "empty" + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/brick.png",   id: "brick" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/block.png",   id: "solid" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/ladder.png",  id: "ladder" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/rope.png",    id: "rope" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/trap.png",    id: "trapBrick" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/hladder.png", id: "hladder" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/gold.png",    id: "gold" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/guard1.png",  id: "guard1" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/runner1.png", id: "runner1" + THEME_APPLE2  },
+
+		{ src: themeImagePath + THEME_APPLE2 + "/runner.png",  id: "runner"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/guard.png",   id: "guard"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/hole.png",    id: "hole"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/ground.png",  id: "ground"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/over.png",    id: "over"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/text.png",    id: "text"  + THEME_APPLE2 },
+
+		
+		{ src: themeImagePath + THEME_C64 + "/empty.png",   id: "empty" + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/brick.png",   id: "brick" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/block.png",   id: "solid" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/ladder.png",  id: "ladder" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/rope.png",    id: "rope" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/trap.png",    id: "trapBrick" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/hladder.png", id: "hladder" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/gold.png",    id: "gold" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/guard1.png",  id: "guard1" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/runner1.png", id: "runner1" + THEME_C64  },
+
+		{ src: themeImagePath + THEME_C64 + "/runner.png",  id: "runner"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/guard.png",   id: "guard"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/hole.png",    id: "hole"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/ground.png",  id: "ground"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/over.png",    id: "over"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/text.png",    id: "text"  + THEME_C64 },
+		
 		{ src: "image/eraser.png",  id: "eraser" },
-	
-		{ src: "image/guard.png",   id: "guard" },
-		{ src: "image/hole.png",    id: "hole" },
-		{ src: "image/over.png",    id: "over" },
-	
-		{ src: "image/ground.png",  id: "ground" },
-		{ src: "image/text.png",    id: "text" },
 	
 		{ src: "image/help.png",    id: "help" },
 		{ src: "image/editHelp.png",id: "editHelp" },
-		{ src: "image/demoHelp.png",id: "demoHelp" },
+		//{ src: "image/demoHelp.png",id: "demoHelp" }, //replace by infoMenu, 5/14/2015
 		
 		{ src: "image/menu.png",    id: "menu" },
 		{ src: "image/select.png",  id: "select" },
@@ -154,16 +188,47 @@ function preloadResource()
 		
 		{ src: "image/yes.png",     id: "yes" },
 		{ src: "image/no.png",      id: "no" },
+
+		{ src: "image/demo.png",id: "demo" },
 		
+		{ src: "image/soundOn.png",  id: "soundOn" },
+		{ src: "image/soundOff.png", id: "soundOff" },
+		
+		{ src: "image/infoIcon.png", id: "infoIcon" },
+		{ src: "image/helpIcon.png", id: "helpIcon" },
+
+		{ src: "image/repeatOn.png",  id: "repeatOn" },
+		{ src: "image/repeatOff.png", id: "repeatOff" },
+		
+		{ src: "image/apple2.png",     id: "apple2" },
+		{ src: "image/commodore64.png",id: "C64" },
+		
+		{ src: "image/flags32.png",     id: "flag" },
 	
-		{ src: "sound/born.ogg",    id:"reborn"},
-		{ src: "sound/dead.ogg",    id:"dead"},
-		{ src: "sound/dig.ogg",     id:"dig"},
-		{ src: "sound/getGold.ogg", id:"getGold"},
-		{ src: "sound/fall.ogg",    id:"fall"},
-		{ src: "sound/down.ogg",    id:"down"},
-		{ src: "sound/pass.ogg",    id:"pass"},
-		{ src: "sound/trap.ogg",    id:"trap"},
+		{ src: themeSoundPath + THEME_APPLE2 + "/born.ogg",    id:"reborn" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/dead.ogg",    id:"dead" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/dig.ogg",     id:"dig" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/getGold.ogg", id:"getGold" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/fall.ogg",    id:"fall" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/down.ogg",    id:"down" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/pass.ogg",    id:"pass" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/trap.ogg",    id:"trap" + THEME_APPLE2},
+
+		
+		{ src: themeSoundPath + THEME_C64 + "/born.ogg",    id:"reborn" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/dead.ogg",    id:"dead" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/dig.ogg",     id:"dig" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/getGold.ogg", id:"getGold" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/fall.ogg",    id:"fall" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/down.ogg",    id:"down" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/pass.ogg",    id:"pass" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/trap.ogg",    id:"trap" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish1.ogg",    id:"goldFinish1"},
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish2.ogg",    id:"goldFinish2"},
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish3.ogg",    id:"goldFinish3"},
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish4.ogg",    id:"goldFinish4"},
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish5.ogg",    id:"goldFinish5"},
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish6.ogg",    id:"goldFinish6"},
 		
 		{ src: "sound/goldFinish.ogg",  id:"goldFinish"},
 		{ src: "sound/ending.ogg",      id:"ending"},
@@ -228,12 +293,12 @@ function preloadResource()
 	{
 		percentTxt.text = "100%";
 		mainStage.update();
-		createPreloadSpriteSheet();
+////		createPreloadSpriteSheet();
 		createSoundInstance();
 		setTimeout(clearLoadingInfo, 500);
 	}
 	
-	
+/*	
 	function createSoundInstance()
 	{
 		soundFall = createjs.Sound.createInstance("fall"); 
@@ -243,16 +308,30 @@ function preloadResource()
 		soundEnding = createjs.Sound.createInstance("ending");
 		
 	}
+*/
 	
 	function clearLoadingInfo()
 	{
 		mainStage.removeChild(runnerSprite, progress, progressBorder, percentTxt);
+		showSignetBitmap();
+		mainStage.addChild(signetBitmap);
 		showRemakeBitmap();
 		mainStage.addChild(remakeBitmap);
 		mainStage.update();
 	}
+
+	function showSignetBitmap()
+	{
+		var x, y;
+		signetBitmap = new createjs.Bitmap(preload.getResult("signet"));
+		x = (BASE_SCREEN_X - SIGNET_UNDER_X - signetBitmap.getBounds().width )* tileScale;
+		y = (BASE_SCREEN_Y - SIGNET_UNDER_Y - signetBitmap.getBounds().height)* tileScale;
+		signetBitmap.setTransform(x, y, tileScale, tileScale); //x,y, scaleX, scaleY 
+		signetBitmap.set({alpha:0.8});
+		createjs.Tween.get(signetBitmap).set({alpha:0.8}).to({alpha:1}, 500);
+	}	
 	
-	//create remake 2014 
+	//create remake image 
 	function showRemakeBitmap()
 	{
 		var x = 372 * tileScale;
@@ -260,17 +339,17 @@ function preloadResource()
 		remakeBitmap = new createjs.Bitmap(preload.getResult("remake"));
 		remakeBitmap.setTransform(x, y, tileScale, tileScale); //x,y, scaleX, scaleY 
 		remakeBitmap.rotation = -5;
-		remakeBitmap.set({alpha:0});
-		createjs.Tween.get(remakeBitmap).set({alpha:0}).to({alpha:1}, 500).call(preloadComplet);
+		remakeBitmap.set({alpha:0.6});
+		createjs.Tween.get(remakeBitmap).set({alpha:0.6}).to({alpha:1}, 800).call(preloadComplet);
 	}
 	
 	function createHelpObj()
 	{
 		helpBitmap = new createjs.Bitmap(preload.getResult("help"));
 		editHelpBitmap = new createjs.Bitmap(preload.getResult("editHelp"));
-		demoHelpBitmap = new createjs.Bitmap(preload.getResult("demoHelp"));
+		//demoHelpBitmap = new createjs.Bitmap(preload.getResult("demoHelp")); //replace by infoMenu, 5/14/2015
 		
-		helpObj = new helpMenuClass(mainStage, helpBitmap, editHelpBitmap, demoHelpBitmap, tileScale);
+		helpObj = new helpMenuClass(mainStage, helpBitmap, editHelpBitmap, tileScale);
 	}
 	
 	function createMenuBitmapIcon()
@@ -281,7 +360,28 @@ function preloadResource()
 		selectIconBitmap = new  createjs.Bitmap(preload.getResult("select"));
 		selectIconObj = new selectIconClass(screenX1, screenY1, tileScale, selectIconBitmap); 
 		
+		demoIconBitmap = new createjs.Bitmap(preload.getResult("demo")); //04/18/2015
+		demoIconObj = new demoIconClass(screenX1, screenY1, tileScale, demoIconBitmap);
+
+		soundOnIconBitmap = new createjs.Bitmap(preload.getResult("soundOn")); //04/18/2015
+		soundOffIconBitmap = new createjs.Bitmap(preload.getResult("soundOff"));
+		soundIconObj = new soundIconClass(screenX1, screenY1, tileScale, soundOnIconBitmap, soundOffIconBitmap);
 		
+		infoIconBitmap = new createjs.Bitmap(preload.getResult("infoIcon")); //05/12/2015
+		infoIconObj = new infoIconClass(screenX1, screenY1, tileScale, infoIconBitmap);
+		infoObj = new infoMenuClass(mainStage, tileScale);
+		
+		helpIconBitmap = new createjs.Bitmap(preload.getResult("helpIcon")); //04/21/2015
+		helpIconObj = new helpIconClass(screenX1, screenY1, tileScale, helpIconBitmap);
+
+		repeatActionOnIconBitmap = new createjs.Bitmap(preload.getResult("repeatOn")); //05/17/2015
+		repeatActionOffIconBitmap = new createjs.Bitmap(preload.getResult("repeatOff"));
+		repeatActionIconObj = new repeatActionIconClass(screenX1, screenY1, tileScale, repeatActionOnIconBitmap, repeatActionOffIconBitmap);
+		
+		apple2IconBitmap = new createjs.Bitmap(preload.getResult("apple2")); //04/18/2015
+		C64IconBitmap = new createjs.Bitmap(preload.getResult("C64"));
+		themeIconObj = new themeIconClass(screenX1, screenY1, tileScale, apple2IconBitmap, C64IconBitmap);
+
 		checkBitmap = new  createjs.Bitmap(preload.getResult("check"));
 		
 		returnBitmap = new createjs.Bitmap(preload.getResult("return"));
@@ -292,15 +392,7 @@ function preloadResource()
 		noBitmap = new createjs.Bitmap(preload.getResult("no"));
 		
 	}
-	
-	function getFirstPlayInfo()
-	{
-		if(getStorage(STORAGE_FIRST_PLAY) == null) {
-			firstPlay = 1;
-			setStorage(STORAGE_FIRST_PLAY, 1);
-		}
-	}
-	
+
 	function preloadComplet()
 	{
 		createHelpObj();
@@ -311,16 +403,28 @@ function preloadResource()
 	}
 }
 
+function createSoundInstance()
+{
+	soundFall = createjs.Sound.createInstance("fall" + curTheme); 
+	soundDig = createjs.Sound.createInstance("dig" + curTheme);
+	soundPass = createjs.Sound.createInstance("pass" + curTheme);
+	
+	soundEnding = createjs.Sound.createInstance("ending"); //for training mode only 
+	
+}
+
 //==============================
 // support different AI-version 
 //==============================
 
 var spriteSpeed = [
 	{ runnerSpeed: 0.65, guardSpeed: 0.3,  digSpeed: 0.68, fillSpeed: 0.24, xMoveBase: 8, yMoveBase: 8 }, //ver 1
-	{ runnerSpeed: 0.70, guardSpeed: 0.35, digSpeed: 0.68, fillSpeed: 0.27, xMoveBase: 8, yMoveBase: 9 }  //ver 2
+	{ runnerSpeed: 0.70, guardSpeed: 0.35, digSpeed: 0.68, fillSpeed: 0.27, xMoveBase: 8, yMoveBase: 9 }, //ver 2
+	{ runnerSpeed: 0.8,  guardSpeed: 0.4,  digSpeed: 1,    fillSpeed: 1,    xMoveBase: 8, yMoveBase: 9 }  //ver 3 
 ];
 
-var curAiVersion = AI_VERSION;		
+var curAiVersion = AI_VERSION;
+var maxGuard = MAX_NEW_GUARD; 
 function setSpeedByAiVersion()
 {
 	var speedObj = spriteSpeed[curAiVersion-1];
@@ -330,27 +434,54 @@ function setSpeedByAiVersion()
 	DIG_SPEED = speedObj.digSpeed;
 	FILL_SPEED = speedObj.fillSpeed;
 	
-	//xMove = speedObj.xMoveBase * tileScale; //8, 6, 4 (10, 7.5, 5)
- 	//yMove = speedObj.yMoveBase * tileScale;	//8, 6, 4 (10, 7.5, 5)	
 	xMove = speedObj.xMoveBase; 
  	yMove = speedObj.yMoveBase;
 	
-	//W4 = (tileW/4|0)+ speedObj.w4; //no used
-	//H4 = (tileH/4|0)+ speedObj.h4;
+	//------------------------------------------------------------------------------------
+	// Change move policy for support LR FAN BOOK with one guard 
+	// Original policy for one guard is [0, 1, 1] ==> 2/3 speed of runner 
+	// while AI_VERSION >= 3 change policy to [ 0, 1, 0, 1, 0, 1 ] ==> 1/2 speed of runner
+	//------------------------------------------------------------------------------------
+	if(curAiVersion < 3) {
+		movePolicy[1] = [0, 1, 1, 0, 1, 1];
+		maxGuard = MAX_OLD_GUARD;
+	} else {
+		movePolicy[1] = [0, 1, 0, 1, 0, 1]; //slow down the guard when only one guard
+		maxGuard = MAX_NEW_GUARD;           //change max guard 
+	}
 	
-	createSpriteSheet();
+	themeDataReset(); //4/16/2015
+}
+
+function themeDataReset()
+{
+	createSoundInstance(); 
+	createSpriteSheet();   //base one theme & Ai Version
+}
+
+function getThemeImage(name) 
+{
+	return preload.getResult(name + curTheme);
+}
+
+function getThemeTileColor()
+{
+	if(curTheme == THEME_APPLE2) return "#0DA1FF"; //APPLE II TILE COLOR
+	else return "#933A4C"; //C64 TILE COLOR
 }
 
 function createSpriteSheet()
 {
-	createRunnerSpriteSheet(coverPageLoad.getResult("runner"));
+	//createRunnerSpriteSheet(coverPageLoad.getResult("runner"));
+	createRunnerSpriteSheet(getThemeImage("runner"));
 	createPreloadSpriteSheet();
+	createFlagSpriteSheet();
 }
 
 function createPreloadSpriteSheet() 
 {
 	guardData = new createjs.SpriteSheet({
-		images: [preload.getResult("guard")],
+		images: [getThemeImage("guard")],
 		
 		frames: {regX:0, height: BASE_TILE_Y,  regY: 0, width: BASE_TILE_X},
 		
@@ -362,7 +493,7 @@ function createPreloadSpriteSheet()
 			barRight: {
 				frames: [ 11, 12, 12, 13, 13 ],
 				next:  "barRight",
-					speed: GUARD_SPEED
+				speed: GUARD_SPEED
 			},
 				 
 			barLeft: {
@@ -370,15 +501,15 @@ function createPreloadSpriteSheet()
 				next:  "barLeft",
 				speed: GUARD_SPEED
 			},
-			
+
 			reborn: {
 				frames: [ 17, 17, 18 ],
 				speed: GUARD_SPEED
 			},
-					 
+
 			fallRight : 8,
 			fallLeft: 19,
-			
+
 			shakeRight: {
 				frames: [ 8, 8, 8, 8, 8, 8, 8,
 				          8, 8, 8, 8, 8, 8,
@@ -394,12 +525,11 @@ function createPreloadSpriteSheet()
 				next: null,
 				speed: GUARD_SPEED
 			}
-					
 		}
 	});
 	
 	holeData = new createjs.SpriteSheet( {
-		images: [preload.getResult("hole")],
+		images: [getThemeImage("hole")],
 		
 		frames: [
 			//dig hole Left
@@ -441,15 +571,22 @@ function createPreloadSpriteSheet()
 				         17, 17, 18, 18, 19 ], //delay fill time for champLevel, 2014/04/12
 				next:  false,
 				speed: FILL_SPEED
-			}		
+			}	
 		}
 	});
 	
 	holeObj.sprite = new createjs.Sprite(holeData, "digHoleLeft");
+	
+	if(curAiVersion < 3) {
+		holeObj.digLimit = 6; //for check guard is close to runner when digging
+	} else {
+		holeObj.digLimit = 8; //for check guard is close to runner when digging
+	}
+	
 	holeObj.action = ACT_STOP; //no digging 
 
 	textData = new createjs.SpriteSheet({
-		images: [preload.getResult("text")],
+		images: [getThemeImage("text")],
 		
 		frames: {regX:0, height: BASE_TILE_Y,  regY: 0, width: BASE_TILE_X},
 		
@@ -463,14 +600,26 @@ function createPreloadSpriteSheet()
 			"DOT": 36, "LT": 37, "GT": 38, "DASH": 39,
 			"@":40,  //gold
 			"#":41,  //trap
-			"SPACE":43, 
 			"FLASH": { //42 & 43 
 				frames: [42, 42, 42, 43, 43, 43],
 				next: "FLASH",
 				speed: FLASH_SPEED
 			},
+			"SPACE":43, "COLON":44, "UNDERLINE": 45, 
 			"D0": 50, "D1": 51, "D2": 52, "D3": 53, "D4": 54,  //blue digit number for player name, 11/17/2014
  			"D5": 55, "D6": 56, "D7": 57, "D8": 58, "D9": 59
 		}
+	});
+}
+
+//=======================================
+// country flag for demo info 5/14/2015
+//=======================================
+function createFlagSpriteSheet()
+{
+	countryFlagData = new createjs.SpriteSheet({
+		images: [preload.getResult("flag")],
+		frames: {regX:0, height: 32,  regY: 0, width: 32},
+		animations: countryId
 	});
 }

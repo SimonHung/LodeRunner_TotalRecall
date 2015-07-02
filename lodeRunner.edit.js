@@ -34,12 +34,16 @@ var tileInfo = [
 var baseTile=[];	
 var lastRunner = null;
 var lastGuardList = [];	
-var editBorder;
+var editBorder, editStartX;
 var testLevelInfo = {level: -1};
+var mouseInStage = 1;
 
 function startEditMode() 
 {
+	soundIconObj.disable(1);
+	repeatActionIconObj.disable(1);
 	playMode = PLAY_EDIT;
+	playData = PLAY_DATA_USERDEF; //for title name only
 	mainStage.removeAllChildren();
 	//document.onkeydown = function() { return true; };
 	document.onkeydown = editHandleKeyDown;
@@ -52,6 +56,7 @@ function startEditMode()
 	createEditMap();
 	startEditTicker();
 	setButtonState();
+	initForPlay();      // 1/19/2015
 }
 
 function setEditSelectMenu()
@@ -82,7 +87,7 @@ function saveTestState()
 function startTestMode()
 {
 	playMode = PLAY_TEST;
-	playData = 3;
+	playData = PLAY_DATA_USERDEF;
 	
 	curLevel = testLevelInfo.level;
 	stopEditTicker();
@@ -103,46 +108,51 @@ var EDIT_PADDING = 1;
 
 function canvasEditReSize() 
 {
-	for (var scale = MAX_SCALE; scale >= MIN_SCALE; scale -= 0.25) {
-		canvasX = (BASE_SCREEN_X+BASE_TILE_X*2) * scale+ EDIT_PADDING * (NO_OF_TILES_X+1);
-		canvasY =  BASE_SCREEN_Y * scale + EDIT_PADDING * (NO_OF_TILES_Y+1);
-		if (canvasX <= screenX1 && canvasY <= screenY1 || scale <= MIN_SCALE) break;
+	var menuIconAreaX = screenBorder + BASE_ICON_X * tileScale; //current icon size X
+	var toolAreaX = BASE_TILE_X*3/2; //edit tool size X
+	var canvas = document.getElementById('canvas');
+	
+	//(1) try use scale same as play mode 
+	canvasX = (BASE_SCREEN_X+toolAreaX) * tileScale + EDIT_PADDING * (NO_OF_TILES_X+1);
+	canvasY =  BASE_SCREEN_Y * tileScale + EDIT_PADDING * (NO_OF_TILES_Y+1);
+	
+	if(canvasX > (screenX1 - menuIconAreaX) || canvasY > screenY1) {
+		//(2) can not fit, find new scale 
+		for (var scale = MAX_SCALE*100; scale >= MIN_SCALE*100; scale -= 10) {
+			tileScale = scale/100; //new scale 
+			canvasX = (BASE_SCREEN_X+toolAreaX) * tileScale + EDIT_PADDING * (NO_OF_TILES_X+1);
+			canvasY =  BASE_SCREEN_Y * tileScale + EDIT_PADDING * (NO_OF_TILES_Y+1);
+			if (canvasX <= (screenX1 - menuIconAreaX) && canvasY <= screenY1 || tileScale <= MIN_SCALE) break;
+		}
 	}
-	//debug("screenX1 = " + screenX1 + " screenY1 = " + screenY1 + "scale = " + scale);
+	debug("EDIT SCALE = " + tileScale);
 
-	canvas = document.getElementById('canvas');
+	var left = ((screenX1 - canvasX)/2|0),
+		top  = ((screenY1 - canvasY)/2|0);
+	
+	if(left < menuIconAreaX) left = ((screenX1 - canvasX - menuIconAreaX)/2|0);
 
 	canvas.width = canvasX;
 	canvas.height = canvasY;
 	
-	//Set canvas top left position
-	var left = ((screenX1 - canvasX)/2|0),
-		top  = ((screenY1 - canvasY)/2|0);
 	canvas.style.left = (left>0?left:0) + "px";
 	canvas.style.top =  (top>0?top:0) + "px";
 	canvas.style.position = "absolute";
 	
-	//initial constant value
-	tileScale = scale;
-	tileW = BASE_TILE_X * scale;
-	tileH = BASE_TILE_Y * scale;
-	
-	W2 = (tileW/2|0); //20, 15, 10,
-	H2 = (tileH/2|0); //22, 16, 11 
-	
-	W4 = (tileW/4|0); //10, 7, 5,
-	H4 = (tileH/4|0); //11, 8, 5,
+	tileWScale = BASE_TILE_X * tileScale;
+	tileHScale = BASE_TILE_Y * tileScale;
 	
 	editBorder = 4 * tileScale;	
+	editStartX = (tileWScale + W2 * tileScale);
 }
 
 function createBaseTile()
 {
 	for(var id = 0; id < tileInfo.length; id++) {
-		baseTile[id] = { image: preload.getResult(tileInfo[id][0]), id: id };
+		baseTile[id] = { image: getThemeImage(tileInfo[id][0]), id: id };
 	}
 	
-	emptyTile = { image: preload.getResult("empty"), id: 0 };
+	emptyTile = { image: getThemeImage("empty"), id: 0 };
 	actTile = baseTile[1];
 }
 
@@ -150,12 +160,11 @@ function createEditMap()
 {
 	var tile, backColor, bitmap;
 		
-	setEditBackground();
-	drawEditArea(0,0, 
-				 (tileW+EDIT_PADDING)*NO_OF_TILES_X+EDIT_PADDING,
-				 (tileH+EDIT_PADDING)*NO_OF_TILES_Y+EDIT_PADDING
+	setCanvasBackground();
+	setEditBackground(editStartX,0, 
+				 (tileWScale+EDIT_PADDING)*NO_OF_TILES_X+EDIT_PADDING,
+				 (tileHScale+EDIT_PADDING)*NO_OF_TILES_Y+EDIT_PADDING
 	);
-	
 	initMapInfo();
 	getTestLevel(testLevelInfo);
 	
@@ -174,7 +183,7 @@ function createEditMap()
 			tile = new createjs.Container();
 				
 			backColor = new createjs.Shape();
-			backColor.graphics.beginFill("black").drawRect(0, 0, tileW, tileH).endFill();
+			backColor.graphics.beginFill("black").drawRect(0, 0, tileWScale, tileHScale).endFill();
 			if(id == 0) {
 				bitmap = new createjs.Bitmap(emptyTile.image);
 			} else {
@@ -183,26 +192,36 @@ function createEditMap()
 			bitmap.scaleX = bitmap.scaleY = tileScale;
 			
 			tile.addChild(backColor, bitmap);
-			tile.x = (tileW + EDIT_PADDING) * x+EDIT_PADDING;
-			tile.y = (tileH + EDIT_PADDING) * y+EDIT_PADDING;
+			tile.x = (tileWScale + EDIT_PADDING) * x+EDIT_PADDING + editStartX;
+			tile.y = (tileHScale + EDIT_PADDING) * y+EDIT_PADDING;
 			editMap[x][y] = { tile: tile, id: id };
 			mainStage.addChild(tile); 
 			addManCheck(id, x, y);
 		}
 	}
+	
 	drawEditGround();
+	drawEditBlock(editStartX,0, canvasX-editStartX-1,
+				 (tileHScale+EDIT_PADDING)*NO_OF_TILES_Y+EDIT_PADDING
+	);
+	
+	
 	addSelectIcon();
  	addCursorTile();
 	drawEditLevel();
 	drawSaveButton();
 	drawTestButton();
 	drawNewButton();
+	drawLoadButton();
 	enableTestButton();
 	
+	mouseInStage = 1;
 	mainStage.on("stagemouseup", stageMouseUp);
 	mainStage.on("stagemousedown", stageMouseDown);
+	mainStage.on("mouseleave", function() { mouseInStage = 0; });
+	mainStage.on("mouseenter", function() { mouseInStage = 1; });
 }
-
+		
 function clearEditMap()
 {
 	initMapInfo();	
@@ -225,7 +244,7 @@ function tile2Id(tileChar)
 	}
 }
 
-function setEditBackground()
+function setCanvasBackground()
 {
 	//set background color
 	var background = new createjs.Shape();
@@ -233,23 +252,41 @@ function setEditBackground()
 	mainStage.addChild(background);
 	document.body.style.background = "#301050";
 }
-	
-function drawEditArea(startX, startY, width, height)
+
+function setEditBackground(startX, startY, width, height)
 {
 	var editBack = new createjs.Shape();
-	editBack.alpha = 0.5;
+	editBack.alpha = 0.6;
 	editBack.graphics.beginFill("gold").drawRect(startX, startY, width, height);
 	mainStage.addChild(editBack);
+}
+	
+function drawEditBlock(startX, startY, width, height)
+{
+	var editBlock = new createjs.Shape();
+	editBlock.alpha = 0.6;
+	//editBack.graphics.beginFill("gold").drawRect(startX, startY, width, height);
+	
+	editBlock.graphics.setStrokeStyle(2);
+	editBlock.graphics.beginStroke("red");	
+	editBlock.graphics.moveTo(startX, startY);
+	editBlock.graphics.lineTo(startX+width, startY);
+	editBlock.graphics.lineTo(startX+width, startY+height);
+	editBlock.graphics.lineTo(startX, startY+height);
+	editBlock.graphics.lineTo(startX, startY);
+	editBlock.graphics.endStroke();
+	
+	mainStage.addChild(editBlock);
 }
 
 function drawEditGround()
 {
 	var groundTile;
-	var y = (tileH + EDIT_PADDING) * NO_OF_TILES_Y+EDIT_PADDING;
-	var x = (tileW + EDIT_PADDING) * NO_OF_TILES_X+EDIT_PADDING;
+	var x = (tileWScale + EDIT_PADDING) * NO_OF_TILES_X+EDIT_PADDING + editStartX;
+	var y = (tileHScale + EDIT_PADDING) * NO_OF_TILES_Y+EDIT_PADDING;
 	
 	groundTile = new createjs.Shape();
-	groundTile.graphics.beginFill("#0DA1FF").drawRect(0, 0, x, 10*tileScale);
+	groundTile.graphics.beginFill(getThemeTileColor()).drawRect(0, 0, x, 10*tileScale);
 	groundTile.x = 0;
 	groundTile.y = y;
 
@@ -258,13 +295,14 @@ function drawEditGround()
 
 function addSelectIcon()
 {
-	var x =  (tileW+EDIT_PADDING)*NO_OF_TILES_X+tileW/2;
+	//var x =  (tileWScale+EDIT_PADDING)*NO_OF_TILES_X+tileWScale/2;
+	var x = W4 * tileScale;
 	var y;
 	for(var i = 1; i < baseTile.length; i++) {
-		y = (tileH*3/2)*(i-1) + tileH*3/2;
+		y = (tileHScale*5/3)*(i-1) + tileHScale*1/4;
 		drawSelectIcon(i, x, y);
 	}
-	y = (tileH*3/2)*(i-1) + tileH*3/2;
+	y = (tileHScale*5/3)*(i-1) + tileHScale*1/4;
 	drawSelectIcon(0, x, y);
 }
 	
@@ -275,7 +313,7 @@ function addCursorTile()
 	cursorTileObj = new createjs.Container();
 				
 	backColor = new createjs.Shape();
-	backColor.graphics.beginFill("black").drawRect(0, 0, tileW, tileH).endFill();
+	backColor.graphics.beginFill("black").drawRect(0, 0, tileWScale, tileHScale).endFill();
 	bitmap = new createjs.Bitmap(actTile.image);
 	bitmap.scaleX = bitmap.scaleY = tileScale;
 				
@@ -326,11 +364,11 @@ function drawSelectIcon(id, x, y)
 	} else {
 		selColor = "black";
 	}
-	border.graphics.beginFill(selColor).drawRect(-editBorder, -editBorder, tileW+editBorder*2, tileH+editBorder*2).endFill();
+	border.graphics.beginFill(selColor).drawRect(-editBorder, -editBorder, tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
 	
 	//child id = 1
 	backColor = new createjs.Shape();
-	backColor.graphics.beginFill("black").drawRect(0, 0, tileW, tileH).endFill();
+	backColor.graphics.beginFill("black").drawRect(0, 0, tileWScale, tileHScale).endFill();
 	
 	//child id = 2
 	if(id == 0) {
@@ -358,10 +396,10 @@ function selectTileClick()
 	var inActBorder = selectedTile.getChildAt(0);
 	
 	inActBorder.graphics.clear();
-	inActBorder.graphics.beginFill("black").drawRect(-editBorder, -editBorder, tileW+editBorder*2, tileH+editBorder*2).endFill();
+	inActBorder.graphics.beginFill("black").drawRect(-editBorder, -editBorder, tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
 	
 	actBorder.graphics.clear();
-	actBorder.graphics.beginFill("red").drawRect(-editBorder, -editBorder, tileW+editBorder*2, tileH+editBorder*2).endFill();
+	actBorder.graphics.beginFill("red").drawRect(-editBorder, -editBorder, tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
 	
 	actTile = baseTile[this.myId];
 	cursorTileObj.getChildAt(1).image =  actTile.image;
@@ -373,7 +411,7 @@ function selectTileMouseOver()
 	var border = this.getChildAt(0);
 	
 	border.graphics.clear();
-	border.graphics.beginFill("gold").drawRect(-editBorder, -editBorder, tileW+editBorder*2, tileH+editBorder*2).endFill();
+	border.graphics.beginFill("gold").drawRect(-editBorder, -editBorder, tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
 
 	mainStage.cursor = 'pointer'
 	mouseOver = 1;
@@ -385,51 +423,53 @@ function selectTileMouseOut()
 	var color = (actTile.id == this.myId)?"red":"black";
 	
 	border.graphics.clear();
-	border.graphics.beginFill(color).drawRect(-editBorder, -editBorder, tileW+editBorder*2, tileH+editBorder*2).endFill();
+	border.graphics.beginFill(color).drawRect(-editBorder, -editBorder, tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
 	
 	mouseOver = 0;
 }
 
 function drawEditLevel()
 {
-	var y = canvas.height - tileH - editBorder*2;
+	var x = 17.2*(tileWScale+EDIT_PADDING)+EDIT_PADDING;	
+	var y = canvas.height - tileHScale - editBorder;
 	
-	drawText(0, y, "LEVEL", mainStage);	
+	drawText(x, y, "EDIT", mainStage);	
+	x += 4.3*(tileWScale+EDIT_PADDING);
+	drawText(x, y, "LEVEL", mainStage);	
 	drawEditLevelNo();
 }
 
 var editLevelNoObj = [];
 function drawEditLevelNo()
 {
-	var y = canvas.height - tileH - editBorder*2;
+	var y = canvas.height - tileHScale - editBorder;
 	
 	for(var i = 0; i < editLevelNoObj.length; i++) 
 		mainStage.removeChild(editLevelNoObj[i]);
 	
-	editLevelNoObj = drawText(5*tileW, y, ("00"+(testLevelInfo.level)).slice(-3), mainStage);
+	editLevelNoObj = drawText(26.5*(tileWScale+EDIT_PADDING), y, ("00"+(testLevelInfo.level)).slice(-3), mainStage);
 }
 
-var testButton, newButton, saveButton;
+var testButton, newButton, saveButton, loadButton;
 
 function drawTestButton()
 {
 	var border, backColor, text;
 	var textSting = "TEST";
 	
-	var width = textSting.length * tileW;
-	//var x = canvas.width - width * 1.5;
-	var x = 20*(tileW+EDIT_PADDING)+EDIT_PADDING;
-	var y = canvas.height - tileH - editBorder;
+	var width = textSting.length * tileWScale;
+	var x = 8.5*(tileWScale+EDIT_PADDING)+EDIT_PADDING;
+	var y = canvas.height - tileHScale - editBorder;
 	
 	testButton = new createjs.Container();
 
 	//child id = 0
 	border = new createjs.Shape();
-	border.graphics.beginFill("black").drawRect(-editBorder, -editBorder, width+editBorder*2, tileH+editBorder*2).endFill();
+	border.graphics.beginFill("#40F").drawRect(-editBorder, -editBorder, width+editBorder*2, tileHScale+editBorder*2).endFill();
 	
 	//child id = 1
 	backColor = new createjs.Shape();
-	backColor.graphics.beginFill("#FFF").drawRect(0, 0, width, tileH).endFill();
+	backColor.graphics.beginFill("#FFF").drawRect(0, 0, width, tileHScale).endFill();
 	
 	testButton.addChild(border, backColor);
 	
@@ -446,6 +486,7 @@ function drawTestButton()
 
 	function testButtonClick()
 	{
+		mainStage.cursor = 'default';
 		startTestMode();
 	}
 
@@ -454,8 +495,12 @@ function drawTestButton()
 		var border = this.getChildAt(0);
 	
 		border.graphics.clear();
-		border.graphics.beginFill("gold").drawRect(-editBorder, -editBorder, 4*tileW+editBorder*2, tileH+editBorder*2).endFill();
+		border.graphics.beginFill("red").drawRect(-editBorder, -editBorder, 4*tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
 
+		var backColor = this.getChildAt(1);
+		backColor.graphics.clear();
+		backColor.graphics.beginFill("#ffa").drawRect(0, 0, width, tileHScale).endFill();
+		
 		mainStage.cursor = 'pointer';
 		mouseOver = 1;	
 	}
@@ -465,8 +510,13 @@ function drawTestButton()
 		var border = this.getChildAt(0);
 	
 		border.graphics.clear();
-		border.graphics.beginFill("black").drawRect(-editBorder, -editBorder, 4*tileW+editBorder*2, tileH+editBorder*2).endFill();
-	
+		border.graphics.beginFill("#40F").drawRect(-editBorder, -editBorder, 4*tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
+		
+		var backColor = this.getChildAt(1);
+		backColor.graphics.clear();
+		backColor.graphics.beginFill("#FFF").drawRect(0, 0, width, tileHScale).endFill();
+
+		
 		mouseOver = 0;	
 	}	
 }
@@ -476,20 +526,19 @@ function drawSaveButton()
 	var border, backColor, text;
 	var textSting = "SAVE";
 	
-	var width = textSting.length * tileW;
-	//var x = canvas.width - width * 1.5;
-	var x = 15*(tileW+EDIT_PADDING)+EDIT_PADDING;
-	var y = canvas.height - tileH - editBorder;
+	var width = textSting.length * tileWScale;
+	var x = 13*(tileWScale+EDIT_PADDING)+EDIT_PADDING;
+	var y = canvas.height - tileHScale - editBorder;
 	
 	saveButton = new createjs.Container();
 
 	//child id = 0
 	border = new createjs.Shape();
-	border.graphics.beginFill("black").drawRect(-editBorder, -editBorder, width+editBorder*2, tileH+editBorder*2).endFill();
+	border.graphics.beginFill("#40F").drawRect(-editBorder, -editBorder, width+editBorder*2, tileHScale+editBorder*2).endFill();
 	
 	//child id = 1
 	backColor = new createjs.Shape();
-	backColor.graphics.beginFill("#FFF").drawRect(0, 0, width, tileH).endFill();
+	backColor.graphics.beginFill("#FFF").drawRect(0, 0, width, tileHScale).endFill();
 	
 	saveButton.addChild(border, backColor);
 	
@@ -517,7 +566,11 @@ function drawSaveButton()
 		var border = this.getChildAt(0);
 	
 		border.graphics.clear();
-		border.graphics.beginFill("gold").drawRect(-editBorder, -editBorder, 4*tileW+editBorder*2, tileH+editBorder*2).endFill();
+		border.graphics.beginFill("red").drawRect(-editBorder, -editBorder, 4*tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
+		
+		var backColor = this.getChildAt(1);
+		backColor.graphics.clear();
+		backColor.graphics.beginFill("#ffa").drawRect(0, 0, width, tileHScale).endFill();
 
 		mainStage.cursor = 'pointer';
 		mouseOver = 1;	
@@ -528,7 +581,11 @@ function drawSaveButton()
 		var border = this.getChildAt(0);
 	
 		border.graphics.clear();
-		border.graphics.beginFill("black").drawRect(-editBorder, -editBorder, 4*tileW+editBorder*2, tileH+editBorder*2).endFill();
+		border.graphics.beginFill("#40F").drawRect(-editBorder, -editBorder, 4*tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
+		
+		var backColor = this.getChildAt(1);
+		backColor.graphics.clear();
+		backColor.graphics.beginFill("#fff").drawRect(0, 0, width, tileHScale).endFill();
 	
 		mouseOver = 0;	
 	}	
@@ -548,7 +605,7 @@ function drawSaveButton()
 	function startPlayUserLevel()
 	{
 		playMode = PLAY_MODERN;
-		playData = 3;
+		playData = PLAY_DATA_USERDEF;
 	
 		curLevel = testLevelInfo.level;
 		setModernInfo();
@@ -568,7 +625,7 @@ function editLevelModified()
 function editConfirmAbortState(callbackFun)
 {
 	stopEditTicker();
-	yesNoDialog(["Abort current edit ?"], yesBitmap, noBitmap, mainStage, tileScale, 
+	yesNoDialog(["Abort current editing ?"], yesBitmap, noBitmap, mainStage, tileScale, 
 				function(rc) { if(rc) callbackFun(); else startEditTicker(); });
 }
 
@@ -576,19 +633,19 @@ function drawNewButton()
 {
 	var border, backColor, text;
 	var textSting = "NEW";
-	var width = textSting.length * tileW;
-	var x = 25*(tileW+EDIT_PADDING)+EDIT_PADDING;
-	var y = canvas.height - tileH - editBorder;
+	var width = textSting.length * tileWScale;
+	var x = 0.5*(tileWScale+EDIT_PADDING)+EDIT_PADDING;
+	var y = canvas.height - tileHScale - editBorder;
 	
 	newButton = new createjs.Container();
 
 	//child id = 0
 	border = new createjs.Shape();
-	border.graphics.beginFill("black").drawRect(-editBorder, -editBorder, width+editBorder*2, tileH+editBorder*2).endFill();
+	border.graphics.beginFill("#40F").drawRect(-editBorder, -editBorder, width+editBorder*2, tileHScale+editBorder*2).endFill();
 	
 	//child id = 1
 	backColor = new createjs.Shape();
-	backColor.graphics.beginFill("#FFF").drawRect(0, 0, width, tileH).endFill();
+	backColor.graphics.beginFill("#FFF").drawRect(0, 0, width, tileHScale).endFill();
 	
 	newButton.addChild(border, backColor);
 	
@@ -616,6 +673,8 @@ function drawNewButton()
 				disableTestButton();
 			}
 			clearTestLevel();
+			testLevelInfo.fromPlayData = -1; 
+			testLevelInfo.fromLevel = -1;
 		}
 		startEditTicker();
 	}
@@ -624,7 +683,7 @@ function drawNewButton()
 	{
 		stopEditTicker();
 		if(testLevelInfo.modified) {
-			yesNoDialog(["Abort current edit ?"], yesBitmap, noBitmap, mainStage, tileScale, newLevel);
+			yesNoDialog(["Abort current editing ?"], yesBitmap, noBitmap, mainStage, tileScale, newLevel);
 		} else {
 			newLevel(1);
 		}
@@ -635,7 +694,11 @@ function drawNewButton()
 		var border = this.getChildAt(0);
 	
 		border.graphics.clear();
-		border.graphics.beginFill("gold").drawRect(-editBorder, -editBorder, 3*tileW+editBorder*2, tileH+editBorder*2).endFill();
+		border.graphics.beginFill("red").drawRect(-editBorder, -editBorder, 3*tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
+		
+		var backColor = this.getChildAt(1);
+		backColor.graphics.clear();
+		backColor.graphics.beginFill("#ffa").drawRect(0, 0, width, tileHScale).endFill();
 
 		mainStage.cursor = 'pointer';
 		mouseOver = 1;	
@@ -646,8 +709,154 @@ function drawNewButton()
 		var border = this.getChildAt(0);
 	
 		border.graphics.clear();
-		border.graphics.beginFill("black").drawRect(-editBorder, -editBorder, 3*tileW+editBorder*2, tileH+editBorder*2).endFill();
+		border.graphics.beginFill("#40F").drawRect(-editBorder, -editBorder, 3*tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
+		
+		var backColor = this.getChildAt(1);
+		backColor.graphics.clear();
+		backColor.graphics.beginFill("#fff").drawRect(0, 0, width, tileHScale).endFill();
 	
+		mouseOver = 0;	
+	}	
+}
+
+//========================
+// LOAD BUTTON
+// 05/21/2015
+//========================
+function drawLoadButton()
+{
+	var border, backColor, text;
+	var textSting = "LOAD";
+	var width = textSting.length * tileWScale;
+	var x = 4*(tileWScale+EDIT_PADDING)+EDIT_PADDING;
+	var y = canvas.height - tileHScale - editBorder;
+	var saveStateObj;
+	var loadLevelData, loadPlayData;
+	var editGameVersionList = [
+		{ activeItem: 0 } //game version menu ID
+	];
+	
+	loadButton = new createjs.Container();
+
+	//child id = 0
+	border = new createjs.Shape();
+	border.graphics.beginFill("#40F").drawRect(-editBorder, -editBorder, width+editBorder*2, tileHScale+editBorder*2).endFill();
+	
+	//child id = 1
+	backColor = new createjs.Shape();
+	backColor.graphics.beginFill("#FFF").drawRect(0, 0, width, tileHScale).endFill();
+	
+	loadButton.addChild(border, backColor);
+	
+	//child id = 2
+	drawText(0, 0, textSting, loadButton);
+		
+	loadButton.x = x;
+	loadButton.y = y;
+	loadButton.on('click', loadButtonClick);
+	loadButton.on('mouseover', loadButtonMouseOver);
+	loadButton.on('mouseout', loadButtonMouseOut);
+	mainStage.addChild(loadButton);	
+	initLoadVariable();
+
+	
+	function saveState()
+	{
+		saveStateObj = saveKeyHandler(noKeyDown);
+		stopEditTicker();
+	}
+	
+	function restoreState()
+	{
+		restoreKeyHandler(saveStateObj);
+		startEditTicker();
+	}
+	
+	function initLoadVariable()
+	{
+		for(var i = 0; i < playVersionInfo.length; i++) {
+			editGameVersionList.push( 
+			{ 
+				name: playVersionInfo[i].name + " (" + playVersionInfo[i].verData.length + " Levels) ", 
+				id :playVersionInfo[i].id,
+				activeFun:  loadSelectMenu
+			});
+		}
+	}
+	
+	function menuId2GameVersionId(id)			
+	{
+		return editGameVersionList[id+1].id;
+	}
+
+	function loadSelectLevel(level)
+	{
+		restoreState();
+		testLevelInfo.levelMap = loadLevelData[level-1];
+		testLevelInfo.pass = 1;
+		testLevelInfo.fromPlayData = loadPlayData;
+		testLevelInfo.fromLevel = level;
+		setTestLevel(testLevelInfo);
+		startEditMode();
+	}
+	
+	function loadSelectMenu(id, callbackFun)
+	{
+		loadPlayData = menuId2GameVersionId(id);
+		var titleName = playDataToTitleName(loadPlayData);
+		loadLevelData = getPlayVerData(loadPlayData);
+		
+		titleName = "Load From: " + titleName;
+		
+		selectDialog(titleName, checkBitmap, loadLevelData, 1, screenX1, screenY1, 
+				mainStage, tileScale, loadSelectLevel, null, restoreState)		
+	}
+			
+	function loadExistLevel(yes)
+	{
+		if(yes) {
+			menuDialog("Load Game Version ", editGameVersionList, mainStage, tileScale, 1, restoreState, null); 
+		} else {
+			restoreState();
+		}
+	}
+
+	function loadButtonClick()
+	{
+		saveState();
+		if(!editMapIsEmpty()) {
+			yesNoDialog(["Abort current editing ?"], yesBitmap, noBitmap, mainStage, tileScale, loadExistLevel);
+		} else {
+			loadExistLevel(1);
+		}
+	}
+
+	function loadButtonMouseOver()
+	{
+		var border = this.getChildAt(0);
+	
+		border.graphics.clear();
+		border.graphics.beginFill("red").drawRect(-editBorder, -editBorder, 4*tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
+		
+		var backColor = this.getChildAt(1);
+		backColor.graphics.clear();
+		backColor.graphics.beginFill("#ffa").drawRect(0, 0, width, tileHScale).endFill();
+		
+		mainStage.cursor = 'pointer';
+		mouseOver = 1;	
+	}
+
+	function loadButtonMouseOut()
+	{
+		var border = this.getChildAt(0);
+	
+		border.graphics.clear();
+		border.graphics.beginFill("#40F").drawRect(-editBorder, -editBorder, 4*tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
+	
+		var backColor = this.getChildAt(1);
+		backColor.graphics.clear();
+		backColor.graphics.beginFill("#fff").drawRect(0, 0, width, tileHScale).endFill();
+		
 		mouseOver = 0;	
 	}	
 }
@@ -691,7 +900,7 @@ function disableTestButton()
 
 function clearUserLevelScore()
 {
-	playData = 3;
+	playData = PLAY_DATA_USERDEF;
 	getModernScoreInfo();
 	modernScoreInfo[testLevelInfo.level-1] = -1;
 	setModernScoreInfo();
@@ -699,7 +908,7 @@ function clearUserLevelScore()
 
 function delUserLevelScore(level)
 {
-	playData = 3;
+	playData = PLAY_DATA_USERDEF;
 	getModernScoreInfo();
 	modernScoreInfo.splice(level-1, 1);
 	modernScoreInfo[MAX_EDIT_LEVEL-1] = -1;
@@ -808,7 +1017,7 @@ function delManCheck(id, x, y)
 			guardTile.id = emptyTile.id;
 			lastGuardList.splice(removeId,1);
 		} else {
-			console.log("design error !");
+			error(arguments.callee.name, "design error !");
 		}
 		break;	
 	}
@@ -845,6 +1054,7 @@ function editSelectLevel(level)
 {
 	testLevelInfo.level = level;
 	testLevelInfo.levelMap = editLevelData[level-1];
+	testLevelInfo.fromPlayData = testLevelInfo.fromLevel = -1;
 	setTestLevel(testLevelInfo);
 	startEditMode();
 }
@@ -861,6 +1071,28 @@ function map2LevelData()
 	}
 }
 
+function editMapIsEmpty()
+{
+	for(var y = 0; y < NO_OF_TILES_Y; y++) {
+		for(var x = 0; x < NO_OF_TILES_X; x++) {
+			if(editMap[x][y].id != emptyTile.id) return 0;
+		}
+	}
+	return 1;
+}
+
+function copyEditingMap()
+{
+	var curEditMap = "";
+	for(var y = 0; y < NO_OF_TILES_Y; y++) {
+		for(var x = 0; x < NO_OF_TILES_X; x++) {
+			curEditMap += tileInfo[editMap[x][y].id][1];
+		}
+	}
+	
+	return curEditMap;
+}
+
 //==============================
 // Too many user created Levels
 //==============================
@@ -870,13 +1102,13 @@ function editWarningMsg(hidden)
 	var x, y, width, height;
 
 	if(editWarningText == null) 
-		editWarningText = new createjs.Text("Too many user created levels !", 
+		editWarningText = new createjs.Text("Too many custom levels !", 
 											"bold " +  (64*tileScale) + "px Helvetica", "#fc5c1c");
 	
 	width = editWarningText.getBounds().width;
 	height = editWarningText.getBounds().height;
-	x = editWarningText.x = (NO_OF_TILES_X*(tileW+EDIT_PADDING) - width) / 2 | 0;
-	y = editWarningText.y = (NO_OF_TILES_Y*tileH - height) / 2 | 0;
+	x = editWarningText.x = (NO_OF_TILES_X*(tileWScale+EDIT_PADDING) - width) / 2 | 0;
+	y = editWarningText.y = (NO_OF_TILES_Y*tileHScale - height) / 2 | 0;
 	editWarningText.shadow = new createjs.Shadow("white", 2, 2, 1);
 	
 	if(hidden) {
@@ -887,21 +1119,30 @@ function editWarningMsg(hidden)
 	mainStage.update();
 }
 
-var copyLevelMap = null;
+var copyLevelMap = null, copyLevelPassed = 0;
 function editHandleKeyDown(event)
 {
 	if(!event){ event = window.event; } //cross browser issues exist
 	
 	if (event.ctrlKey) {
-		if(event.keyCode == KEYCODE_V) { //CTRL-V
+		switch(event.keyCode) {
+		case KEYCODE_C: //CTRL-C : copy current level
+			copyLevelMap = copyEditingMap();
+			copyLevelPassed = (!testLevelInfo.modified && lastRunner) || testLevelInfo.pass;
+			setTimeout(function() { showTipsText("COPY MAP", 1500);}, 50);
+			break;	
+		case KEYCODE_V: //CTRL-V : paste copy map
 			if(copyLevelMap != null) {
 				testLevelInfo.levelMap = copyLevelMap;
-				testLevelInfo.pass = 1;
+				testLevelInfo.modified = 1;
+				testLevelInfo.pass = copyLevelPassed;
+				testLevelInfo.fromPlayData = testLevelInfo.fromLevel = -1;
 				setTestLevel(testLevelInfo);
 				startEditMode();
 				////setButtonState();
-				setTimeout(function() { showTipsText("PASTE MAP", 0);}, 50);
+				setTimeout(function() { showTipsText("PASTE MAP", 1500);}, 50);
 			}
+			break;	
 		}
 	}
 	return true;
@@ -909,21 +1150,23 @@ function editHandleKeyDown(event)
 
 function editTick() 
 {
-	var x = ((mainStage.mouseX-EDIT_PADDING) / (tileW+EDIT_PADDING) )| 0;
-	var y = ((mainStage.mouseY-EDIT_PADDING) / (tileH+EDIT_PADDING) )| 0;
+	var x = ((mainStage.mouseX-EDIT_PADDING - editStartX)/(tileWScale+EDIT_PADDING));
+	var x = (x < 0)?-1:(x|0);
+	var y = ((mainStage.mouseY-EDIT_PADDING) / (tileHScale+EDIT_PADDING) )| 0;
 	
 	if(testLevelInfo.level > MAX_EDIT_LEVEL) {
 		mainStage.cursor = 'default'; 
 		mainStage.update();
 		return;
 	}
-	if(x >= 0 && x < NO_OF_TILES_X && y >= 0 && y < NO_OF_TILES_Y) {
+	//debug(mainStage.mouseX,editStartX, x,y);
+	if(mouseInStage && x >= 0 && x < NO_OF_TILES_X && y >= 0 && y < NO_OF_TILES_Y) {
 		//edit area
 		mainStage.cursor = 'pointer'; 
 		if( x != lastDown.x || y != lastDown.y) {
 			cursorTileObj.alpha = 1;
-			cursorTileObj.x = (tileW + EDIT_PADDING) * x+EDIT_PADDING;
-			cursorTileObj.y = (tileH + EDIT_PADDING) * y+EDIT_PADDING;
+			cursorTileObj.x = (tileWScale + EDIT_PADDING) * x+EDIT_PADDING + editStartX;
+			cursorTileObj.y = (tileHScale + EDIT_PADDING) * y+EDIT_PADDING;
 			if(mouseDown) {
 				var clickTile = editMap[x][y];
 				

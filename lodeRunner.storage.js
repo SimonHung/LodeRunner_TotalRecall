@@ -13,66 +13,130 @@ function setLastPlayMode()
 	setStorage(STORAGE_LASTPLAY_MODE, infoJSON); 	
 }
 
-function getClassicInfo()
+function initClassicInfo()
 {
-	var infoJSON;
-	
-	if(playData == 1) {
-		infoJSON = getStorage(STORAGE_CLASSIC_INFO1); 
-		levelData = levelData1;
-	} else {
-		infoJSON = getStorage(STORAGE_CLASSIC_INFO2); 
-		levelData = levelData2;
-	}
-	
-	if(infoJSON == null) {
-		curScore = 0;	
-		curLevel = maxLevel = 1;
-		runnerLife = RUNNER_LIFE;
-	} else {
-		var infoObj = JSON.parse(infoJSON);
-		curScore = infoObj.s;
-		curLevel = infoObj.l;
-		maxLevel = infoObj.m;
-		runnerLife = infoObj.r;
-	}
+	curScore = 0;	
+	curLevel = maxLevel = 1;
+	passedLevel = 0; //6/3/2015
+	runnerLife = RUNNER_LIFE;
+	sometimePlayInGodMode = 0;
 }
 
-function setClassicInfo()
+function base64Decode(str)
+{
+	//----------------------------------------------------------------------------------------------------------
+	// check string is base64 or not 
+	// ref: http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
+	//----------------------------------------------------------------------------------------------------------
+	var pattern = new RegExp("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$");
+	
+	if(pattern.test(str) == true) {
+		return atob(str); //base64 decode
+	}
+	return null; //string is not base64 
+}
+
+function getClassicInfo()
+{
+	var infoJSON = null;
+	var needEncode = 0;
+	
+	if(playData >= 1 && playData <= maxPlayId) {
+		infoJSON = getStorage(STORAGE_CLASSIC_INFO+playData); 
+		//==================================
+		// BEGIN for support base64 encode 
+		//==================================
+/*	for backward compatible disable it !	
+		if(infoJSON) {
+			if(infoJSON.charAt(0) != '{' ) { //assume base64 encoded
+				infoJSON = base64Decode(infoJSON); //base64 decode
+			} else { //no encode (for backward compatibility)
+				if( getStorage(STORAGE_FIRST_PLAY) >= VERSION) infoJSON = null; //something wrong, reset it 
+				else {
+					setFirstPlayInfo(); //set current version
+				}
+				needEncode = 1; 
+			}
+		}
+*/		
+		//================================
+		// END for support base64 encode
+		//================================
+	} else {
+		error(arguments.callee.name, "design error, value =" + playData );
+		playData = 1;	
+	}
+	levelData = getPlayVerData(playData);
+	
+	if(infoJSON == null) {
+		initClassicInfo();
+	} else {
+		var infoObj = JSON.parse(infoJSON);
+		
+		if( ! (infoObj && ("s" in infoObj) && ("l" in infoObj) && ("m" in infoObj) ) ) {
+			initClassicInfo(); //something wrong, reset it !
+		} else {
+			if(!infoObj.hasOwnProperty('g')) infoObj.g = 0; //god-mode
+			if(!infoObj.hasOwnProperty('p')) infoObj.p = infoObj.l-1; //passed level
+		
+			curScore = infoObj.s;
+			curLevel = infoObj.l;
+			maxLevel = infoObj.m;
+			passedLevel = infoObj.p;
+			runnerLife = infoObj.r;
+			sometimePlayInGodMode = infoObj.g;
+		}
+	}
+	
+	if(needEncode) setClassicInfo(0);
+}
+
+function setClassicInfo(passed)
 {
 	maxLevel = (maxLevel < curLevel)?curLevel:maxLevel;
-	var infoObj = { s:curScore, l:curLevel, r:runnerLife, m: maxLevel };
+	if(passed) passedLevel++;
+	var infoObj = { s:curScore, l:curLevel, r:runnerLife, m: maxLevel, g: sometimePlayInGodMode, p: passedLevel};
 	var infoJSON = JSON.stringify(infoObj);
 	
-	if(playData == 1) setStorage(STORAGE_CLASSIC_INFO1, infoJSON); 
-	else setStorage(STORAGE_CLASSIC_INFO2, infoJSON); 
+	// for backward compatible disable it !	
+	// infoJSON = btoa(infoJSON); //base64 encode, 6/3/2015
+	
+	if(playData >= 1 && playData <= maxPlayId) {
+		setStorage(STORAGE_CLASSIC_INFO+playData, infoJSON); 	
+	} else {
+		error(arguments.callee.name, "design error, value =" + playData );
+	}
 }
 
 function clearClassicInfo()
 {
-	if(playData == 1) clearStorage(STORAGE_CLASSIC_INFO1);
-	else clearStorage(STORAGE_CLASSIC_INFO2);
+	clearStorage(STORAGE_CLASSIC_INFO + playData);
 }
 
 function getModernInfo()
 {
 	var infoJSON;
 	
-	if(playData == 1) {
-		infoJSON = getStorage(STORAGE_MODERN_INFO1); 
-		levelData = levelData1;
-	} else if(playData == 2) {
-		infoJSON = getStorage(STORAGE_MODERN_INFO2); 
-		levelData = levelData2;
-	} else {
+	switch(true) {
+	case (playData >= 1 && playData <= maxPlayId):
+		infoJSON = getStorage(STORAGE_MODERN_INFO+playData); 
+		levelData = getPlayVerData(playData);
+		break;
+	case (playData == PLAY_DATA_USERDEF):
 		if(editLevels > 0) {
 			infoJSON = getStorage(STORAGE_USER_INFO); 
 			levelData = editLevelData;
 		} else { //no any user created level !
 			playData = 1;
-			infoJSON = getStorage(STORAGE_MODERN_INFO1); 
-			levelData = levelData1;
+			playData2MainMenuId();
+			infoJSON = getStorage(STORAGE_MODERN_INFO+1); 
+			levelData = getPlayVerData(playData);
 		}
+		break;	
+	default:		
+		error(arguments.callee.name, "design error, value =" + playData );
+		playData = 1;	
+		break;
 	}
 	
 	if(infoJSON == null) {
@@ -93,59 +157,51 @@ function setModernInfo()
 	var infoObj = { l:curLevel};
 	var infoJSON = JSON.stringify(infoObj);
 	
-	switch(playData) {
-	case 1:		
-		setStorage(STORAGE_MODERN_INFO1, infoJSON); 
+	switch(true) {
+	case (playData >= 1 && playData <= maxPlayId):		
+		setStorage(STORAGE_MODERN_INFO + playData, infoJSON); 
 		break;
-	case 2:
-		setStorage(STORAGE_MODERN_INFO2, infoJSON);
-		break;
-	case 3:		
+	case (playData == PLAY_DATA_USERDEF):
 		setStorage(STORAGE_USER_INFO, infoJSON); //user created
 		break;
 	default:
-		debug("setModernInfo() design error !");
+		error(arguments.callee.name, "design error, value =" + playData );
 		break;	
 	}
 }
 
 function clearModernInfo()
 {
-	switch(playData) {
-	case 1:
-		clearStorage(STORAGE_MODERN_INFO1);	
+	switch(true) {
+	case (playData >= 1 && playData <= maxPlayId):		
+		clearStorage(STORAGE_MODERN_INFO+playData);	
 		break;
-	case 2:
-		clearStorage(STORAGE_MODERN_INFO2);	
-		break;
-	case 3:
+	case (playData == PLAY_DATA_USERDEF):
 		clearStorage(STORAGE_USER_INFO);	
 		break;
 	default:
-		debug("setModernInfo() design error !");
+		error(arguments.callee.name, "design error, value =" + playData );
 		break;	
-	}
-		
+	}	
 }
 
 function getModernScoreInfo()
 {
 	var infoJSON, levelSize;
-	
-	switch(playData) {
-	case 1:
-		infoJSON = getStorage(STORAGE_MODERN_SCORE_INFO1); 
+
+	switch(true) {
+	case (playData >= 1 && playData <= maxPlayId):		
+		infoJSON = getStorage(STORAGE_MODERN_SCORE_INFO+playData); 
 		levelSize = levelData.length;
-		break;	
-	case 2:
-		infoJSON = getStorage(STORAGE_MODERN_SCORE_INFO2); 
-		levelSize = levelData.length;
-		break;	
-	case 3:
+		break;
+	case (playData == PLAY_DATA_USERDEF):
 		infoJSON = getStorage(STORAGE_USER_SCORE_INFO);  //user created
 		levelSize = MAX_EDIT_LEVEL;	
 		break;
-	}
+	default:
+		error(arguments.callee.name, "design error, value =" + playData );
+		break;	
+	}	
 	
 	if(infoJSON) {
 		modernScoreInfo = JSON.parse(infoJSON);
@@ -161,17 +217,33 @@ function setModernScoreInfo()
 {
 	var infoJSON = JSON.stringify(modernScoreInfo);
 	
-	switch(playData) {
-	case 1:		
-		setStorage(STORAGE_MODERN_SCORE_INFO1, infoJSON); 
+	switch(true) {
+	case (playData >= 1 && playData <= maxPlayId):		
+		setStorage(STORAGE_MODERN_SCORE_INFO+playData, infoJSON); 
 		break;
-	case 2:		
-		setStorage(STORAGE_MODERN_SCORE_INFO2, infoJSON); 
-		break;
-	case 3:		
+	case (playData == PLAY_DATA_USERDEF):
 		setStorage(STORAGE_USER_SCORE_INFO, infoJSON); 
 		break;
-	}		
+	default:
+		error(arguments.callee.name, "design error, value =" + playData );
+		break;	
+	}
+}
+
+function getFirstPlayInfo()
+{
+	var firstValue;
+	
+	firstValue =  parseInt(getStorage(STORAGE_FIRST_PLAY));
+	
+	if( isNaN(firstValue) || firstValue < parseInt(VERSION) ) {
+		firstPlay = 1; 
+	}
+}
+
+function setFirstPlayInfo()
+{
+	setStorage(STORAGE_FIRST_PLAY, VERSION);
 }
 
 //=====================
@@ -284,6 +356,8 @@ function initNewLevelInfo(testInfo)
 	testInfo.levelMap = "";
 	testInfo.pass = 0;
 	testInfo.modified = 0;
+	testInfo.fromPlayData = -1;
+	testInfo.fromLevel = -1;
 	for(var i = 0; i < NO_OF_TILES_X * NO_OF_TILES_Y; i++) 
 		testInfo.levelMap += " "; //empty map
 }
@@ -310,6 +384,13 @@ function getTestLevel(testInfo)
 		testInfo.levelMap = infoObj.map;
 		testInfo.pass     = infoObj.pass;
 		
+		if(('fromPlayData' in infoObj) && ('fromLevel' in infoObj)) {
+			testInfo.fromPlayData  = infoObj.fromPlayData;
+			testInfo.fromLevel  = infoObj.fromLevel;
+		} else {
+			testInfo.fromPlayData  = testInfo.fromLevel  = -1;
+		}
+
 		//BEGIN for debug ====================
 		var i = 0;
 		for(var y = 0; y < NO_OF_TILES_Y; y++) {
@@ -317,7 +398,7 @@ function getTestLevel(testInfo)
 			for(var x = 0; x < NO_OF_TILES_X; x++) {
 				string += testInfo.levelMap[i++];
 			}
-			debug('"' + string + '"');
+			//debug('"' + string + '"');
 		}
 		//END   for debug ====================
 		
@@ -339,7 +420,12 @@ function getTestLevel(testInfo)
 
 function setTestLevel(testInfo)
 {
-	var infoObj = { level:testInfo.level, map: testInfo.levelMap, pass: testInfo.pass};
+	var infoObj = { level:testInfo.level, 
+					map: testInfo.levelMap, 
+					pass: testInfo.pass, 
+					fromPlayData: testInfo.fromPlayData,
+					fromLevel: testInfo.fromLevel
+				  };
 	var infoJSON = JSON.stringify(infoObj);
 	
 	setStorage(STORAGE_TEST_LEVEL, infoJSON); 	
@@ -371,6 +457,75 @@ function createUserDefaultLevel()
 		"H        #       #         H";		
 	
 	addEditLevel(myDefaultLevel);
+}
+
+//======================
+// Repeat Action ON/OFF
+//======================
+function getRepeatAction()
+{
+	if((repeatAction = getStorage(STORAGE_REPEAT_ACTION)) == null)	{
+		repeatAction = 0; //set default off (NES keyboard mode)
+	} else {
+		repeatAction = parseInt(repeatAction);
+	}
+}
+
+function setRepeatAction()
+{
+	setStorage(STORAGE_REPEAT_ACTION, repeatAction); 	
+}
+
+//===================
+// Theme state
+//===================
+function getThemeMode()
+{
+	var themeName;
+	if((themeName = getStorage(STORAGE_THEME_MODE)) == null)	{
+		themeName = THEME_APPLE2;
+	}
+	return themeName;
+	
+}
+
+function setThemeMode(themeName)
+{
+	setStorage(STORAGE_THEME_MODE, themeName); 	
+}
+
+//===================
+// player name
+//===================
+function getPlayerName()
+{
+	var name;
+	if((name = getStorage(STORAGE_PLAYER_NAME)) == null)	{
+		name = "";
+	}
+	return name;
+}
+
+function setPlayerName(name)
+{
+	setStorage(STORAGE_PLAYER_NAME, name); 	
+}
+
+//===================
+// uid
+//===================
+function getUid()
+{
+	var uid;
+	if((uid = getStorage(STORAGE_UID)) == null)	{
+		uid = "";
+	}
+	return uid;
+}
+
+function setUid(uid)
+{
+	setStorage(STORAGE_UID, uid); 	
 }
 
 //=========================

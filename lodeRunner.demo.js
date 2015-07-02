@@ -23,7 +23,7 @@ function getAutoDemoLevel(initValue)
 		curScore = 0;	
 		runnerLife = 1;
 /* auto demo data always use demoData1 (because now can select demo levels from demo mode) , 6/12/2014		
-		if(playData == 2) { //lode runner 2 demo data
+		if(playData == PLAY_DATA_2) { //lode runner 2 demo data
 			demoLevel = 1;
 			demoCount = 1;
 			demoMaxCount = 2;
@@ -36,7 +36,7 @@ function getAutoDemoLevel(initValue)
 			demoCount = 1;
 			demoMaxCount = 3;
 			demoData = demoData1;
-			levelData = levelData1;
+			levelData = playVersionInfo[0].verData;
 			demoIdx = 0;
 //		}
 	} else {
@@ -88,7 +88,13 @@ function initPlayDemo()
 {
 	demoRecordIdx = demoGoldIdx = demoBornIdx = 0;
 	demoTickCount = 0;
+	playTickTimer = 0; //modern mode time counter
 	gameState = GAME_RUNNING;
+	
+	if(playMode == PLAY_DEMO_ONCE) {
+		demoIconObj.disable(1);
+		selectIconObj.disable(1);
+	}
 }
 
 function playDemo()
@@ -122,25 +128,90 @@ function getDemoBornPos()
 // for demo mode (User select level)
 //====================================
 
-var playerDemoData1 = [], playerDemoData2 = [];
-var noDemoData1 = 1, noDemoData2 = 1;
+//var playerDemoData = [], noDemoData = [];
+//var wDemoData1 = [], wDemoData2 = [], wDemoData3 = [], wDemoData4 = [], wDemoData5 = []; //temp temp temp
 
-var wHighScores1 = [], wHighScores2 = [];
-var wDemoData1 = [], wDemoData2 = [];
+var playerDemoData = [], wDemoData = [];
+var demoPlayData = 0; //for syn demo data with current playData
+var demoDataLoading = 0;
 
+/* No used
+function showGameLoading()
+{
+	lastGameState = gameState;	
+	gameState = GAME_LOADING;
+	showTipsText("Loading ...", 0, 3/4); //display "Loading"
+}
+
+function hideGameLoading()
+{
+	gameState = lastGameState;
+	showTipsText("", 100); //clear text
+	//if(playMode == PLAY_MODERN && gameState == GAME_START ) demoIconObj.enable();
+}
+*/
+
+function initDemoData()
+{
+	demoPlayData = playData;
+	playerDemoData = [];
+	wDemoData = [];
+	demoDataLoading = 1; 
+	getDemoData(playData); //ajax 
+}
+
+function setDemoData(jsonTxt)
+{
+	if(jsonTxt.substring(0, 1) == "[" ) { 		
+		wDemoData = JSON.parse(jsonTxt);
+		for(var i = 0; i < wDemoData.length; i++) {
+			playerDemoData[wDemoData[i].level-1] = wDemoData[i]; 
+		}
+	} else {
+		error(arguments.callee.name, "Wrong Demo Data: " + jsonTxt);
+	}
+	demoDataLoading = 0; 
+	if(playMode == PLAY_MODERN && gameState == GAME_START ) demoIconObj.enable();
+
+	//hideGameLoading();
+}
+
+/*
 function initDemoModeVariable()
 {
-	for(var i = 0; i < wDemoData1.length; i++) {
-		playerDemoData1[wDemoData1[i].level-1] = wDemoData1[i]; 
+	for(var i = 0; i < maxPlayId; i++) {
+		playerDemoData[i] = [];
+		noDemoData[i] = 1;
+		//wHighScore[i] = [];
+	}
+
+	
+	for(var i = 0; i < wDemoData1.length; i++) { //temp
+		playerDemoData[0][wDemoData1[i].level-1] = wDemoData1[i]; 
 	}
 	
-	for(var i = 0; i < wDemoData2.length; i++) {
-		playerDemoData2[wDemoData2[i].level-1] = wDemoData2[i]; 
+	for(var i = 0; i < wDemoData2.length; i++) { //temp
+		playerDemoData[1][wDemoData2[i].level-1] = wDemoData2[i]; 
 	}
 	
-	if(playerDemoData1.length > 0) noDemoData1 = 0;
-	if(playerDemoData2.length > 0) noDemoData2 = 0;
+	for(var i = 0; i < wDemoData3.length; i++) { //temp
+		playerDemoData[2][wDemoData3[i].level-1] = wDemoData3[i]; 
+	}
+	
+	for(var i = 0; i < wDemoData4.length; i++) { //temp
+		playerDemoData[3][wDemoData4[i].level-1] = wDemoData4[i]; 
+	}
+	
+	for(var i = 0; i < wDemoData5.length; i++) { //temp
+		playerDemoData[4][wDemoData5[i].level-1] = wDemoData5[i]; 
+	}
+	
+	for(var i = 0; i < maxPlayId; i++) {
+		if(playerDemoData[i].length > 0) noDemoData[i] = 0; 
+	}
 }
+*/
+
 
 function initDemoInfo()
 {
@@ -159,19 +230,25 @@ function initDemoInfo()
 		godMode = demoData[idx].godMode; //07/09/2014
 }
 
+function getDemoOnceInfo() //for demo once
+{
+	//DEMO ONCE in Training mode, so curLevel & levelData are same as training mode 
+	demoData = playerDemoData;
+	initDemoInfo();	
+}
+
 function getDemoInfo()
 {
 	var infoJSON;
-	
-	if(playData == 5) {
-		infoJSON = getStorage(STORAGE_DEMO_INFO2); 
-		levelData = levelData2;
-		demoData = playerDemoData2;
+
+	if (playData >= 1 && playData <= maxPlayId) {
+		infoJSON = getStorage(STORAGE_DEMO_INFO + playData); 
+		levelData = getPlayVerData(playData);
+		//demoData = playerDemoData[playData-1];
+		demoData = playerDemoData;
 	} else {
-		infoJSON = getStorage(STORAGE_DEMO_INFO1); 
-		levelData = levelData1;
-		demoData = playerDemoData1;
-	} 
+		error(arguments.callee.name, "design error, value =" + playData );
+	}	
 
 	if(infoJSON == null) {
 		curLevel = 1;
@@ -187,16 +264,12 @@ function setDemoInfo()
 {
 	var infoObj = { l:curLevel};
 	var infoJSON = JSON.stringify(infoObj);
-	
-	switch(playData) {
-	default:
-	case 4:		
-		setStorage(STORAGE_DEMO_INFO1, infoJSON); 
-		break;
-	case 5:
-		setStorage(STORAGE_DEMO_INFO2, infoJSON);
-		break;	
-	}
+
+	if (playData >= 1 && playData <= maxPlayId) {
+		setStorage(STORAGE_DEMO_INFO + playData, infoJSON); 	
+	} else {
+		error(arguments.callee.name, "design error, value =" + playData );
+	}	
 }
 
 function getValidDemoLevel()
@@ -213,49 +286,76 @@ function getNextDemoLevel()
 	initDemoInfo();
 }
 
+function curDemoLevelIsVaild()
+{
+	if(playData == PLAY_DATA_USERDEF) return 0;
+	//return (typeof playerDemoData[playData-1][curLevel-1] != "undefined");
+	return (typeof playerDemoData[curLevel-1] != "undefined");
+}
+
 function updatePlayerDemoData(playData, demoDataInfo)
 {
-	var playerDemoData = null;
 	var level = demoDataInfo.level;
 	
-	switch(playData) {
-	case 1:
-		playerDemoData = playerDemoData1;
-		break;
-	case 2:
-		playerDemoData = playerDemoData2;
-		break;
-	}
+	playerDemoData[level-1] = { 
+		level: demoDataInfo.level, 
+		ai: demoDataInfo.ai, 
+		time: demoDataInfo.time, 
+		state: demoDataInfo.state,
+		action: demoDataInfo.action,
+		goldDrop: demoDataInfo.goldDrop,
+		bornPos: demoDataInfo.bornPos,
+		godMode: demoDataInfo.godMode,
+		player: playerName,
+		date:   getLocalTime(),
+		location: "Unknown", //update by sendDemoData2Server() resp.
+		cId: "Unknown",
+		ip: "updating"
+	};
+}
+
+//======================
+// resp from server
+//======================
+function respUpdatePlayerDemoData(jsonTxt)
+{
+	var respObj, level;
 	
-	if(playerDemoData != null) {
-		if(typeof playerDemoData[level-1] == "undefined") {
-			// new
-			playerDemoData[level-1] = { 
-				level: demoDataInfo.level, 
-				ai: demoDataInfo.ai, 
-				time: demoDataInfo.time, 
-				state: demoDataInfo.state,
-				action: demoDataInfo.action,
-				goldDrop: demoDataInfo.goldDrop,
-				bornPos: demoDataInfo.bornPos,
-				godMode: demoDataInfo.godMode //07/09/2014
-			};
-		} else {  // always update local data 
-			//if( playerDemoData[level-1].time >= demoDataInfo.time) { //only udate best time
-			
-			//update
-			playerDemoData[level-1].level = demoDataInfo.level;
-			playerDemoData[level-1].ai = demoDataInfo.ai;
-			playerDemoData[level-1].time = demoDataInfo.time;
-			playerDemoData[level-1].state = demoDataInfo.state;
-			playerDemoData[level-1].action = demoDataInfo.action;
-			playerDemoData[level-1].goldDrop = demoDataInfo.goldDrop;
-			playerDemoData[level-1].bornPos = demoDataInfo.bornPos;
-			playerDemoData[level-1].godMode = demoDataInfo.godMode; //07/09/2014
-			
+	if(jsonTxt.substring(0, 1) == "{" ) { 		
+		respObj = JSON.parse(jsonTxt);
+		level = respObj.level;
+		
+		if(respObj.playData == playData && playerDemoData[level-1].ip == "updating") {
+			playerDemoData[level-1].ip = respObj.ip;
+			playerDemoData[level-1].location = respObj.location;
+			playerDemoData[level-1].cId = respObj.cId;
 		}
+	} else {
+		error(arguments.callee.name, "Wrong resp Data: " + jsonTxt);
 	}
 }
+
+/*
+function updatePlayerDemoData(playData, demoDataInfo)
+{
+	var updateDemoData = playerDemoData[playData-1];
+	var level = demoDataInfo.level;
+	
+	if(updateDemoData == null) updateDemoData = [];
+	
+	updateDemoData[level-1] = { 
+		level: demoDataInfo.level, 
+		ai: demoDataInfo.ai, 
+		time: demoDataInfo.time, 
+		state: demoDataInfo.state,
+		action: demoDataInfo.action,
+		goldDrop: demoDataInfo.goldDrop,
+		bornPos: demoDataInfo.bornPos,
+		godMode: demoDataInfo.godMode
+	};
+	noDemoData[playData-1] = 0;
+}
+*/
 
 //==============================
 // Record play action for demo
@@ -316,7 +416,7 @@ function recordModeDump(state)
 function recordModeToggle(state)
 {
 	if(recordMode == RECORD_KEY) {
-		if(playMode != PLAY_AUTO && playMode != PLAY_DEMO) recordMode = RECORD_PLAY;
+		if(playMode != PLAY_AUTO && playMode != PLAY_DEMO && playMode != PLAY_DEMO_ONCE) recordMode = RECORD_PLAY;
 		recordModeDump(state);
 	} else recordMode = RECORD_KEY;
 }
@@ -336,6 +436,13 @@ function processRecordKey()
 
 function recordKeyAction()
 {
+	if(repeatAction) recordKeyAction1();
+	else recordKeyAction2()
+}
+
+//record key for "keyboard repeat on"	   
+function recordKeyAction1()
+{
 	if(!keyPressed) return;
 	if(recordKeyCode != lastKeyCode || alwaysRecord) {
 		playRecord.push(recordCount);
@@ -343,6 +450,30 @@ function recordKeyAction()
 		lastKeyCode = recordKeyCode;
 	}
 	keyPressed = 0;
+}
+
+//record key for "keyboard repeat off"
+// keyPressed= 1:pressed, 0:released, -1:floating (do nothing till pressed again)
+function recordKeyAction2()
+{
+	switch(keyPressed) {
+	case 1: //pressed
+		if(recordKeyCode != lastKeyCode || alwaysRecord) {
+			playRecord.push(recordCount);
+			playRecord.push(recordKeyCode);
+			lastKeyCode = recordKeyCode;
+		}
+		if(alwaysRecord) keyPressed = -1; //floating
+		break;
+	case 0:	//release	
+		if(recordKeyCode != KEYCODE_SPACE) { 
+			playRecord.push(recordCount);
+			playRecord.push(KEYCODE_SPACE);
+			lastKeyCode = recordKeyCode = KEYCODE_SPACE;
+			keyAction = ACT_STOP;
+		}
+		break;	
+	}
 }
 
 var recordIdx;
@@ -423,7 +554,7 @@ function dumpRecord()
 	curDemoData.level = curLevel;
 	curDemoData.ai = AI_VERSION;
 	curDemoData.time = playRecordTime;
-	curDemoData.state = recordState;
+	curDemoData.state = recordState; //game finish or not
 	curDemoData.action = [];
 	curDemoData.goldDrop = [];
 	curDemoData.bornPos = [];

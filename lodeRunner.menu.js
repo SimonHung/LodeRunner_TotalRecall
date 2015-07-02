@@ -1,7 +1,3 @@
-var LODERUNNER_NAME1 = "Lode Runner 1"; //"Lode Runner";
-var LODERUNNER_NAME2 = "Lode Runner 2"; //"Championship Lode Runner";
-var USER_CREATED_NAME = "User Created"; //user defined level
-
 function saveKeyHandler(newHandler)
 {
 	var keyHandler, clickState; 
@@ -19,8 +15,7 @@ function restoreKeyHandler(stateObj)
 	if(stateObj.clickState) enableStageClickEvent();	
 }
 
-
-function helpMenuClass(_stage, _bitmap, _editBitmap, _demoBitmap, _scale)
+function helpMenuClass(_stage, _bitmap, _editBitmap, _scale)
 {
 	var HELP_BORDER_SIZE = 24;
 	
@@ -35,7 +30,6 @@ function helpMenuClass(_stage, _bitmap, _editBitmap, _demoBitmap, _scale)
 	stage = _stage;
 	helpBitmap[0] = _bitmap;
 	helpBitmap[1] = _editBitmap;
-	helpBitmap[2] = _demoBitmap;
 	bitmapId = 0;
 	scale = _scale;
 
@@ -195,6 +189,7 @@ function helpMenuClass(_stage, _bitmap, _editBitmap, _demoBitmap, _scale)
 	
 	function closeHelpMenu() 
 	{
+		firstPlay = 0; // 01/12/2015
 		removeCloseIcon();
 		removeHelpMenu();
 		removeBackground();
@@ -635,6 +630,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 			moveChild2Top(dialogStage, tabs[id]);
 			dialogStage.update();
 		}
+		
 		function tabsInActive(id)
 		{
 			tabBackground = tabs[id].getChildAt(0);
@@ -932,8 +928,10 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 			
 			switch(playMode) {
 			case PLAY_EDIT:		
-				delSelectObj[id] = new delIcon();
-				selectMap.addChild(delSelectObj[id].getCloseObj());
+				if(editLevelData == _levelData) {	//del box only for "custom levels", NOT for "LOAD" button
+					delSelectObj[id] = new delIcon();
+					selectMap.addChild(delSelectObj[id].getCloseObj());
+				}
 				break;
 			case PLAY_DEMO:
 				setDemoLevelInfo(selectMap, level);	
@@ -955,11 +953,15 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 	
 			canvas2.width  = SELECT_SIZE_X;
 			canvas2.height = SELECT_SIZE_Y;
-	
-			var index = 0;
-			for(var y = 0; y < NO_OF_TILES_Y; y++) {
-				for(var x = 0; x < NO_OF_TILES_X; x++) {
-					var id = levelMap.charAt(index++);
+
+			//--------------------------------------------
+			// Parser map from right-bottom to left-top
+			// for drop guards if too manys	
+			//--------------------------------------------
+			var index = NO_OF_TILES_Y * NO_OF_TILES_X - 1;
+			for(var y = NO_OF_TILES_Y-1; y >= 0; y--) {
+				for(var x = NO_OF_TILES_X-1; x >= 0; x--) {
+					var id = levelMap.charAt(index--);		
 
 					var curTile;	
 					switch(id) {
@@ -967,27 +969,27 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 					case ' ': //empty
 						continue;
 					case '#': //Normal Brick
-						curTile = new createjs.Bitmap(preload.getResult("brick"));
+						curTile = new createjs.Bitmap(getThemeImage("brick"));
 						break;	
 					case '@': //Solid Brick
-						curTile = new createjs.Bitmap(preload.getResult("solid"));
+						curTile = new createjs.Bitmap(getThemeImage("solid"));
 						break;	
 					case 'H': //Ladder
-						curTile = new createjs.Bitmap(preload.getResult("ladder"));
+						curTile = new createjs.Bitmap(getThemeImage("ladder"));
 						break;	
 					case '-': //Line of rope
-						curTile = new createjs.Bitmap(preload.getResult("rope"));
+						curTile = new createjs.Bitmap(getThemeImage("rope"));
 						break;	
 					case 'X': //False brick
-						curTile = new createjs.Bitmap(preload.getResult("brick"));
+						curTile = new createjs.Bitmap(getThemeImage("brick"));
 						break;
 					case 'S': //Ladder appears at end of level
 						continue;
 					case '$': //Gold chest
-						curTile = new createjs.Bitmap(preload.getResult("gold"));
+						curTile = new createjs.Bitmap(getThemeImage("gold"));
 						break;	
 					case '0': //Guard
-						if(++guardCount > MAX_GUARD) {
+						if(++guardCount > MAX_NEW_GUARD) { 
 							continue;  //too many guard , set this tile as empty
 						}
 						curTile = new createjs.Sprite(guardData, "runLeft");
@@ -1073,7 +1075,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 		{
 			var border = this.getChildAt(0);
 	
-			if(playMode == PLAY_EDIT) {
+			if(playMode == PLAY_EDIT && editLevelData == _levelData) { //del box only for "custom levels", NOT for "LOAD"
 				delSelectObj[this.myId].selectOver();	
 			}
 			
@@ -1086,7 +1088,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 		{
 			var border = this.getChildAt(0);
 			
-			if(playMode == PLAY_EDIT) {
+			if(playMode == PLAY_EDIT && editLevelData == _levelData) { //del box only for "custom levels", NOT for "LOAD"
 				if(this.myId < delSelectObj.length)	delSelectObj[this.myId].selectOut();	
 				////else debug("mouse out: select deleted");
 			}
@@ -1246,7 +1248,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 			}
 			
 			//(3) shift or delete playInfo of user created
-			playData = 3;
+			playData = PLAY_DATA_USERDEF;
 			if(editLevels > 0) {
 				getModernInfo();
 				if(curLevel == level) {  //play level deleted
@@ -1279,10 +1281,35 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 	
 }
 
+function handleMenuKeyDown(event) 
+{
+	if(!event){ event = window.event; } //cross browser issues exist
+	
+	if(event.shiftKey || event.ctrlKey) return false;
+
+	switch(event.keyCode) {
+	case KEYCODE_UP: 
+		keyAction = ACT_UP;
+		break;
+	case KEYCODE_DOWN: 
+		keyAction = ACT_DOWN;
+		break;
+	case KEYCODE_ENTER:
+		break;	
+	case KEYCODE_ESC:
+		break;	
+	default:
+		keyAction = ACT_UNKNOWN;
+		//debug("keycode = " + code);	
+		break;	
+	}
+	return false;
+}	
+
 //==============
 // select menu
 //==============
-function menuDialog(_titleName, _itemList, _stage, _scale, _closeCallBack, _args)
+function menuDialog(_titleName, _itemList, _stage, _scale, _closeIconEnable, _closeCallBack, _args)
 {
 	var TITLE_TEXT_SIZE = 48 * _scale;
 	var ITEM_TEXT_SIZE = 40 * _scale;
@@ -1326,9 +1353,11 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeCallBack, _args
 	
 	var coverBackgroundObj, background1Obj, background2Obj, menuButtonObj; 
 	var closeIconObj = null;
+	var saveKeyStateObj;
+	var activeItemBackup = _itemList[0].activeItem; //recover menu active item if press ESC or close 
 	
 	init();
-	
+
 	function init()
 	{
 		createText();
@@ -1336,12 +1365,14 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeCallBack, _args
 		creatBackground();
 		createTitle();
 		createItemList();
-		if(_closeCallBack) {
+		if(_closeIconEnable) {
 			closeIconObj = new closeIconClass(startX+menuX, startY, _stage, _scale, CLOSE_ICON_ACTIVE_COLOR, closeBox, null);
 		}
 
 		_stage.enableMouseOver(120);
 		_stage.update();
+		
+		saveKeyStateObj = saveKeyHandler(handleMenuKeyDown);
 	}
 	
 	function coverParentStage()
@@ -1362,15 +1393,15 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeCallBack, _args
 		titleHeight = titleTextObj.getBounds().height;
 		
 		maxItemTextWidth =0;
-		for(var i = 0; i < _itemList.length; i++) {
-			itemText[i] = new createjs.Text(_itemList[i].name, 
+		for(var i = 1; i < _itemList.length; i++) {
+			itemText[i-1] = new createjs.Text(_itemList[i].name, 
 				"bold " + ITEM_TEXT_SIZE + "px Helvetica",ITEM_TEXT_COLOR);
-			textLength = itemText[i].getBounds().width;
+			textLength = itemText[i-1].getBounds().width;
 			if(maxItemTextWidth < textLength) maxItemTextWidth = textLength;
 		}
 		maxItemTextWidth += ITEM_TEXT_SIZE;
 		menuX = (maxItemTextWidth > titleWidth? maxItemTextWidth: titleWidth) + TITLE_TEXT_SIZE * 2;
-		menuY = TITLE_AREA_Y + BOTTOM_AREA_Y + (ITEM_AREA_Y+ITEM_GAP_Y)*_itemList.length; 
+		menuY = TITLE_AREA_Y + BOTTOM_AREA_Y + (ITEM_AREA_Y+ITEM_GAP_Y)*(_itemList.length-1); 
 		
 		startX = (screenX1-menuX)/2|0;
 		startY = (screenY1-menuY)/2|0;
@@ -1430,11 +1461,14 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeCallBack, _args
 			menuButtonObj[i].on('mouseout', buttonMouseOut);			
 			_stage.addChild(menuButtonObj[i]);
 		}
+		buttonActive(menuButtonObj[_itemList[0].activeItem]);
 	}
 
 	function closeBox()
 	{
-		removeAllObj()
+		 _itemList[0].activeItem = activeItemBackup; //recover menu active item
+		restoreKeyHandler(saveKeyStateObj);
+		removeAllObj();
 		if(_closeCallBack) _closeCallBack(_args);
 	}
 	
@@ -1450,18 +1484,19 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeCallBack, _args
 	
 	function buttonClick()
 	{
+		restoreKeyHandler(saveKeyStateObj);
 		removeAllObj();
 		_stage.cursor = 'default';
 		_stage.enableMouseOver(0);
-		if(_itemList[this.myId].activeFun) {
-			_itemList[this.myId].activeFun(this.myId, _args);
+		if(_itemList[_itemList[0].activeItem+1].activeFun) {
+			_itemList[_itemList[0].activeItem+1].activeFun(_itemList[0].activeItem, _args);
 		}
 	}
 	
-	function buttonMouseOver()
+	function buttonActive(buttonObj) 
 	{
-		var border = this.getChildAt(0);
-		var text = this.getChildAt(2);
+		var border = buttonObj.getChildAt(0);
+		var text = buttonObj.getChildAt(2);
 	
 		border.graphics.clear();
 		border.graphics.beginFill(BUTTON_BORDER_COLOR)
@@ -1469,15 +1504,12 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeCallBack, _args
 			maxItemTextWidth+BUTTON_BORDER_SIZE*2, ITEM_AREA_Y+BUTTON_BORDER_SIZE*2,BUTTON_ROUND_RADIUD).endFill();
 
 		text.shadow = new createjs.Shadow(TITLE_TEXT_SHADOW_COLOR, 2, 2, 10 );
-		_stage.cursor = 'pointer';
-		_stage.update();
 	}
 	
-	function buttonMouseOut()
+	function buttonInactive(buttonObj) 
 	{
-		var border = this.getChildAt(0);
-		var text = this.getChildAt(2);
-
+		var border = buttonObj.getChildAt(0);
+		var text = buttonObj.getChildAt(2);
 	
 		border.graphics.clear();
 		border.graphics.beginFill(BUTTON_BACKGROUND_COLOR)
@@ -1485,9 +1517,55 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeCallBack, _args
 			maxItemTextWidth+BUTTON_BORDER_SIZE*2, ITEM_AREA_Y+BUTTON_BORDER_SIZE*2,BUTTON_ROUND_RADIUD).endFill();
 		
 		text.shadow = null;
-		
+	}
+	
+	function buttonMouseOver()
+	{
+		if(this.myId != _itemList[0].activeItem) {
+			buttonInactive(menuButtonObj[_itemList[0].activeItem]);
+			buttonActive(this);
+			_itemList[0].activeItem = this.myId;
+		}
+		_stage.cursor = 'pointer';
+		_stage.update();
+	}
+	
+	function buttonMouseOut()
+	{
 		_stage.cursor = 'default';
 		_stage.update();
+	}
+	
+	function handleMenuKeyDown(event) 
+	{
+		if(!event){ event = window.event; } //cross browser issues exist
+	
+		if(event.shiftKey || event.ctrlKey) return false;
+
+		switch(event.keyCode) {
+		case KEYCODE_UP: 
+			buttonInactive(menuButtonObj[_itemList[0].activeItem]);
+			if(--_itemList[0].activeItem < 0) _itemList[0].activeItem = menuButtonObj.length-1;
+			buttonActive(menuButtonObj[_itemList[0].activeItem]);
+			_stage.update();
+			break;
+		case KEYCODE_DOWN: 
+			buttonInactive(menuButtonObj[_itemList[0].activeItem]);
+			if(++_itemList[0].activeItem > (menuButtonObj.length-1)) _itemList[0].activeItem = 0;
+			buttonActive(menuButtonObj[_itemList[0].activeItem]);
+			_stage.update();
+			break;
+		case KEYCODE_ENTER:
+			buttonClick();	
+			break;	
+		case KEYCODE_ESC:
+			if(closeIconObj != null) closeBox();
+			break;	
+		default:
+			//debug("keycode = " + code);	
+			break;	
+		}
+		return false;
 	}	
 }
 
@@ -1496,103 +1574,234 @@ function mainMenuClose(callbackFun)
 	if(callbackFun) callbackFun();
 }
 
+var playVersionInfo = [
+	{ id:1, verData: classicData,  name: gameVersionName[0], info: classicInfo },
+	{ id:3, verData: proData,      name: gameVersionName[2], info: proInfo },
+	{ id:4, verData: revengeData,  name: gameVersionName[3], info: revengeInfo },
+	{ id:5, verData: fanBookData,  name: gameVersionName[4], info: fanBookInfo },
+	{ id:2, verData: championData, name: gameVersionName[1], info: championInfo }
+];
+
+var customItemInfo = { id:999, name:" Custom Levels " };
+var maxPlayId;
+
+var gameVersionMenuList = [
+	{ activeItem: 0 } //game version menu ID
+];
+
+function initMenuVariable()
+{
+	maxPlayId = 0;
+	
+	for(var i = 0; i < playVersionInfo.length; i++) {
+		//ex: { name: "Classic Lode Runner (150 Levels) ", activeFun: subGameMenu },
+		gameVersionMenuList.push( 
+			{ name: playVersionInfo[i].name + " (" + playVersionInfo[i].verData.length + " Levels) ", 
+			  activeFun: subGameMenu 
+			}
+		);
+		if(maxPlayId < playVersionInfo[i].id) maxPlayId = playVersionInfo[i].id;
+	}
+	gameVersionMenuList.push({name: customItemInfo.name, activeFun: subEditMenu});
+}
+
+function getPlayVerData(id) 
+{
+	for(var i = 0; i < playVersionInfo.length; i++) {
+		if(playVersionInfo[i].id == id) return playVersionInfo[i].verData;
+	}
+	
+	error(arguments.callee.name, "Error: versionData can not find, id = " + id );
+	return playVersionInfo[0].verData;
+}
+
+function getPlayVerInfo(id) 
+{
+	for(var i = 0; i < playVersionInfo.length; i++) {
+		if(playVersionInfo[i].id == id) return playVersionInfo[i].info;
+	}
+	
+	error(arguments.callee.name, "Error: version info can not find, id = " + id );
+	return playVersionInfo[0].info;
+}
+
+function defaultLevelData()
+{
+	return playVersionInfo[0].verData;
+}
+
+function menuIdToPlayData(menuId)
+{
+	if(menuId == playVersionInfo.length) return PLAY_DATA_USERDEF; //user created
+	else if (menuId < playVersionInfo.length) return playVersionInfo[menuId].id;
+	
+	error(arguments.callee.name, "design error, menuId =" + menuId );
+	
+	return playVersionInfo[0].id;
+}
+
+var playDataNameUserDef = "Custom Levels";
+function playDataToTitleName(verId)
+{
+	if(verId == PLAY_DATA_USERDEF) return playDataNameUserDef;
+	
+	for(var i = 0; i < playVersionInfo.length; i++) {
+		if(playVersionInfo[i].id == verId) return playVersionInfo[i].name;
+	}
+	
+	error(arguments.callee.name, "design error, id =" + verId );
+	return "Unknown";
+}
+
 function mainMenu(callbackFun)
+{	
+	menuDialog(" Select Game Version ", gameVersionMenuList, mainStage, tileScale, 0, mainMenuClose, callbackFun);
+}
+
+function gameVersionMenu(id, callbackFun)
 {
-	var mainMenuList = [
-		{ name: "CLASSIC MODE", activeFun: classicMenu },
-		{ name: "TRAINING MODE", activeFun:  modernMenu },
-		{ name: "EDIT MODE", activeFun:  editMenu },
-		{ name: "HELP", activeFun: helpMenu }
+	menuDialog(" Select Game Version ", gameVersionMenuList, mainStage, tileScale, 1, mainMenuClose, callbackFun);
+}
+
+//set main menu id from playData
+function playData2GameVersionMenuId()
+{
+	if(playData == PLAY_DATA_USERDEF) {
+		gameVersionMenuList[0].activeItem = playVersionInfo.length;
+		return gameVersionMenuList[0].activeItem;
+	} else {
+		for(var i = 0; i < playVersionInfo.length; i++) {
+			if(playVersionInfo[i].id == playData) {
+				gameVersionMenuList[0].activeItem = i;
+				return i;
+			}
+		}
+	}
+	
+	error(arguments.callee.name, "design error, value =" + playData );
+	gameVersionMenuList[0].activeItem = 0;
+	return 0;
+
+}
+	
+//=========================================
+// Add menu item if the item is not exist 
+//=========================================
+function addMenuItem(menuList, addItemObj, addPosition) 
+{
+	if(addPosition >= 0) { 
+		menuList.splice(addPosition, 0, addItemObj); //add item to position 
+	} else {
+		menuList.push(addItemObj); //append 
+	}
+}
+
+function gameMenu(callbackFun)
+{
+	var titleName;
+	
+	var demoItemObj = { name: " Demo Mode ",      activeFun: demoPlay };
+	var editPlayItemObj = { name: " Play Mode ",       activeFun: editPlay };	
+
+	var gameMenuList = [
+		{ activeItem: 0 },
+		{ name: " Challenge Mode ", activeFun: classicPlay },
+		{ name: " Training Mode ",  activeFun: modernPlay }, 
+//		{ name: " Demo Mode ",      activeFun: demoPlay }, 
+		{ name: " Change Game Version ",      activeFun: gameVersionMenu } 
 	];
-	
-	if(!noDemoData1 || !noDemoData2 ) { //insert demo mode 6/11/2014
-		mainMenuList.splice(3, 0, { name: "DEMO MODE", activeFun: demoMenu });
-	}	
-	
-	if(typeof callbackFun == "undefined") callbackFun = null;
-	
-	menuDialog("MAIN MENU", mainMenuList, mainStage, tileScale, mainMenuClose, callbackFun);
-}
 
-function classicMenu(id, callbackFun)
-{
-	var classicMenuList = [
-		{ name: LODERUNNER_NAME1, activeFun: classicPlay },
-		{ name: LODERUNNER_NAME2, activeFun:  classicPlay }
-	];
+	var editMenuList = [
+		{ activeItem: 0 },
+		{ name: " Edit Mode",           activeFun: editEdit },
+//		{ name: " Play ",           activeFun: editPlay }, 
+		{ name: " Change Game Version ",      activeFun: gameVersionMenu }    
+	];	
 	
-	if(playMode != PLAY_EDIT) {
-		classicMenuList.push({ name: "High Scores", activeFun: hiScoreDisplay });
+	switch(true) {
+	case (gameVersionMenuList[0].activeItem == playVersionInfo.length):
+		titleName = customItemInfo.name;
+		if(playMode == PLAY_EDIT || playMode == PLAY_TEST) 	editMenuList[0].activeItem = 0; //edit.edit
+		else editMenuList[0].activeItem = 1; // edit.play
+		if(editLevels > 0) addMenuItem(editMenuList,  editPlayItemObj, 2);
+		menuDialog(titleName, editMenuList, mainStage, tileScale, 1, mainMenuClose, callbackFun);	
+		return;
+	case (gameVersionMenuList[0].activeItem < playVersionInfo.length):
+		titleName = playVersionInfo[gameVersionMenuList[0].activeItem].name;
+		//if(!noDemoData[playVersionInfo[gameVersionMenuList[0].activeItem].id-1])	
+		//	addMenuItem(gameMenuList,  demoItemObj, 3);
+		if(playerDemoData.length > 0) addMenuItem(gameMenuList,  demoItemObj, 3);
+		break
+	default:
+		error(arguments.callee.name, "design error, value =" + gameVersionMenuList[0].activeItem );
+		return;	
 	}
 	
-	menuDialog("  CLASSIC MODE  ", classicMenuList, mainStage, tileScale, mainMenu, callbackFun);
+	//set active menu id for play mode
+	switch(playMode) {
+	case PLAY_CLASSIC:
+		gameMenuList[0].activeItem = 0;	
+		break;	
+	case PLAY_MODERN:
+	case PLAY_DEMO_ONCE:
+		gameMenuList[0].activeItem = 1;	
+		break;	
+	case PLAY_DEMO:
+		gameMenuList[0].activeItem = 2;	
+		break;	
+	}
+
+	menuDialog("  " + titleName + "  ", gameMenuList, mainStage, tileScale, 1, mainMenuClose, callbackFun);
+	return;
 }
 
-function modernMenu(id, callbackFun)
+function subGameMenu(id, callbackFun)	
 {
-	var modernMenuList = [
-		{ name: LODERUNNER_NAME1, activeFun: modernPlay},
-		{ name: LODERUNNER_NAME2, activeFun: modernPlay}
-	];
-	if(editLevels > 0) {
-		modernMenuList.push({ name: USER_CREATED_NAME, activeFun: modernPlay}); 
-	}
+	gameVersionMenuList[0].activeItem = id;
+
+	playData = menuIdToPlayData(gameVersionMenuList[0].activeItem);
 	
-	menuDialog(" TRAINING MODE ", modernMenuList, mainStage, tileScale, mainMenu, callbackFun);
-}
-
-function demoMenu(id, callbackFun)
-{
-	var demoMenuList = [];
-	if(!noDemoData1) {
-		demoMenuList.push({ name: LODERUNNER_NAME1, activeFun: demoPlay});
-	}
-	if(!noDemoData2) {
-		demoMenuList.push({ name: LODERUNNER_NAME2, activeFun: demoPlay});
-	}
+	//================================================
+	// get demo data for current playData from server
+	//------------------------------------------------
+	if(demoPlayData != playData) initDemoData();
+	//================================================
 	
-	menuDialog(" DEMO MODE ", demoMenuList, mainStage, tileScale, mainMenu, callbackFun);
+	classicPlay(id, callbackFun); //set as classic mode
 }
 
-
-function editMenu(id, callbackFun)
+function subEditMenu(id, callbackFun)	
 {
-	if(callbackFun != null) callbackFun();
-	disableStageClickEvent();
-	startEditMode();
+	gameVersionMenuList[0].activeItem = id;
+	//menuDialog("  Your Own Levels  ", editMenuList, mainStage, tileScale, 1, mainMenu, callbackFun);
+	editEdit(id, callbackFun); //set as edit mode 
 }
 
-		
 function classicPlay(id, callbackFun)
 {
 	if(callbackFun != null) callbackFun();
 	if(playMode == PLAY_EDIT) canvasReSize();
-	
 	playMode = PLAY_CLASSIC;
-	playData = id+1;
-	
+
+	soundStop(soundDig);
+	soundStop(soundFall);
 	disableStageClickEvent();
 	document.onkeydown = handleKeyDown;
 	setLastPlayMode();
 	selectIconObj.disable(1);
+	demoIconObj.disable(1);
 	initShowDataMsg();
 	startGame();
-}
-
-function hiScoreDisplay(id, callbackFun)
-{
-	//if(callbackFun != null) callbackFun();
-	showScoreTable(0, null, function() { showScoreTable(1, null, callbackFun, 3500);}, 3500);
 }
 
 function modernPlay(id, callbackFun)
 {
 	if(callbackFun != null) callbackFun();
 	if(playMode == PLAY_EDIT) canvasReSize();
-	
 	playMode = PLAY_MODERN;
-	playData = id+1;
 	
+	soundStop(soundDig);
+	soundStop(soundFall);
 	disableStageClickEvent();
 	document.onkeydown = handleKeyDown;
 	setLastPlayMode();
@@ -1606,412 +1815,71 @@ function demoPlay(id, callbackFun)
 	if(playMode == PLAY_EDIT) canvasReSize();
 	
 	playMode = PLAY_DEMO;
-	playData = id+4; //4: DEMO: lode runner 1 , 5: DEMO: lode runner 2
 	
+	soundStop(soundDig);
+	soundStop(soundFall);
+	demoSoundOff = 1; //always sound off when start demo 
 	anyKeyStopDemo();
+	initShowDataMsg();
+	demoIconObj.disable(1);
+	startGame();
+}
+
+function editPlay(id, callbackFun)
+{
+	if(callbackFun != null) callbackFun();
+	if(playMode == PLAY_EDIT) canvasReSize();
+	playMode = PLAY_MODERN;
+	playData = PLAY_DATA_USERDEF;
+	
+	disableStageClickEvent();
+	document.onkeydown = handleKeyDown;
+	setLastPlayMode();
+	selectIconObj.disable(1);
+	demoIconObj.disable(1);
 	initShowDataMsg();
 	startGame();
 }
 
-/*
-function editPlay(id, callbackFun)
+function editEdit(id, callbackFun)
 {
 	if(callbackFun != null) callbackFun();
-	//debug("edit play:" + id);
+	disableStageClickEvent();
+	demoIconObj.disable(1);
+	initShowDataMsg();
+	startEditMode();
 }
-*/
 
-function helpMenu(id, callbackFun)
+function helpMenu(callbackFun)
 {
 	var id = 0;
 	if(playMode == PLAY_EDIT) id = 1;
-	if(playMode == PLAY_DEMO) id = 2;
 	
-	helpObj.showHelp(id, helpMenuClose, callbackFun);
-	//debug("help menu:" + id);
-}
-
-function helpMenuClose(callbackFun)
-{
-	if(callbackFun != null) callbackFun();
-}
-
-
-/////////////////////////////////////////////////////
-
-function mainMenuIconClass( _screenX1, _screenY1, _scale, _mainMenuBitmap)
-{
-	//_scale = _scale*2/3;
-	var border = 4 * _scale + 2;
-	var mainMainCanvas, stage;
-	var	menuIcon, menuBG;
-	var saveStateObj;
-	var mouseOverHandler = null, mouseOutHandler = null, mouseClickHandler = null;
-	
-	var bitmapX = _mainMenuBitmap.getBounds().width * _scale;
-	var bitmapY = _mainMenuBitmap.getBounds().height * _scale;	
-	var self = this;
-	var enabled = 0;
-	
-	init();
-	
-	function init()
-	{
-		createCanvas();
-		createMenuIcon();
-	}
-	
-	this.enable = function ()
-	{
-		if(enabled) return;
-		enabled = 1;
-		disableMouseHandler();
-		enableMouseHandler();
-		menuIcon.set({alpha:1})
-		stage.enableMouseOver(60);
-		stage.update();
-	}
-	
-	this.disable = function (hidden)
-	{
-		disableMouseHandler();
-		if(hidden) {
-			menuIcon.set({alpha:0})
-		} else {
-			menuIcon.set({alpha:1})
-		}
-		stage.update();
-		enabled = 0;
-		stage.enableMouseOver(0);
-	}
-	
-	function enableMouseHandler()
-	{
-		mouseOverHandler = menuIcon.on("mouseover", mouseOver);
-		mouseOutHandler = menuIcon.on("mouseout", mouseOut);
-		mouseClickHandler = menuIcon.on("click", mouseClick);
-	}
-	
-	function disableMouseHandler()
-	{
-		menuIcon.removeEventListener("mouseover", mouseOverHandler);
-		menuIcon.removeEventListener("mouseout", mouseOutHandler);
-		menuIcon.removeEventListener("click", mouseClickHandler);
-		stage.cursor = "default";
-		stage.update();
-	}
-	
-	function createCanvas()
-	{
-		mainMainCanvas = document.createElement('canvas');
-		mainMainCanvas.id     = "main_menu";
-		mainMainCanvas.width  = bitmapX+border*2;
-		mainMainCanvas.height = bitmapY+border*2;
-	
-		var left = (_screenX1 - mainMainCanvas.width - bitmapX/3),
-			top  = (_screenY1 - mainMainCanvas.height - bitmapY/4);
-			//top  = bitmapY/4|0;
-		mainMainCanvas.style.left = left + "px";
-		mainMainCanvas.style.top =  top + "px";
-		mainMainCanvas.style.position = "absolute";
-		document.body.appendChild(mainMainCanvas);
-	}
-	
-	function createMenuIcon()
-	{
-		stage = new createjs.Stage(mainMainCanvas);
-		menuIcon = new createjs.Container();
-		menuBG = new createjs.Shape();
-		
-		menuBG.graphics.beginFill("#fefef1")
-			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
-		menuBG.alpha = 0.05;
-		menuIcon.addChild(menuBG);
-		_mainMenuBitmap.setTransform(border, border, _scale, _scale);
-		menuIcon.addChild(_mainMenuBitmap);
-		
-		menuIcon.set({alpha:0})
-		stage.addChild(menuIcon);
-		stage.update();
-	}
-	function mouseOver()
-	{
-		if(gameState == GAME_PAUSE || 
-		   (gameState != GAME_START && gameState != GAME_RUNNING && playMode != PLAY_EDIT)) return;
-		stage.cursor = "pointer";
-		menuBG.alpha = 1;
-		stage.update();
-	}
-	
-	function mouseOut()
-	{
-		stage.cursor = "default";
-		menuBG.alpha = 0.05;
-		stage.update();
-	}
-	
-	function mouseClick()
-	{
-		if(gameState == GAME_PAUSE || 
-		   (gameState != GAME_START && gameState != GAME_RUNNING && playMode != PLAY_EDIT)) return;
-		saveState();
-		mainMenu(restoreState);
-		mouseOut();
-	}
-
-	function saveState()
-	{
-		saveStateObj = saveKeyHandler(noKeyDown);
-		gamePause();
-		if(playMode == PLAY_EDIT) {
-			if(editLevelModified()) saveTestState();
-			stopEditTicker();
-		} else {
-			stopPlayTicker();
-			stopAllSpriteObj();
-		}
-		self.disable();
-	}
-	
-	function restoreState()
-	{
-		restoreKeyHandler(saveStateObj);
-		if(playMode == PLAY_EDIT) {
-			startEditTicker();
-		} else {
-			startAllSpriteObj();
-			startPlayTicker();
-		}
-		gameResume();
-		self.enable();
+	if(playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) {
+		infoObj.showInfo(demoHelp, callbackFun, null);	
+	} else {
+		helpObj.showHelp(id, callbackFun, null);
 	}
 }
 
-//////////////////////////////////////////////////////////
 function activeSelectMenu(activeFun, postFun)
 {
 	if(playMode == PLAY_EDIT) {
 		var editLevel = testLevelInfo.level> editLevels?0:testLevelInfo.level;
 		
-		selectDialog(USER_CREATED_NAME, checkBitmap, editLevelData, editLevel, screenX1, screenY1, 
+		selectDialog(playDataNameUserDef, checkBitmap, editLevelData, editLevel, screenX1, screenY1, 
 				mainStage, tileScale, activeFun, editSelectMenuClose, postFun)		
 	} else {
-		//var	titleName = (playData==1)?LODERUNNER_NAME1:((playData==2)?LODERUNNER_NAME2:USER_CREATED_NAME);
-	
-		switch(playData) {
-		case 1:
-			titleName = LODERUNNER_NAME1;	
-			break;	
-		case 2:
-			titleName = LODERUNNER_NAME2;	
-			break;	
-		case 3:
-			titleName = USER_CREATED_NAME;	
-			break;	
-		case 4:
-			titleName = "DEMO: " + LODERUNNER_NAME1;	
-			break;	
-		case 5:
-			titleName = "DEMO: " + LODERUNNER_NAME2;	
-			break;	
-		default:
-			titleName = "Unknown";	
-			break;	
-		}
+
+		var titleName = playDataToTitleName(playData);
+		
+		if(playMode == PLAY_DEMO) titleName = "DEMO: " + titleName;
 		
 		selectDialog(titleName, checkBitmap, levelData, curLevel, screenX1, screenY1, 
 				mainStage, tileScale, activeFun, null, postFun)		
 	}
 }		
 
-function selectIconClass( _screenX1, _screenY1, _scale, _bitmap)
-{
-	//_scale = _scale*2/3;
-	var border = 4 * _scale + 2;
-	var selectCanvas, stage;
-	var	selectIcon, selectBG;
-	var saveStateObj;
-	var mouseOverHandler = null, mouseOutHandler = null, mouseClickHandler = null;
-	
-	var bitmapX = _bitmap.getBounds().width * _scale;
-	var bitmapY = _bitmap.getBounds().height * _scale;	
-	var self = this;
-	var enabled = 0;
-	
-	init();
-	
-	function init()
-	{
-		createCanvas();
-		createSelectIcon();
-	}
-	
-	this.enable = function ()
-	{
-		if(enabled) return;
-		enabled = 1;
-		disableMouseHandler();
-		enableMouseHandler();
-		selectIcon.set({alpha:1})
-		stage.enableMouseOver(60);
-		stage.update();
-	}
-	
-	this.disable = function (hidden)
-	{
-		disableMouseHandler();
-		if(hidden) {
-			selectIcon.set({alpha:0})
-		} else {
-			selectIcon.set({alpha:1})
-		}
-		stage.update();
-		enabled = 0;
-		stage.enableMouseOver(0);
-	}
-	
-	function enableMouseHandler()
-	{
-		mouseOverHandler = selectIcon.on("mouseover", mouseOver);
-		mouseOutHandler = selectIcon.on("mouseout", mouseOut);
-		mouseClickHandler = selectIcon.on("click", mouseClick);
-	}
-	
-	function disableMouseHandler()
-	{
-		selectIcon.removeEventListener("mouseover", mouseOverHandler);
-		selectIcon.removeEventListener("mouseout", mouseOutHandler);
-		selectIcon.removeEventListener("click", mouseClickHandler);
-		stage.cursor = "default";
-		stage.update();
-	}
-	
-	function createCanvas()
-	{
-		selectCanvas = document.createElement('canvas');
-		selectCanvas.id     = "select_menu";
-		selectCanvas.width  = bitmapX+border*2;
-		selectCanvas.height = bitmapY+border*2;
-	
-		var left = (_screenX1 - selectCanvas.width - bitmapX/3),
-			top  = bitmapY/4|0;
-			//top  = (_screenY1 - selectCanvas.height - bitmapY/4);
-		selectCanvas.style.left = left + "px";
-		selectCanvas.style.top =  top + "px";
-		selectCanvas.style.position = "absolute";
-		document.body.appendChild(selectCanvas);
-	}
-	
-	function createSelectIcon()
-	{
-		stage = new createjs.Stage(selectCanvas);
-		selectIcon = new createjs.Container();
-		selectBG = new createjs.Shape();
-		
-		selectBG.graphics.beginFill("#fefef1")
-			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
-		selectBG.alpha = 0.05;
-		selectIcon.addChild(selectBG);
-		_bitmap.setTransform(border, border, _scale, _scale);
-		selectIcon.addChild(_bitmap);
-		
-		selectIcon.set({alpha:0})
-		stage.addChild(selectIcon);
-		stage.update();
-	}
-	
-	function mouseOver()
-	{
-		if(gameState == GAME_PAUSE || 
-		   (gameState != GAME_START && gameState != GAME_RUNNING && playMode != PLAY_EDIT)) return;
-		stage.cursor = "pointer";
-		selectBG.alpha = 1;
-		stage.update();
-	}
-	
-	function mouseOut()
-	{
-		stage.cursor = "default";
-		selectBG.alpha = 0.05;
-		stage.update();
-	}
-	
-	function startSelectMenu()
-	{
-		saveState();
-		activeSelectMenu(activeSelectPlay, restoreState);
-		mouseOut();
-	}
-	
-	function mouseClick()
-	{
-		if(gameState == GAME_PAUSE || 
-		   (gameState != GAME_START && gameState != GAME_RUNNING && playMode != PLAY_EDIT)) return;
-		
-		if(playMode == PLAY_EDIT && editLevelModified()) {
-			if(editLevelModified())saveTestState();
-			editConfirmAbortState(startSelectMenu);
-		} else {
-			startSelectMenu();
-		}
-	}
-
-	function activeSelectPlay(level)
-	{
-		//debug("time play:" + level);
-		//if(callbackFun != null) callbackFun();
-		switch(playMode) {
-		case PLAY_EDIT:
-			editSelectLevel(level);
-			break;
-		case PLAY_DEMO:
-			curLevel = level;
-			setDemoInfo();	
-			startGame();
-			break;	
-		case PLAY_MODERN:		
-			curLevel = level;
-			//playMode = PLAY_MODERN;
-			//document.onkeydown = handleKeyDown;
-			//setLastPlayMode();
-			setModernInfo();
-			startGame();
-			break;	
-		default:
-			debug("activeSelectPlay design error ! playMode = " + playMode);
-			break;	
-		}
-	}	
-
-	function saveState()
-	{
-		saveStateObj = saveKeyHandler(noKeyDown);
-		gamePause();
-		if(playMode == PLAY_EDIT) {
-			stopEditTicker();
-		} else {
-			stopPlayTicker();
-			stopAllSpriteObj();
-		}
-		self.disable();
-	}
-	
-	function restoreState()
-	{
-		restoreKeyHandler(saveStateObj);
-		if(playMode == PLAY_EDIT) {
-			startEditTicker();
-		} else {
-			startAllSpriteObj();
-			startPlayTicker();
-		}
-		gameResume();
-		self.enable();
-	}
-}
-
-
-///////////////////////////////////////////////////////
 function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore, 
 						  _returnBitmap, _menuBitmap, _nextBitmap,
 						  _stage, _scale, _callBack)
@@ -2062,7 +1930,7 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 
 	var centerX, xOffset, yOffset;
 
-	var levelScore = 0, goldPoint = 0, guardPoint = 0, timePoint = 0;
+	var levelScore = 0, goldPoint = 0, guardPoint = 0, timePoint = MAX_TIME_COUNT;
 	var countTime = 85, onePointValue = 100, countAddValue = 47;
 	
 	init();
@@ -2088,7 +1956,7 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 		
 		guardTextObj = new createjs.Text("000", ITEM_TEXT_SIZE + "px Helvetica",ITEM_TEXT_COLOR);
 		
-		timeTextObj = new createjs.Text("000", ITEM_TEXT_SIZE + "px Helvetica",ITEM_TEXT_COLOR);
+		timeTextObj = new createjs.Text(("00"+MAX_TIME_COUNT).slice(-3), ITEM_TEXT_SIZE + "px Helvetica",ITEM_TEXT_COLOR);
 		
 		timeNameObj = new createjs.Text("TIME", "bold " + ITEM_TEXT_SIZE + "px Helvetica", TIME_NAME_COLOR);
 		
@@ -2278,19 +2146,19 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 			timeNameObj.alpha = 1;
 			timeTextObj.alpha = 1;
 			soundPlay("scoreBell");
-			if(_time <= 0) {
+			if(_time >= MAX_TIME_COUNT) {
 				endCount = 1;
 			} else {
 				setTimeout(function() { timeScoreCounting(0); }, countTime );
 			}
 		} else {
 			var addCount = countAddValue, endCount = 0;		   
-			if(timePoint + addCount >= _time) {
+			if(timePoint - addCount <= _time) {
 				endCount = 1;
-				addCount = _time - timePoint;
+				addCount = timePoint - _time;
 			}
 			soundPlay("scoreCount");
-			timePoint += addCount;
+			timePoint -= addCount;
 			levelScore += (addCount * onePointValue);
 			timeTextObj.text = ("00" + (timePoint)).slice(-3);
 			scoreTextObj.text = ("00000" + (levelScore)).slice(-6);
@@ -2396,6 +2264,7 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 	}
 	
 }
+
 ////////////////////////////////////////////////////////////
 function yesNoDialog(_txtMsg, _yesBitmap, _noBitmap, _stage, _scale, _callBack)
 {
@@ -2595,6 +2464,3 @@ function yesNoDialog(_txtMsg, _yesBitmap, _noBitmap, _stage, _scale, _callBack)
 		_stage.update();
 	}	
 }
-
-
-

@@ -1,5 +1,5 @@
 
-function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
+function showScoreTable(_playData, _curScoreInfo, _callbackFun, _waitTime)
 {
 	var hiScoreInfo;
 	var canvas2, scoreStage;
@@ -12,7 +12,7 @@ function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
 	
 	function init()
 	{
-		getHiScoreInfo();
+		var haveInfo = getHiScoreInfo();
 		
 		if(_curScoreInfo) {
 			recordId = updateScoreInfo();
@@ -22,13 +22,20 @@ function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
 			}
 		}
 		
+		if(!haveInfo && !_curScoreInfo) {
+			if(_callbackFun) _callbackFun();
+			return; //no score info don't need display 
+		}
+			
 		createCanvas2();
 		createScoreStage();
 		setScoreBackground();
 		drawHiScoreList();
 		scoreStage.update();
 		if(recordId >= 0) {
-			inputHiScoreName();
+			var winner = 0;
+			if('w' in _curScoreInfo) winner = 1;
+			inputHiScoreName(winner);
 		} else {
 			anyKeyHandler();
 			if(typeof _waitTime == "undefined") _waitTime = 3500;
@@ -45,55 +52,30 @@ function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
 	
 	function getHiScoreInfo()
 	{
-		var infoJSON, levelMap;
-	
-		if(_dataId == 1) {
-			infoJSON = getStorage(STORAGE_HISCORE_INFO2);
-		} else {
-			infoJSON = getStorage(STORAGE_HISCORE_INFO1);
-		}
+		var infoJSON = null, levelMap;
+		var rc = 0;
+		
+		infoJSON = getStorage(STORAGE_HISCORE_INFO + _playData);
 		
 		if(infoJSON) {
 			var infoObj = JSON.parse(infoJSON);
 			hiScoreInfo = infoObj;
+			rc = 1;
 		} else {
+			// no score
 			hiScoreInfo = [];
 			for(var i = 0; i < MAX_HISCORE_RECORD; i++) {
 				hiScoreInfo[i] = {s:0 , n:"" , l: 0};
 			}
-			
-			if(_dataId == 1) {
-				hiScoreInfo[0].n = "STEVE JOBS";
-				hiScoreInfo[0].l = 1;
-				hiScoreInfo[0].s = 2500;
-				
-				hiScoreInfo[1].n = "BILL GATES";
-				hiScoreInfo[1].l = 1;
-				hiScoreInfo[1].s = 1500;
-			} else {
-				hiScoreInfo[0].n = "SIMON";
-				hiScoreInfo[0].l = 1;
-				hiScoreInfo[0].s = 3500;
-				
-				hiScoreInfo[1].n = "PETER PAN";
-				hiScoreInfo[1].l = 1;
-				hiScoreInfo[1].s = 2000;
-				 
-				hiScoreInfo[2].n = "DASH PARR"; // The Incredibles. He is the son of Bob Parr and Helen Parr (小飛)
-				hiScoreInfo[2].l = 1;
-				hiScoreInfo[2].s = 1000;
-			}
 		}
+		return rc;
 	}
 	
 	function setHiScoreInfo()
 	{
 		var infoJSON = JSON.stringify(hiScoreInfo);
-		
-		if(_dataId == 1) 
-			setStorage(STORAGE_HISCORE_INFO2, infoJSON); 
-		else
-			setStorage(STORAGE_HISCORE_INFO1, infoJSON); 
+		setStorage(STORAGE_HISCORE_INFO + _playData, infoJSON); 
+	
 	}
 
 	function updateScoreInfo()
@@ -153,7 +135,7 @@ function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
 	
 	function getNameStartPos(nameLength, itemId) 
 	{
-		var x = (4+(MAX_HISCORE_NAME_LENGTH-nameLength)/2)*tileWScale;
+		var x = (3.75+(MAX_HISCORE_NAME_LENGTH-nameLength)/2)*tileWScale;
 		var y = (itemId * 1.2 + 5) * tileHScale;
 		
 		return { x: x, y: y };
@@ -161,16 +143,22 @@ function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
 	
 	function drawHiScoreList()
 	{
-		var title = "LODE RUNNER " + ((_dataId == 1)?"2":"1") + " HIGH SCORES";
+		//var title =  playDataName[_playData-1] + " HIGH SCORES";
+		var title = playDataToTitleName(_playData);
+		var localHighScore = "LOCAL HIGH SCORES";
 		var barTile;
 
-		drawText((NO_OF_TILES_X-title.length)/2*tileWScale, 0.5*tileHScale, title, scoreStage);
+		//title 
+		drawText((NO_OF_TILES_X-title.length)/2*tileWScale, 0*tileHScale, title, scoreStage);
+		drawText((NO_OF_TILES_X-localHighScore.length)/2*tileWScale, 1.5*tileHScale, localHighScore, scoreStage);
 		drawText(0.5*tileWScale, 3*tileHScale, "NO", scoreStage);
-		drawText(7*tileWScale, 3*tileHScale, "NAME", scoreStage);
-		drawText(14.5*tileWScale, 3*tileHScale, "LEVEL  SCORE", scoreStage);
+		drawText(7.75*tileWScale, 3*tileHScale, "NAME", scoreStage);
+		drawText(15.75*tileWScale, 3*tileHScale, "LEVEL", scoreStage);
+		drawText(22*tileWScale, 3*tileHScale, "SCORE", scoreStage);
 
+		//bar 
 		for(var x = 0; x < NO_OF_TILES_X; x++) {
-			barTile = new createjs.Bitmap(preload.getResult("ground"));
+			barTile = new createjs.Bitmap(getThemeImage("ground"));
 			barTile.setTransform(x * tileWScale, 4.5*tileHScale , tileScale, tileScale);
 			scoreStage.addChild(barTile); 
 		}		
@@ -178,14 +166,14 @@ function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
 		for(var i = 0; i < MAX_HISCORE_RECORD; i++) {
 			var pos = getNameStartPos(hiScoreInfo[i].n.length, i);
 			
-			drawText(0.5*tileWScale, pos.y, ("0"+(i+1)).slice(-2) + ".", scoreStage); //no
+			drawText(0.25*tileWScale, pos.y, ("0"+(i+1)).slice(-2) + ".", scoreStage); //no
 			
 			if(hiScoreInfo[i].s > 0) {
 				if(hiScoreInfo[i].n.length > 0) {
 					drawText(pos.x, pos.y, hiScoreInfo[i].n, scoreStage, "D"); //name
 				}
-				drawText(15.5*tileWScale, pos.y, ("00"+hiScoreInfo[i].l).slice(-3), scoreStage); //level
-				drawText(20.5*tileWScale, pos.y, ("000000"+hiScoreInfo[i].s).slice(-7), scoreStage); //score
+				drawText(16.75*tileWScale, pos.y, ("00"+hiScoreInfo[i].l).slice(-3), scoreStage); //level
+				drawText(21*tileWScale, pos.y, ("000000"+hiScoreInfo[i].s).slice(-7), scoreStage); //score
 			}
 		}
 	}
@@ -208,25 +196,29 @@ function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
 		document.onkeydown = savedKeyDownHander;
 	}			
 	
-	function inputHiScoreName() 
+	function inputHiScoreName(winner) 
 	{
 		var name, nameText;
 		var curPos = 0;
 		var savedKeyDownHander, hiScoreTicker;
 		var cursor;
 
+		if(winner) endingMusicPlay(); //6/15/2015, play ending music for winner
 		initInput();
 		
 		function initInput()
 		{
-			name = []; //array of char 
+			curPos = playerName.length;
+			name = playerName.split(""); //string to array;
 			nameText = []; //text object
 			
-			var pos = getNameStartPos(0, recordId);
+			var pos = getNameStartPos(name.length, recordId);
 			cursor = new createjs.Sprite(textData, "FLASH");
 			cursor.setTransform(pos.x-tileWScale/2, pos.y , tileScale, tileScale);
 			scoreStage.addChild(cursor);
 			
+			//copyPlayerName();
+			redrawName();
 			changeKeyDownHandler();
 			hiScoreTicker = createjs.Ticker.on("tick", scoreStage);	
 		}
@@ -237,22 +229,27 @@ function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
 			document.onkeydown = handleHiScoreName;
 		}
 		
-		function cutTailSpace()
+		function inputFinish(async)
 		{
+			if(winner) endingMusicStop(); //6/15/2015, stop ending music
+			
+			//cut tail space
 			for(var i = name.length-1; i >= 0; i--) {
 				if(name[i] == " ") name.splice(i,1);
 				else break;
 			}
-		}
-		
-		function inputFinish()
-		{
-			cutTailSpace();
+			
+			var nameString = name.join(""); //array to string
 			redrawName();
 			
 			//update name for score info  
-			hiScoreInfo[recordId].n = array2String(name);
+			hiScoreInfo[recordId].n = nameString;
 			setHiScoreInfo();
+			
+			if(nameString != playerName && nameString != "???") { //set and save playerName 
+				playerName = nameString;
+				setPlayerName(nameString);     
+			}
 
 			//remove cursor
 			scoreStage.removeChild(cursor);
@@ -267,21 +264,12 @@ function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
 			for(var i = 0; i < nameText.length; i++) 
 			scoreStage.removeChild(nameText[i]);
 		}
-		
-		function array2String(name)
-		{
-			var nameString = "";
-			for(var i = 0; i < name.length; i++) {
-				nameString += name[i];
-			}
-			return nameString;
-		}
-	
+
 		function redrawName()
 		{
 			var pos = getNameStartPos(name.length, recordId); 
 			removeNameText();
-			nameText = drawText(pos.x, pos.y, array2String(name), scoreStage, "D");
+			nameText = drawText(pos.x, pos.y, name.join(""), scoreStage, "D");
 
 			//change cursor position
 			if(name.length > 0) cursor.x = pos.x + curPos * tileWScale;
@@ -339,6 +327,7 @@ function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
 			case (code == KEYCODE_ENTER): //ENTER
 				if(name.length > 0) inputFinish(true);	//async
 				else soundPlay("beep");	
+				break;	
 			default:
 				//debug(code);	
 				if(code > 32) soundPlay("beep"); //wrong key code	
@@ -348,5 +337,196 @@ function showScoreTable(_dataId, _curScoreInfo, _callbackFun, _waitTime)
 			redrawName();
 			return false;
 		}
+	}
+}
+ 
+function inputPlayerName(_stage, _callbackFun) 
+{
+	var constString = "PLAYER NAME:"
+	var constSize = constString.length;
+	var maxInputSize = MAX_HISCORE_NAME_LENGTH;
+	var borderSize = 2;
+	var totalSizeX = constSize + maxInputSize + borderSize + 1; //+1 flash 
+	var totalSizeY = 3;
+	
+	var inputBoardX = (NO_OF_TILES_X - totalSizeX) / 2;
+	var inputBoardY = (NO_OF_TILES_Y - totalSizeY) / 2;
+	
+	var inputStartX = inputBoardX + constSize + 1;
+	var inputStartY = inputBoardY + 1;
+	
+	var background = new createjs.Shape();
+	var textBorder = new createjs.Shape();
+	var textBackground = new createjs.Shape();
+	
+	background.graphics.beginFill("black").drawRect(0, 0, _stage.canvas.width, _stage.canvas.height).endFill();
+	background.alpha = 0.2;
+	
+	var x = inputBoardX*tileWScale, y = inputBoardY*tileHScale;
+	var w = totalSizeX*tileWScale, h = totalSizeY*tileHScale;
+	var radius = (tileWScale/4)|0;
+	textBorder.graphics.beginFill("#f00").drawRoundRect(x, y, w, h, radius).endFill();
+	textBorder.alpha = 0.6;
+	textBorder.shadow = new  createjs.Shadow("#111", tileWScale/4, tileHScale/4, 10);
+	
+	x = (inputBoardX+0.5)*tileWScale; y = (inputBoardY+0.5)*tileHScale;
+	w = (totalSizeX-1)*tileWScale; h = (totalSizeY-1)*tileHScale;
+	textBackground.alpha = 0.5;
+	textBackground.graphics.beginFill("#111").drawRoundRect(x, y, w, h, radius/2).endFill();
+	
+	_stage.addChild(background, textBorder, textBackground);
+	
+	x = (inputBoardX+1)*tileWScale; y = (inputBoardY+1)*tileHScale;
+	var constObj = drawText(x, y, constString, _stage, "D");
+
+	x = inputStartX*tileWScale; y = inputStartY*tileHScale;
+	inputString(_stage, maxInputSize, x, y, playerName, inputComplete);
+	
+	function inputComplete(string) 
+	{
+		setPlayerName(string);
+		playerName = string;
+		
+		//remove const object
+		for(var i = 0; i < constObj.length; i++) 
+			_stage.removeChild(constObj[i]);
+		
+		//remove textBackground, textBorder & background
+		_stage.removeChild(textBackground, textBorder, background);
+		_stage.update();
+		_callbackFun();
+	}
+}
+ 
+
+function inputString(_stage, _maxSize, _startX, _startY, _defaultString, _callbackFun) 
+{
+	var inputText, inputObj;
+	var curPos = 0;
+	var savedKeyDownHander, hiScoreTicker;
+	var cursor;
+
+	initInput();
+		
+	function initInput()
+	{
+		curPos = _defaultString.length; // cursor start position
+		inputText = _defaultString.split(""); //string to array
+		inputObj = []; //text object
+			
+		cursor = new createjs.Sprite(textData, "FLASH");
+		cursor.setTransform(_startX, _startY, tileScale, tileScale);
+		_stage.addChild(cursor);
+			
+		drawString();
+		changeKeyDownHandler();
+		//hiScoreTicker = createjs.Ticker.on("tick", scoreStage);	
+	}
+		
+	function drawString()
+	{
+		clearStringObj();
+		inputObj = drawText(_startX, _startY, inputText.join(""), _stage, "D");
+
+		//change cursor position
+		cursor.x = _startX + curPos * tileWScale;
+
+		//move cursor to top
+		moveChild2Top(_stage, cursor);
+	}	
+	
+	function clearStringObj()
+	{
+		for(var i = 0; i < inputObj.length; i++) 
+			_stage.removeChild(inputObj[i]);
+	}
+	
+	function changeKeyDownHandler()
+	{
+		savedKeyDownHander = document.onkeydown;
+		document.onkeydown = handleStringInput;
+	}
+	
+	function restoreKeyDownHandler()
+	{
+		document.onkeydown = savedKeyDownHander;
+	}	
+	
+	function handleStringInput(event)
+	{
+		if(!event){ event = window.event; } //cross browser issues exist
+			
+		var code = event.keyCode;
+			
+		if(curPos >= _maxSize && code != KEYCODE_BKSPACE && code != KEYCODE_LEFT && code != KEYCODE_ENTER) 
+		{
+			soundPlay("beep"); //wrong key code	
+			return false;
+		}
+
+		switch(true) {
+		case (code >= 48 && code <= 57): // 0 ~ 9
+			if(curPos == 0) { soundPlay("beep"); break; } //first char except numbers
+			inputText[curPos++] = String.fromCharCode(code);
+			break;	
+		case (code >=65 && code <= 90): // A ~ Z
+		case (code >= 97 && code <= 122): //a ~ z
+			if( code > 90) code -= 32;	
+			inputText[curPos++] = String.fromCharCode(code);
+			break;
+		case (code == KEYCODE_DOT): //'.'		
+			if(curPos == 0) { soundPlay("beep"); break;	} //first char except '.'
+			inputText[curPos++] = ".";
+			break;
+		case (code == KEYCODE_DASH || code == KEYCODE_HYPHEN || code == KEYCODE_SUBTRACT): //'-'
+			if(curPos == 0) { soundPlay("beep"); break;	} //first char except '-'
+			inputText[curPos++] = "-";
+			break;
+		case (code == KEYCODE_SPACE): //space
+			if(curPos == 0) { soundPlay("beep"); break;	} //first char except space
+			inputText[curPos++] = " ";
+			break;
+		case (code == KEYCODE_BKSPACE): //backspace
+			if(curPos == 0) break;
+			inputText.splice(--curPos, 1);
+			break;
+		case (code == KEYCODE_LEFT): //LEFT
+			if(curPos > 0) curPos--;	
+			break;
+		case (code == KEYCODE_RIGHT): //RIGHT
+			if(curPos < inputText.length) curPos++;	
+			break;
+		case (code == KEYCODE_ENTER): //ENTER
+			if(inputText.length > 0) { 
+				inputFinish();
+				return true;
+			} else soundPlay("beep");	
+			break;	
+		default:
+			//debug(code);	
+			if(code > 32) soundPlay("beep"); //wrong key code	
+			break;	
+		}
+			
+		drawString();
+		return false;
+	}
+	
+	function inputFinish()
+	{
+		//cut tail space
+		for(var i = inputText.length-1; i >= 0; i--) {
+			if(inputText[i] == " ") inputText.splice(i,1);
+			else break;
+		}
+		
+		restoreKeyDownHandler();
+
+		//remove cursor
+		clearStringObj();
+		_stage.removeChild(cursor);
+		_stage.update();
+
+		_callbackFun(inputText.join(""));
 	}
 }
