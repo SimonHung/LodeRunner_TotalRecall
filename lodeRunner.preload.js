@@ -420,14 +420,15 @@ function createSoundInstance()
 var spriteSpeed = [
 	{ runnerSpeed: 0.65, guardSpeed: 0.3,  digSpeed: 0.68, fillSpeed: 0.24, xMoveBase: 8, yMoveBase: 8 }, //ver 1
 	{ runnerSpeed: 0.70, guardSpeed: 0.35, digSpeed: 0.68, fillSpeed: 0.27, xMoveBase: 8, yMoveBase: 9 }, //ver 2
-	{ runnerSpeed: 0.8,  guardSpeed: 0.4,  digSpeed: 1,    fillSpeed: 1,    xMoveBase: 8, yMoveBase: 9 }  //ver 3 
+	{ runnerSpeed: 0.8,  guardSpeed: 0.4,  digSpeed: 1,    fillSpeed: 1,    xMoveBase: 8, yMoveBase: 9 }  //ver 3 & 4 
 ];
 
 var curAiVersion = AI_VERSION;
 var maxGuard = MAX_NEW_GUARD; 
 function setSpeedByAiVersion()
 {
-	var speedObj = spriteSpeed[curAiVersion-1];
+	var idx = (curAiVersion > spriteSpeed.length)?(spriteSpeed.length-1):(curAiVersion-1); //array index don't overflow
+	var speedObj = spriteSpeed[idx];
 	
 	RUNNER_SPEED = speedObj.runnerSpeed;
 	GUARD_SPEED = speedObj.guardSpeed;

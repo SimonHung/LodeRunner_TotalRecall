@@ -209,8 +209,25 @@ function guardMoveStep( id, action)
 		}
 		
 		if(action == ACT_IN_HOLE) { //check in hole or still falling
-			if (yOffset < 0) action = ACT_FALL; //still falling
-			else { //fall into hole (yOffset MUST = 0)
+			if (yOffset < 0) {
+				action = ACT_FALL; //still falling
+				
+				//----------------------------------------------------------------------
+				//For AI version >= 4, drop gold before guard failing into hole totally
+				if(curAiVersion >= 4 && curGuard.hasGold > 0) {
+					if(map[x][y-1].base == EMPTY_T) {
+						//drop gold above
+						addGold(x, y-1);
+					} else 
+						decGold(); //gold disappear 
+					curGuard.hasGold = 0;
+				}
+				//----------------------------------------------------------------------
+				
+			} else { //fall into hole (yOffset MUST = 0)
+
+				//----------------------------------------------------------------------
+				//For AI version < 4, drop gold after guard failing into hole totally
 				if( curGuard.hasGold > 0 ) {
 					if(map[x][y-1].base == EMPTY_T) {
 						//drop gold above
@@ -219,6 +236,8 @@ function guardMoveStep( id, action)
 						decGold(); //gold disappear 
 				}
 				curGuard.hasGold = 0;
+				//----------------------------------------------------------------------
+				
 				if( curShape == "fallRight") newShape = "shakeRight";
 				else newShape = "shakeLeft";
 				themeSoundPlay("trap");
@@ -403,6 +422,15 @@ function initStillFrameVariable()
 function initGuardShakeVariable()
 {
 	shakingGuardList = [];
+	
+	//-------------------------------------------------------------------------
+	// Shake time extension when guard in hole,
+	// so the runner can dig three hold for three guards and pass through them. 
+	// The behavior almost same as original lode runner (APPLE-II version).
+	// 2016/06/04
+	//-------------------------------------------------------------------------
+	if(curAiVersion <= 3) shakeTime = [ 36,  3,  3,  3,  3,  3 ]; //for AI VERSION = 3
+	else                  shakeTime = [ 51,  3,  3,  3,  3,  3 ]; //for AI VERSION > 3
 }
 
 function add2GuardShakeQueue(id, shape)

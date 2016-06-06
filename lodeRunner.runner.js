@@ -289,6 +289,9 @@ function runnerMoveStep(action, stayCurrPos )
 	}
 	map[x][y].act = RUNNER_T;
 	
+	//show trap tile if runner fall into the tile, 9/12/2015
+	if(map[x][y].base == TRAP_T) map[x][y].bitmap.set({alpha:0.5}); //show trap tile
+	
 	// Check runner to get gold (MAX MOVE MUST < H4 & W4) 
 	if( map[x][y].base == GOLD_T &&
 		((!xOffset && yOffset >= 0 && yOffset < H4) || 
@@ -321,9 +324,7 @@ function decGold()
 		showHideLaddr();
 		if(runner.pos.y > 0) {
 			if(curTheme == "C64")  soundPlay("goldFinish" + ((curLevel-1)%6+1)); //six sounds
-			else if (playMode == PLAY_MODERN || playMode == PLAY_TEST || playMode == PLAY_DEMO_ONCE) {
-				soundPlay("goldFinish"); //TIME MODE
-			}
+			else soundPlay("goldFinish"); //for all apple2 mode, 9/12/2015
 		}
 	}
 }

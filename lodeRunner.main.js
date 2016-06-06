@@ -37,7 +37,8 @@ var loadingTxt;
 var gameState, lastGameState ;
 var tileScale, xMove, yMove;
 
-var speedMode = [15, 20, 25, 30, 35]; //slow   normal  fast 
+//var speedMode = [15, 20, 25, 30, 35]; //slow   normal  fast 
+var speedMode = [14, 18, 23, 29, 35]; //slow   normal  fast , slow down all speed 6/2/2016
 var speedText = ["VERY SLOW", "SLOW", "NORMAL", "FAST", "VERY FAST"];
 var speed = 2; //normal 
 var demoSpeed = 35;
@@ -992,9 +993,9 @@ function toggleTrapTile()
 		for(var x = 0; x < NO_OF_TILES_X; x++) {
 			if( map[x][y].base == TRAP_T) {
 				if(dspTrapTile) {
-					map[x][y].bitmap.set({alpha:0.5}); //hidden tile
+					map[x][y].bitmap.set({alpha:0.5}); //show trap tile
 				} else {
-					map[x][y].bitmap.set({alpha:1}); //display tile
+					map[x][y].bitmap.set({alpha:1}); //hide trap tile
 				}
 			}
 		}
@@ -1084,7 +1085,22 @@ function gameOverAnimation()
 			.to({scaleY:-tileScale},750)
 			.to({scaleY:tileScale},750)
 			.wait(1500)
-			.call(function(){gameState = GAME_OVER;});
+			.call(function(){ if(gameState == GAME_OVER_ANIMATION) gameState = GAME_OVER;});
+	/* 
+		BUG: 
+		while in PLAY_AUTO MODE and demo dead into the gameOverAnimation() 
+		At this time if player press any key or click mouse will cause 
+		  gameState changed to  "GAME_START" and start play the game,  
+		  and after the TWEEN function into final "call( function() { gameState = GAME_OVER;})"
+		  will cause program orderless and want player record hiscore table 
+		  
+		BUG FIXED:  9/15/2015
+		   if TWEEN complete and into call() func need check gameState MUST = "GAME_OVER_ANIMATION"
+		   
+		==> call(function(){ if(gameState == GAME_OVER_ANIMATION) gameState = GAME_OVER;});   
+		   
+	*/
+	
 	
 	mainStage.addChild(rectBlock);
 	mainStage.addChild(gameOverImage);
@@ -1386,6 +1402,7 @@ var scoreIncValue, finalScore;
 function mainTick(event)
 { 
 	var deltaS = event.delta/1000; 
+	var scoreInfo;
 	
 	switch(gameState) {
 	case GAME_START:
@@ -1464,7 +1481,7 @@ function mainTick(event)
 		break;	
 	case GAME_OVER:
 		////getClassicInfo();
-		var scoreInfo = null;	
+		scoreInfo = null;	
 		if(playMode == PLAY_CLASSIC && !sometimePlayInGodMode) {	
 			//try to set hi-score record
 			//scoreInfo = {s:curScore, l:(curLevel>maxLevel)?curLevel:maxLevel};
@@ -1575,7 +1592,7 @@ function mainTick(event)
 		newLevel();	
 		break;
 	case GAME_WIN:		
-		var scoreInfo = {s:curScore, l: levelData.length, w:1 }; //winner	
+		scoreInfo = {s:curScore, l: levelData.length, w:1 }; //winner	
 		menuIconDisable(1);
 		clearClassicInfo();
 		showScoreTable(playData, scoreInfo , function() { showCoverPage();});	
