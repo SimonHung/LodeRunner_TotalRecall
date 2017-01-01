@@ -194,7 +194,7 @@ function infoMenuClass(_stage, _scale)
 				infoObj[i].type = 'TITLE';	
 				infoObj[i].text = new createjs.Text(infoList[i].contain, 
 				                      "bold " + TITLE_TEXT_SIZE + "px Helvetica",TITLE_TEXT_COLOR);
-				infoObj[i].text.shadow = new createjs.Shadow(TITLE_TEXT_SHADOW_COLOR, 0, 0, 2 );
+				infoObj[i].text.shadow = new createjs.Shadow(TITLE_TEXT_SHADOW_COLOR, 1, 1, 1 );
 				infoObj[i].width = infoObj[i].text.getBounds().width;
 				infoObj[i].height = infoObj[i].text.getBounds().height;
 				menuY += (infoObj[i].height * 3/2|0);	
@@ -489,5 +489,4 @@ function infoMenuClass(_stage, _scale)
 		//add setTimeout just don't cause mouse event (click) cascade!
 		if(callBackFun) setTimeout(function() { callBackFun(callBackArgs);}, 10); 
 	}	
-	
 }

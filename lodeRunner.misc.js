@@ -121,8 +121,6 @@ function soundPlay(name)
 
 function soundStop(name)
 {
-	//if(soundDisable()) return;
-	
 	if(typeof name == "string") {
 		return createjs.Sound.stop(name);
 	} else {
@@ -137,7 +135,7 @@ function soundPause(name)
 	if(typeof name == "string") {
 		return createjs.Sound.pause(name);
 	} else {
-		name.pause();
+		name.paused=true; //SoundJS 0.6.2 API Changed, 8/28/2016 
 	}
 }
 
@@ -148,7 +146,7 @@ function soundResume(name)
 	if(typeof name == "string") {
 		return createjs.Sound.resume(name);
 	} else {
-		name.resume();
+		name.paused=false; //SoundJS 0.6.2 API Changed, 8/28/2016
 	}
 }
 

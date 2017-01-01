@@ -1,6 +1,6 @@
-/////////////////
+//===============
 // Auto Demo 
-/////////////////
+//===============
 
 var demoRecordIdx, demoGoldIdx, demoBornIdx;
 var	demoTickCount;
@@ -10,9 +10,6 @@ function initAutoDemoRnd()
 {
 	demoRnd = [];
 	demoRnd[0] = new rangeRandom(0, demoData1.length-1, 0); //random range 0 .. demoData1.length-1
-/* auto demo data always use demoData1 (because now can select demo levels from demo mode) , 6/12/2014	
-	demoRnd[1] = new rangeRandom(0, demoData2.length-1, 0); //random range 0 .. demoData1.length-2
-*/	
 }
 
 var demoRecord, demoGoldDrop, demoBornPos;
@@ -22,23 +19,12 @@ function getAutoDemoLevel(initValue)
 	if(initValue) {
 		curScore = 0;	
 		runnerLife = 1;
-/* auto demo data always use demoData1 (because now can select demo levels from demo mode) , 6/12/2014		
-		if(playData == PLAY_DATA_2) { //lode runner 2 demo data
-			demoLevel = 1;
-			demoCount = 1;
-			demoMaxCount = 2;
-			demoData = demoData2;
-			levelData = levelData2;
-			demoIdx = 1;
-		} else { //lode runner 1 demo data
-*/		
-			demoLevel = 1;
-			demoCount = 1;
-			demoMaxCount = 3;
-			demoData = demoData1;
-			levelData = playVersionInfo[0].verData;
-			demoIdx = 0;
-//		}
+		demoLevel = 1;
+		demoCount = 1;
+		demoMaxCount = 3;
+		demoData = demoData1;
+		levelData = playVersionInfo[0].verData;
+		demoIdx = 0;
 	} else {
 		demoLevel++;
 		demoCount++;
@@ -128,28 +114,9 @@ function getDemoBornPos()
 // for demo mode (User select level)
 //====================================
 
-//var playerDemoData = [], noDemoData = [];
-//var wDemoData1 = [], wDemoData2 = [], wDemoData3 = [], wDemoData4 = [], wDemoData5 = []; //temp temp temp
-
 var playerDemoData = [], wDemoData = [];
 var demoPlayData = 0; //for syn demo data with current playData
 var demoDataLoading = 0;
-
-/* No used
-function showGameLoading()
-{
-	lastGameState = gameState;	
-	gameState = GAME_LOADING;
-	showTipsText("Loading ...", 0, 3/4); //display "Loading"
-}
-
-function hideGameLoading()
-{
-	gameState = lastGameState;
-	showTipsText("", 100); //clear text
-	//if(playMode == PLAY_MODERN && gameState == GAME_START ) demoIconObj.enable();
-}
-*/
 
 function initDemoData()
 {
@@ -172,46 +139,7 @@ function setDemoData(jsonTxt)
 	}
 	demoDataLoading = 0; 
 	if(playMode == PLAY_MODERN && gameState == GAME_START ) demoIconObj.enable();
-
-	//hideGameLoading();
 }
-
-/*
-function initDemoModeVariable()
-{
-	for(var i = 0; i < maxPlayId; i++) {
-		playerDemoData[i] = [];
-		noDemoData[i] = 1;
-		//wHighScore[i] = [];
-	}
-
-	
-	for(var i = 0; i < wDemoData1.length; i++) { //temp
-		playerDemoData[0][wDemoData1[i].level-1] = wDemoData1[i]; 
-	}
-	
-	for(var i = 0; i < wDemoData2.length; i++) { //temp
-		playerDemoData[1][wDemoData2[i].level-1] = wDemoData2[i]; 
-	}
-	
-	for(var i = 0; i < wDemoData3.length; i++) { //temp
-		playerDemoData[2][wDemoData3[i].level-1] = wDemoData3[i]; 
-	}
-	
-	for(var i = 0; i < wDemoData4.length; i++) { //temp
-		playerDemoData[3][wDemoData4[i].level-1] = wDemoData4[i]; 
-	}
-	
-	for(var i = 0; i < wDemoData5.length; i++) { //temp
-		playerDemoData[4][wDemoData5[i].level-1] = wDemoData5[i]; 
-	}
-	
-	for(var i = 0; i < maxPlayId; i++) {
-		if(playerDemoData[i].length > 0) noDemoData[i] = 0; 
-	}
-}
-*/
-
 
 function initDemoInfo()
 {
@@ -289,7 +217,6 @@ function getNextDemoLevel()
 function curDemoLevelIsVaild()
 {
 	if(playData == PLAY_DATA_USERDEF) return 0;
-	//return (typeof playerDemoData[playData-1][curLevel-1] != "undefined");
 	return (typeof playerDemoData[curLevel-1] != "undefined");
 }
 
@@ -334,28 +261,6 @@ function respUpdatePlayerDemoData(jsonTxt)
 		error(arguments.callee.name, "Wrong resp Data: " + jsonTxt);
 	}
 }
-
-/*
-function updatePlayerDemoData(playData, demoDataInfo)
-{
-	var updateDemoData = playerDemoData[playData-1];
-	var level = demoDataInfo.level;
-	
-	if(updateDemoData == null) updateDemoData = [];
-	
-	updateDemoData[level-1] = { 
-		level: demoDataInfo.level, 
-		ai: demoDataInfo.ai, 
-		time: demoDataInfo.time, 
-		state: demoDataInfo.state,
-		action: demoDataInfo.action,
-		goldDrop: demoDataInfo.goldDrop,
-		bornPos: demoDataInfo.bornPos,
-		godMode: demoDataInfo.godMode
-	};
-	noDemoData[playData-1] = 0;
-}
-*/
 
 //==============================
 // Record play action for demo
@@ -409,6 +314,7 @@ function saveKeyCode(code, keyAction)
 function recordModeDump(state)
 {
 	recordPlayTime(state);
+	remapActionKey();
 	convertBornPos();
 	dumpRecord();
 }
@@ -481,11 +387,6 @@ var recordIdx;
 function recordPlayDemo()
 {
 	if(recordIdx < playRecord.length) {
-		/*
-		if(playRecord[recordIdx].count == recordCount) {
-			loadingTxt.text = recordIdx;
-			pressKey(playRecord[recordIdx++].code);
-		}*/
 		if(playRecord[recordIdx*2] == recordCount) {
 			//loadingTxt.text = recordIdx;  //for debug
 			pressKey(playRecord[recordIdx*2+1]);
@@ -526,6 +427,31 @@ function recordPlayTime(state)
 {
 	playRecordTime = recordCount;
 	recordState = (state == GAME_FINISH)?1:0; //finish or dead
+}
+
+var actionKeyMapping = [
+	[ KEYCODE_A, KEYCODE_LEFT],  //move left
+	[ KEYCODE_D, KEYCODE_RIGHT], //move right
+	[ KEYCODE_W, KEYCODE_UP],    //move up
+	[ KEYCODE_S, KEYCODE_DOWN],  //move down
+	[ KEYCODE_Q, KEYCODE_Z],     //dig left
+	[ KEYCODE_E, KEYCODE_X],     //dig right
+	[ KEYCODE_COMMA, KEYCODE_Z], //dig left
+	[ KEYCODE_PERIOD, KEYCODE_X] //dig right
+];
+
+//Remap action key to orignal "left, right, up down and Z, X"
+//for backward compatible
+function remapActionKey()
+{
+	for(var i = 0; i < playRecord.length; i+=2){
+		for(var j = 0; j < actionKeyMapping.length; j++) {
+			if(actionKeyMapping[j][0] == playRecord[i+1]) {
+				playRecord[i+1] = actionKeyMapping[j][1];
+				break;
+			}
+		}
+	}
 }
 
 function convertBornPos()

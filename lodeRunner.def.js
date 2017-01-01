@@ -1,4 +1,4 @@
-var VERSION = "2.11a";
+var VERSION = "2.21c";
 var AI_VERSION = 4;
 
 var NO_OF_TILES_X = 28,
@@ -16,7 +16,7 @@ var BASE_SCREEN_X = (NO_OF_TILES_X * BASE_TILE_X);
 var BASE_SCREEN_Y = (NO_OF_TILES_Y * BASE_TILE_Y + GROUND_TILE_Y + TEXT_TILE_Y);
 
 var MIN_SCALE = 0.5,
-	MAX_SCALE = 2;
+	MAX_SCALE = 3;
 
 var MENU_ICON_X = 40, MENU_ICON_Y = 36, ICON_BORDER = 4;
 var BASE_ICON_X = (MENU_ICON_X + ICON_BORDER * 2);
@@ -52,11 +52,16 @@ var KEYCODE_BKSPACE = 8, //backspace
 	
 	KEYCODE_A = 65, //'A'
 	KEYCODE_C = 67, //'C'
+	KEYCODE_D = 68, //'D'
+	KEYCODE_E = 69, //'E'
 	KEYCODE_G = 71, //'G'	
+	KEYCODE_H = 72, //'H'
+	KEYCODE_Q = 81, //'Q'
 	KEYCODE_R = 82, //'R'
 	KEYCODE_S = 83, //'S'
 	KEYCODE_T = 84, //'T'
-	KEYCODE_V = 86; //'V'
+	KEYCODE_V = 86, //'V'
+	KEYCODE_W = 87; //'W'
 
 var	KEYCODE_0 = 48,
 	KEYCODE_1 = 49,
@@ -179,5 +184,7 @@ var STORAGE_PLAYER_NAME = "loderunner_player";
 var STORAGE_UID = "loderunner_uid";
 
 var STORAGE_THEME_MODE = "loderunner_theme";
+var STORAGE_THEME_COLOR = "loderunner_color_";
 
 var STORAGE_REPEAT_ACTION = "loderunner_actRepeat";
+var STORAGE_GAMEPAD_MODE = "loderunner_gamepadMode";

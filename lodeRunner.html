@@ -2,9 +2,9 @@
 <html>
 <head>
 	<title>Lode Runner Web Game</title>
-	<!-- DON'T FORGET TO MODIFY *.web.html
-	* ============================================================================= 
-	* Lode Runner (超級運動員) - APPLE-II version
+	<!--
+	* =================================================================================== 
+	* Lode Runner (超級運動員) - APPLE II & C64 version
 	*
 	* This program is a HTML5 remake game.
 	*
@@ -15,10 +15,11 @@
 	* http://www.kingstone.com.tw/book/book_page.asp?kmcode=2014710650538
 	* http://www.amazon.co.jp/Lode-Runnerで学ぶ実践C言語-ビー・エヌ・エヌ企画部/dp/4893690116
 	* 
-	* Source Code: https://github.com/SimonHung/LodeRunner
+	* Source Code: https://github.com/SimonHung/LodeRunner_TotalRecall
+	* Web page: http://LodeRunnerWebGame.com
 	*
-	* by Simon Hung 06/20/2014, 11/23/2014, 06/29/2015 (http://simonsays-tw.com)
-	* ============================================================================= 
+	* by Simon Hung 06/20/2014, 11/23/2014, 06/29/2015, 09/28/2016
+	* =================================================================================== 
 	-->
 	<meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="chrome=1, IE=edge">
@@ -28,10 +29,10 @@
 	<style>#canvas { position:absolute; left:0; top:0; }</style>
 
 	<script type="text/javascript" src="lodeRunner.wData.js"></script>
-	
-	<script type="text/javascript" src="./lib/preloadjs-0.6.0.min.js"></script>
-	<script type="text/javascript" src="./lib/soundjs-0.6.0.min.js"></script>
-	<script type="text/javascript" src="./lib/tweenjs-0.6.0.min.js"></script>
+
+	<script type="text/javascript" src="./lib/preloadjs-0.6.2.min.js"></script>
+	<script type="text/javascript" src="./lib/soundjs-0.6.2.min.js"></script>
+	<script type="text/javascript" src="./lib/tweenjs-0.6.2.min.js"></script>
 	<script type="text/javascript" src="./lib/easeljs-0.7.1.min.js"></script>
 	
 	<script type="text/javascript" src="flag32Id.js"></script>
@@ -57,9 +58,11 @@
 	<script type="text/javascript" src="lodeRunner.demoData1.js"></script>
 	<script type="text/javascript" src="lodeRunner.edit.js"></script>
 	<script type="text/javascript" src="lodeRunner.preload.js"></script>
+	<script type="text/javascript" src="lodeRunner.colorTheme.js"></script>
+	<script type="text/javascript" src="lodeRunner.colorSelector.js"></script>
+	<script type="text/javascript" src="lodeRunner.gamepad.js"></script>
 	<script type="text/javascript" src="lodeRunner.main.js"></script>
 	<script type="text/javascript" src="lodeRunner.win.js"></script>
-	
 </head>
 <body onload="init();">	
 <div class="canvas">

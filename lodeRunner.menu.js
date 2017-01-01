@@ -20,8 +20,9 @@ function helpMenuClass(_stage, _bitmap, _editBitmap, _scale)
 	var HELP_BORDER_SIZE = 24;
 	
 	var saveStateObj;
-	var stage, helpBitmap = [], bitmapId, scale;
-	var helpBorder, helpBackground; //versionText;
+	var playScale, curScale;
+	var stage, helpBitmap = [], bitmapId;
+	var helpBorder, helpBackground, versionText;
 	var startX, startY, menuX, menuY;
 	var closeBoxSize;
 	var callBackFun, callBackArgs;
@@ -31,14 +32,15 @@ function helpMenuClass(_stage, _bitmap, _editBitmap, _scale)
 	helpBitmap[0] = _bitmap;
 	helpBitmap[1] = _editBitmap;
 	bitmapId = 0;
-	scale = _scale;
+	playScale = _scale;
 
-	this.showHelp = function(id, callback, args)
+	this.showHelp = function(id, callback, scale, args)
 	{
+		curScale = scale;
 		if(typeof args == "undefined") args = null;
 		callBackFun = callback;
 		callBackArgs = args;
-		closeBoxSize = 12*scale+2;
+		closeBoxSize = 12*curScale+2;
 		closeIcon = null;
 		bitmapId = id;
 		
@@ -65,10 +67,10 @@ function helpMenuClass(_stage, _bitmap, _editBitmap, _scale)
 
 	function drawHelpMenu()
 	{
-		var borderSize = HELP_BORDER_SIZE * scale;
+		var borderSize = HELP_BORDER_SIZE * curScale;
 		var halfBorder = borderSize/2;
-		var bitmapW = helpBitmap[bitmapId].getBounds().width * scale;
-		var bitmapH = helpBitmap[bitmapId].getBounds().height * scale;
+		var bitmapW = helpBitmap[bitmapId].getBounds().width * curScale;
+		var bitmapH = helpBitmap[bitmapId].getBounds().height * curScale;
 	
 		menuX = bitmapW + borderSize;
 		menuY = bitmapH + borderSize;
@@ -80,7 +82,9 @@ function helpMenuClass(_stage, _bitmap, _editBitmap, _scale)
 	
 		helpBorder = new createjs.Shape();
 		helpBackground = new createjs.Shape();
-		versionText = new createjs.Text("Ver " + VERSION + "." + AI_VERSION, (16*scale) + "px Helvetica", "#FFF");
+		versionText = new createjs.Text(
+			"Ver " + VERSION + "." + AI_VERSION + "." + playScale
+			, (16*curScale) + "px Helvetica", "#FFF");
 	
 		var helpG = helpBorder.graphics;
 	
@@ -95,7 +99,7 @@ function helpMenuClass(_stage, _bitmap, _editBitmap, _scale)
 			 .drawRoundRect(startX + halfBorder, startY + halfBorder, bitmapW, bitmapH, halfBorder/2).endFill();
 	
 	
-		helpBitmap[bitmapId].setTransform(startX + halfBorder, startY + halfBorder, scale, scale);
+		helpBitmap[bitmapId].setTransform(startX + halfBorder, startY + halfBorder, curScale, curScale);
 		//helpBitmap.set({alpha:0.8});
 	
 		versionText.x = startX + (menuX - versionText.getBounds().width-borderSize); 
@@ -477,13 +481,16 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 	{
 		dialogStage.removeAllChildren();
 		dialogStage.enableMouseOver(0);
+		createjs.Ticker.removeEventListener(dialogStage);
 		document.body.removeChild(canvas1);
 	}		
 	
 	function createDialogStage()
 	{
 		dialogStage = new createjs.Stage(canvas1);
-		dialogStage.enableMouseOver(120);
+		dialogStage.enableMouseOver(60);
+		createjs.Ticker.setFPS(60);
+		createjs.Ticker.addEventListener("tick", dialogStage);
 	}
 	
 	function setBackground()
@@ -526,10 +533,10 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 		var vBorder2 = new createjs.Shape();
 		
 		vBorder1.graphics.beginFill(BORDER1_COLOR)
-			      .drawRect(BORDER1+BORDER2, 0, SLIDE_AREA_X, TOP_BORDER1+TOP_BORDER2).endFill();
+			      .drawRect(BORDER1+BORDER2-1, 0, SLIDE_AREA_X+2, TOP_BORDER1+TOP_BORDER2).endFill();
 		
 		vBorder2.graphics.beginFill(BORDER1_COLOR)
-			      .drawRect(BORDER1+BORDER2, CANVAS_SIZE_Y-BORDER1, SLIDE_AREA_X, BORDER1).endFill();
+			      .drawRect(BORDER1+BORDER2-1, CANVAS_SIZE_Y-BORDER1, SLIDE_AREA_X+2, BORDER1).endFill();
 		
 		border1.addChild(vBorder1, vBorder2);
 		border1.on("mouseover", function() { dialogStage.cursor ="default" });
@@ -547,20 +554,20 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 		
 		vBorder1.graphics.beginFill(BORDER2_COLOR)
 			.drawRect(BORDER1, TOP_BORDER1+TOP_BORDER2, 
-			CANVAS_SIZE_X-2*BORDER1, BORDER2).endFill();
-		
+			CANVAS_SIZE_X-2*BORDER1, BORDER2+1).endFill();
+ 	
 		vBorder2.graphics.beginFill(BORDER2_COLOR)
-			.drawRect(BORDER1+BORDER2, CANVAS_SIZE_Y-BORDER1-BORDER2-1, 
-			CANVAS_SIZE_X-2*(BORDER1+BORDER2),BORDER2+1).endFill();
-		
+			.drawRect(BORDER1, CANVAS_SIZE_Y-BORDER1-BORDER2-1, 
+			CANVAS_SIZE_X-2*(BORDER1)-BORDER2,BORDER2+1).endFill();
+ 	
 		hBorder1.graphics.beginFill(BORDER2_COLOR)
 			.drawRect(BORDER1, TOP_BORDER1+TOP_BORDER2+BORDER2, 
-			BORDER2, CANVAS_SIZE_Y-BORDER1-BORDER2-TOP_BORDER1-TOP_BORDER2).endFill();
-		
+			BORDER2+2, CANVAS_SIZE_Y-BORDER1-BORDER2-TOP_BORDER1-TOP_BORDER2).endFill();
+ 	
 		hBorder2.graphics.beginFill(BORDER2_COLOR)
-			.drawRect(CANVAS_SIZE_X-BORDER1-BORDER2, TOP_BORDER1+TOP_BORDER2+BORDER2, 
-			BORDER2, CANVAS_SIZE_Y-BORDER1-BORDER2-TOP_BORDER1-TOP_BORDER2).endFill();
-		
+			.drawRect(CANVAS_SIZE_X-BORDER1-BORDER2-1, TOP_BORDER1+TOP_BORDER2+BORDER2, 
+			BORDER2+1, CANVAS_SIZE_Y-BORDER1-BORDER2-TOP_BORDER1-TOP_BORDER2).endFill();
+ 	
 		border2.addChild(vBorder1, vBorder2, hBorder1, hBorder2);
 		dialogStage.addChild(border2);
 	}	
@@ -709,36 +716,8 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 			levelLoop:
 			for(var y = 0; y < selectItemY; y++) {
 				for(var x = 0; x < selectItemX; x++) {
-					//var id;
-				
 					if(++id >= pageItems) break levelLoop;
 					createSelectLevel(x, y);
-/*
-					textColor = SELECT_TEXT_COLOR;
-					if(_activeLevel == (level = startLevel+id)) {
-						activeItemY = y;
-						if(activeItemY + SLIDE_ITEM_Y > selectItemY) {
-							activeItemY = selectItemY - SLIDE_ITEM_Y;
-						}
-						textColor = SELECT_TEXT_ACTIVE_COLOR;
-					}
-					
-					selectText[id] = new createjs.Text(("00"+level).slice(-3), SELECT_TEXT_SIZE + "px Arial",
-						textColor);
-					
-					selectText[id].x = (SLIDE_GAP_X*2+SELECT_SIZE_X) * x + SLIDE_GAP_X;
-					selectText[id].y = (SLIDE_GAP_Y*2+SELECT_SIZE_Y) * y + SLIDE_GAP_Y - SELECT_TEXT_SIZE*4/3;
-					slider.addChild(selectText[id]);
-					
-					selectRect[id] = buildSelectMap(level);
-					selectRect[id].x = (SLIDE_GAP_X*2+SELECT_SIZE_X) * x + SLIDE_GAP_X;
-					selectRect[id].y = (SLIDE_GAP_Y*2+SELECT_SIZE_Y) * y + SLIDE_GAP_Y;
-					slider.addChild(selectRect[id]);
-					selectRect[id].on('click', selectClick);
-					selectRect[id].on('mouseover', selectMouseOver);
-					selectRect[id].on('mouseout', selectMouseOut);
-					selectRect[id].myLevel = level;
-*/					
 				}
 			}
 			background.on("mouseover", function() {
@@ -749,7 +728,6 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 			);
 			
 			slider.on("mousedown", function(evt) {
-				//dialogStage.cursor =  "url('cursor/closedhand.cur'), auto";
 				diffY = evt.currentTarget.y - evt.stageY;
 			});
 
@@ -946,14 +924,10 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 		
 		function level2Bitmap(levelMap)
 		{
-			var	canvas2 = document.createElement('canvas');
-			var stage = new createjs.Stage(canvas2);	
 			var container = new createjs.Container();	
 			var guardCount = 0, runner = 0;
+			var bitmap;
 	
-			canvas2.width  = SELECT_SIZE_X;
-			canvas2.height = SELECT_SIZE_Y;
-
 			//--------------------------------------------
 			// Parser map from right-bottom to left-top
 			// for drop guards if too manys	
@@ -969,24 +943,24 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 					case ' ': //empty
 						continue;
 					case '#': //Normal Brick
-						curTile = new createjs.Bitmap(getThemeImage("brick"));
+						curTile = getThemeBitmap("brick");
 						break;	
 					case '@': //Solid Brick
-						curTile = new createjs.Bitmap(getThemeImage("solid"));
+						curTile = getThemeBitmap("solid");
 						break;	
 					case 'H': //Ladder
-						curTile = new createjs.Bitmap(getThemeImage("ladder"));
+						curTile = getThemeBitmap("ladder");
 						break;	
 					case '-': //Line of rope
-						curTile = new createjs.Bitmap(getThemeImage("rope"));
+						curTile = getThemeBitmap("rope");
 						break;	
 					case 'X': //False brick
-						curTile = new createjs.Bitmap(getThemeImage("brick"));
+						curTile = getThemeBitmap("brick");
 						break;
 					case 'S': //Ladder appears at end of level
 						continue;
 					case '$': //Gold chest
-						curTile = new createjs.Bitmap(getThemeImage("gold"));
+						curTile = getThemeBitmap("gold");
 						break;	
 					case '0': //Guard
 						if(++guardCount > MAX_NEW_GUARD) { 
@@ -1007,8 +981,10 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 					container.addChild(curTile); 
 				}
 			}	
-			container.cache(0, 0, canvas2.width, canvas2.height);
-			return (new createjs.Bitmap( container.getCacheDataURL()));
+			container.cache(0, 0, SELECT_SIZE_X, SELECT_SIZE_Y);
+			bitmap = new createjs.Bitmap( container.getCacheDataURL());
+			container.removeAllChildren();
+			return bitmap;
 		}
 		
 		//for demo mode
@@ -1350,7 +1326,6 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeIconEnable, _cl
 	var menuX, menuY;
 	var startX, startY;
 	
-	
 	var coverBackgroundObj, background1Obj, background2Obj, menuButtonObj; 
 	var closeIconObj = null;
 	var saveKeyStateObj;
@@ -1469,6 +1444,7 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeIconEnable, _cl
 		 _itemList[0].activeItem = activeItemBackup; //recover menu active item
 		restoreKeyHandler(saveKeyStateObj);
 		removeAllObj();
+		_stage.enableMouseOver(0);
 		if(_closeCallBack) _closeCallBack(_args);
 	}
 	
@@ -1681,7 +1657,6 @@ function playData2GameVersionMenuId()
 	error(arguments.callee.name, "design error, value =" + playData );
 	gameVersionMenuList[0].activeItem = 0;
 	return 0;
-
 }
 	
 //=========================================
@@ -1728,8 +1703,6 @@ function gameMenu(callbackFun)
 		return;
 	case (gameVersionMenuList[0].activeItem < playVersionInfo.length):
 		titleName = playVersionInfo[gameVersionMenuList[0].activeItem].name;
-		//if(!noDemoData[playVersionInfo[gameVersionMenuList[0].activeItem].id-1])	
-		//	addMenuItem(gameMenuList,  demoItemObj, 3);
 		if(playerDemoData.length > 0) addMenuItem(gameMenuList,  demoItemObj, 3);
 		break
 	default:
@@ -1858,7 +1831,7 @@ function helpMenu(callbackFun)
 	if(playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) {
 		infoObj.showInfo(demoHelp, callbackFun, null);	
 	} else {
-		helpObj.showHelp(id, callbackFun, null);
+		helpObj.showHelp(id, callbackFun, tileScale, null);
 	}
 }
 
@@ -2056,9 +2029,7 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 		hiScoreTextObj.y = yOffset;
 		_stage.addChild(hiScoreNameObj, hiScoreTextObj);
 		
-		
 		yOffset += (ITEM_TEXT_SIZE + buttonY); //xOffset for menu button
-		
 	}
  	
 	function updateHiScore()
@@ -2098,10 +2069,11 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 				setTimeout(function() { goldScoreCounting(0); }, countTime );
 			}
 		}
-		_stage.update();
+
 		if(endCount) {
 			setTimeout(function() { guardScoreCounting(1); }, countTime*4);
 		}
+		_stage.update();
 	}
 	
  	function guardScoreCounting(firstTime)
@@ -2133,10 +2105,11 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 				setTimeout(function() { guardScoreCounting(0); }, countTime );
 			}
 		}
-		_stage.update();
+
 		if(endCount) {
 			setTimeout(function() { timeScoreCounting(1); }, countTime*4 );
 		}
+		_stage.update();
 	}
 	
  	function timeScoreCounting(firstTime)
@@ -2168,6 +2141,7 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 				setTimeout(function() { timeScoreCounting(0); }, countTime );
 			}
 		}
+		
 		if(endCount) {
 			soundPlay("scoreEnding");
 			setTimeout(function() { createButton(); }, 100 );
@@ -2265,7 +2239,6 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 	
 }
 
-////////////////////////////////////////////////////////////
 function yesNoDialog(_txtMsg, _yesBitmap, _noBitmap, _stage, _scale, _callBack)
 {
 	var TEXT_MSG_SIZE = 48 * _scale;

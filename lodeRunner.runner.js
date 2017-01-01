@@ -172,8 +172,14 @@ function runnerMoveStep(action, stayCurrPos )
 		var holdOnBar = 0;
 		if(curToken == BAR_T) {
 			if( yOffset < 0) holdOnBar = 1;
-			else if(action == ACT_DOWN && y < maxTileY && map[x][y+1].act != LADDR_T) {
-				action = ACT_FALL; //shape fixed: 2014/03/27
+			else {
+				//when runner with bar and press down will into falling state 
+				// except "laddr" or "guard" at below, 11/25/2016
+				if(action == ACT_DOWN && y < maxTileY && 
+					map[x][y+1].act != LADDR_T && map[x][y+1].act != GUARD_T) 
+				{
+					action = ACT_FALL;
+				}
 			}
 		}
 		
@@ -341,7 +347,7 @@ function addGold(x, y)
 	var tile;
 	
 	map[x][y].base = GOLD_T;
-	tile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("gold"));
+	tile = map[x][y].bitmap = getThemeBitmap("gold");
 	tile.setTransform(x * tileWScale, y * tileHScale,tileScale, tileScale); //x,y, scaleX, scaleY 
 	mainStage.addChild(tile); 
 	
@@ -656,6 +662,7 @@ function fillComplete(evt, data)
 		if(guard[id].hasGold > 0) { //guard has gold and not fall into the hole
 			decGold(); 
 			guard[id].hasGold = 0;
+			guardRemoveRedhat(guard[id]); //9/4/2016	
 		}
 		guardReborn(x,y);
 		if(playMode == PLAY_CLASSIC || playMode == PLAY_AUTO || playMode == PLAY_DEMO) {	

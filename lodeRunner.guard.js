@@ -221,6 +221,7 @@ function guardMoveStep( id, action)
 					} else 
 						decGold(); //gold disappear 
 					curGuard.hasGold = 0;
+					guardRemoveRedhat(curGuard); //9/4/2016
 				}
 				//----------------------------------------------------------------------
 				
@@ -236,6 +237,7 @@ function guardMoveStep( id, action)
 						decGold(); //gold disappear 
 				}
 				curGuard.hasGold = 0;
+				guardRemoveRedhat(curGuard); //9/4/2016
 				//----------------------------------------------------------------------
 				
 				if( curShape == "fallRight") newShape = "shakeRight";
@@ -359,8 +361,8 @@ function guardMoveStep( id, action)
 	{
 		//curGuard.hasGold = ((Math.random()*26)+14)|0; //14 - 39 
 		curGuard.hasGold = ((Math.random()*26)+12)|0; //12 - 37 change gold drop steps
-		
-		if(playMode == PLAY_AUTO || playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) getDemoGold(curGuard);
+		guardWearRedhat(curGuard); //9/4/2016
+		if(playMode == PLAY_AUTO || playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) 	getDemoGold(curGuard);
 		if(recordMode) processRecordGold(curGuard);
 		removeGold(x, y);
 		//debug ("get, (x,y) = " + x + "," + y + ", offset = " + xOffset); 
@@ -368,6 +370,18 @@ function guardMoveStep( id, action)
 
 	//check collision again 
 	//checkCollision(runner.pos.x, runner.pos.y);
+}
+
+//meanings: guard with gold
+function guardWearRedhat(guard)
+{
+	if(redhatMode) guard.sprite.spriteSheet = redhatData;
+}
+
+//meanings: guard without gold
+function guardRemoveRedhat(guard) 
+{
+	if(redhatMode) guard.sprite.spriteSheet = guardData;
 }
 
 function dropGold(id) 
@@ -381,7 +395,7 @@ function dropGold(id)
 		curGuard.hasGold--; // count > 1,  don't drop it only decrease count 
 		//loadingTxt.text = "(" + id + ") = " + curGuard.hasGold;
 		break;	
-	case (curGuard.hasGold == 1):
+	case (curGuard.hasGold == 1): //drop gold
 		var x = curGuard.pos.x, y = curGuard.pos.y;
 		
 		if(map[x][y].base == EMPTY_T && ( y >= maxTileY ||
@@ -391,6 +405,7 @@ function dropGold(id)
 			addGold(x,y);
 			curGuard.hasGold = -1; //for record play action always use value = -1
 			//curGuard.hasGold =  -(((Math.random()*10)+1)|0); //-1 ~ -10; //waiting time for get gold
+			guardRemoveRedhat(curGuard); //9/4/2016	
 			drop = 1;
 		}
 		break;	
@@ -399,6 +414,7 @@ function dropGold(id)
 		//loadingTxt.text = "(" + id + ") = " + curGuard.hasGold;
 		break;	
 	}
+	return drop;
 }
 
 
@@ -407,7 +423,7 @@ function dropGold(id)
 //=============================================
 var DEBUG_TIME = 0;
 var shakeRight  = [  8,  9, 10,  9, 10,  8 ];
-var shakeLeft   = [ 19, 20, 21, 20, 21, 19 ];
+var shakeLeft   = [ 30, 31, 32, 31, 32, 30 ];
 var shakeTime   = [ 36,  3,  3,  3,  3,  3 ];
 
 var shakingGuardList = [];
@@ -907,7 +923,7 @@ function setRunnerDead()
 //===============================================
 // BEGIN NEW FOR REBORN (ai version >= 3)
 //===============================================
-var rebornFrame = [ 17, 18 ];
+var rebornFrame = [ 28, 29 ];
 var rebornTime  = [  6,  2 ];
 
 var rebornGuardList = [];
@@ -943,13 +959,11 @@ function processReborn()
 				curGuard.sprite.gotoAndStop(rebornFrame[curGuard.curFrameIdx]);
 			} else {
 				//reborn 
-				
 				var id = rebornGuardList[i];
 				rebornGuardList.splice(i, 1); //remove from list
 				rebornComplete(id);
 				continue;
 			}
-				
 		}
 		i++;
 	}

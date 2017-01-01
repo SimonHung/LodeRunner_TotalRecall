@@ -1,3 +1,4 @@
+var inputNameState = 0;
 
 function showScoreTable(_playData, _curScoreInfo, _callbackFun, _waitTime)
 {
@@ -143,7 +144,6 @@ function showScoreTable(_playData, _curScoreInfo, _callbackFun, _waitTime)
 	
 	function drawHiScoreList()
 	{
-		//var title =  playDataName[_playData-1] + " HIGH SCORES";
 		var title = playDataToTitleName(_playData);
 		var localHighScore = "LOCAL HIGH SCORES";
 		var barTile;
@@ -158,7 +158,7 @@ function showScoreTable(_playData, _curScoreInfo, _callbackFun, _waitTime)
 
 		//bar 
 		for(var x = 0; x < NO_OF_TILES_X; x++) {
-			barTile = new createjs.Bitmap(getThemeImage("ground"));
+			barTile = getThemeBitmap("ground");
 			barTile.setTransform(x * tileWScale, 4.5*tileHScale , tileScale, tileScale);
 			scoreStage.addChild(barTile); 
 		}		
@@ -208,6 +208,7 @@ function showScoreTable(_playData, _curScoreInfo, _callbackFun, _waitTime)
 		
 		function initInput()
 		{
+			inputNameState = 1;
 			curPos = playerName.length;
 			name = playerName.split(""); //string to array;
 			nameText = []; //text object
@@ -257,6 +258,8 @@ function showScoreTable(_playData, _curScoreInfo, _callbackFun, _waitTime)
 			
 			createjs.Ticker.off("tick", hiScoreTicker);
 			setTimeout( function() { closeScoreTable(); }, 1500);
+			
+			inputNameState = 0;
 		}
 		
 		function removeNameText()
@@ -277,6 +280,20 @@ function showScoreTable(_playData, _curScoreInfo, _callbackFun, _waitTime)
 
 			//move cursor to top
 			moveChild2Top(scoreStage, cursor);
+		}
+		
+		function nextChar(charValue, nextMode)
+		{
+			if(typeof(charValue) == "undefined")charValue = " ";
+			var code = charValue.charCodeAt(0);
+
+			if(nextMode >=0) code++; else code--;
+			
+			if (code < 65 || code > 90) { //out of A-Z
+				if(nextMode >=0) code = 65;
+				else code= 90;
+			}
+			return String.fromCharCode(code); 
 		}
 		
 		function handleHiScoreName(event)
@@ -323,6 +340,12 @@ function showScoreTable(_playData, _curScoreInfo, _callbackFun, _waitTime)
 				break;
 			case (code == KEYCODE_RIGHT): //RIGHT
 				if(curPos < name.length) curPos++;	
+				break;
+			case (code == KEYCODE_UP): //UP
+				name[curPos] = nextChar(name[curPos], 1);
+				break;
+			case (code == KEYCODE_DOWN): //DOWN
+				name[curPos] = nextChar(name[curPos], -1);
 				break;
 			case (code == KEYCODE_ENTER): //ENTER
 				if(name.length > 0) inputFinish(true);	//async
@@ -410,6 +433,8 @@ function inputString(_stage, _maxSize, _startX, _startY, _defaultString, _callba
 		
 	function initInput()
 	{
+		inputNameState = 1;
+		
 		curPos = _defaultString.length; // cursor start position
 		inputText = _defaultString.split(""); //string to array
 		inputObj = []; //text object
@@ -450,6 +475,20 @@ function inputString(_stage, _maxSize, _startX, _startY, _defaultString, _callba
 	function restoreKeyDownHandler()
 	{
 		document.onkeydown = savedKeyDownHander;
+	}	
+
+	function nextChar(charValue, nextMode)
+	{
+		if(typeof(charValue) == "undefined") charValue = " ";
+		var code = charValue.charCodeAt(0);
+			
+		if(nextMode >=0) code++; else code--;
+			
+		if (code < 65 || code > 90) { //out of A-Z
+			if(nextMode >=0) code = 65;
+			else code= 90;
+		}
+		return String.fromCharCode(code);
 	}	
 	
 	function handleStringInput(event)
@@ -496,6 +535,12 @@ function inputString(_stage, _maxSize, _startX, _startY, _defaultString, _callba
 		case (code == KEYCODE_RIGHT): //RIGHT
 			if(curPos < inputText.length) curPos++;	
 			break;
+		case (code == KEYCODE_UP): //UP
+			inputText[curPos] = nextChar(inputText[curPos], 1);
+			break;
+		case (code == KEYCODE_DOWN): //DOWN
+			inputText[curPos] = nextChar(inputText[curPos], -1);
+			break;
 		case (code == KEYCODE_ENTER): //ENTER
 			if(inputText.length > 0) { 
 				inputFinish();
@@ -528,5 +573,7 @@ function inputString(_stage, _maxSize, _startX, _startY, _defaultString, _callba
 		_stage.update();
 
 		_callbackFun(inputText.join(""));
+		
+		inputNameState = 0;
 	}
 }

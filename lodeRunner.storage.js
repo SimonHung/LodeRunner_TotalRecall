@@ -234,9 +234,9 @@ function getFirstPlayInfo()
 {
 	var firstValue;
 	
-	firstValue =  parseInt(getStorage(STORAGE_FIRST_PLAY));
+	firstValue =  parseFloat(getStorage(STORAGE_FIRST_PLAY));
 	
-	if( isNaN(firstValue) || firstValue < parseInt(VERSION) ) {
+	if( isNaN(firstValue) || firstValue < parseFloat(VERSION) ) {
 		firstPlay = 1; 
 	}
 }
@@ -279,9 +279,6 @@ function addEditLevel(levelMap)
 {
 	if(editLevels >= MAX_EDIT_LEVEL) return false;
 	setEditLevel(++editLevels, levelMap);
-	//setStorage(STORAGE_USER_LEVEL+("00"+(editLevelInfo[editLevels])).slice(-3), levelMap); 	
-	//editLevelData[editLevels] = levelMap;
-	//++editLevels;
 	setEditLevelInfo();
 	
 	return true;
@@ -476,6 +473,48 @@ function setRepeatAction()
 	setStorage(STORAGE_REPEAT_ACTION, repeatAction); 	
 }
 
+//========================
+// Gamepad Enable/Disable
+//========================
+function getGamepadMode()
+{
+	if((gamepadMode = getStorage(STORAGE_GAMEPAD_MODE)) == null)	{
+		gamepadMode = 1; //set default enable
+	} else {
+		gamepadMode = parseInt(gamepadMode)?1:0;
+	}
+	return gamepadMode;
+}
+
+function setGamepadMode()
+{
+	setStorage(STORAGE_GAMEPAD_MODE, gamepadMode); 	
+}
+
+//====================
+// Theme color state
+//====================
+function getThemeColor()
+{
+	var colorId, themeName;
+	
+	for(var i = 0; i < themeNameList.length; i++) {
+		themeName = themeNameList[i];
+		if((colorId = getStorage(STORAGE_THEME_COLOR + themeName)) == null)	{
+			colorId = 0;
+		} else {
+			colorId = parseInt(colorId);
+			if(colorId < 0 || colorId >= maxThemeColor) colorId = 0;
+		}	
+		curColorId[themeName] = colorId;
+	}
+}
+
+function setThemeColor()
+{
+	setStorage(STORAGE_THEME_COLOR + curTheme, curColorId[curTheme]);
+}
+
 //===================
 // Theme state
 //===================
@@ -486,7 +525,6 @@ function getThemeMode()
 		themeName = THEME_APPLE2;
 	}
 	return themeName;
-	
 }
 
 function setThemeMode(themeName)

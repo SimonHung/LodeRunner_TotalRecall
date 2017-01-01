@@ -16,7 +16,7 @@ var SIGNET_UNDER_Y = 30;
 //*********************
 // preload cover page
 //*********************
-var coverBitmap, remakeBitmap, signetBitmap;
+var coverBitmap, titleBackground, remakeBitmap, signetBitmap;
 var helpObj, helpBitmap, editHelpBitmap;
 var mainMenuIconBitmap, mainMenuIconObj;
 var selectIconBitmap, selectIconObj;
@@ -25,17 +25,18 @@ var soundOnIconBitmap, soundOffIconBitmap, soundIconObj;
 var helpIconBitmap, helpIconObj;
 var infoObj, infoIconBitmap, infoIconObj;
 var repeatActionOnIconBitmap, repeatActionOffIconBitmap, repeatActionIconObj;
-var apple2IconBitmap, C64IconBitmap, themeIconObj;
+var apple2IconBitmap, C64IconBitmap, themeIconObj, themeColorObj;
 var checkBitmap;
 var returnBitmap, select1Bitmap, nextBitmap;
 var yesBitmap, noBitmap;
 var coverPageLoad;
+var noCache = "?" + VERSION+ ".1051230";
 
 function showLoadingPage() 
 {
 	var coverPageImages = [
-		{ src: "image/cover.png",  id: "cover" },
-		{ src: themeImagePath + THEME_APPLE2 + "/runner.png",  id: "runner" }
+		{ src: "image/cover.png"+noCache,  id: "cover" },
+		{ src: themeImagePath + THEME_APPLE2 + "/runner.png"+noCache,  id: "runner" }
 	];
 		
 	coverPageLoad = new createjs.LoadQueue(true);
@@ -70,8 +71,19 @@ function showLoadingPage()
 	{
 		coverBitmap = new createjs.Bitmap(image);
 		coverBitmap.setTransform(0, 0, tileScale, tileScale); //x,y, scaleX, scaleY 
+		
+		addTitleBackground(coverBitmap.getBounds().width*tileScale|0,
+		                   coverBitmap.getBounds().height*tileScale|0);
+		
 		mainStage.addChild(coverBitmap);	
 		mainStage.update();	
+	}
+	
+	function addTitleBackground(width, height)
+	{
+		titleBackground = new createjs.Shape();
+		titleBackground.graphics.beginFill("white").drawRect(0, 0, width, height);
+		mainStage.addChild(titleBackground);
 	}
 }
 
@@ -88,22 +100,22 @@ function createRunnerSpriteSheet(runnerImage)
 			runUpDn : [6,7, "runUpDn",  RUNNER_SPEED],
 
 			barRight: {
-				frames: [ 9, 10, 10, 11, 11 ],
+				frames: [ 18, 19, 19, 20, 20 ],
 				next:  "barRight",
 				speed: RUNNER_SPEED
 			},
 
 			barLeft: {
-				frames: [ 12, 13, 13, 14, 14 ],
+				frames: [ 21, 22, 22, 23, 23 ],
 				next:  "barLeft",
 				speed: RUNNER_SPEED
 			},
 					 
-			digRight: 15,
-			digLeft : 16,
+			digRight: 24,
+			digLeft : 25,
 
 			fallRight : 8,
-			fallLeft: 17
+			fallLeft: 26
 		} 
 	});
 }
@@ -114,7 +126,8 @@ function createRunnerSpriteSheet(runnerImage)
 var preload; //preload resource object
 var firstPlay = 0;
 
-var runnerData, guardData;
+var runnerData;
+var guardData = {}, redhatData = {};
 var holeData, holeObj = {};
 var textData;
 var countryFlagData;
@@ -132,114 +145,116 @@ function preloadResource()
 	var percentTxt = new createjs.Text("0", (COVER_PROGRESS_BAR_H* tileScale) + "px Arial", "#FF0000");
 
 	var resource = [
-		{ src: "image/remake.png",  id: "remake" },
-		{ src: "image/signet.png",  id: "signet" },
+		{ src: "image/remake.png"+noCache,  id: "remake" },
+		{ src: "image/signet.png"+noCache,  id: "signet" },
 
-		{ src: themeImagePath + THEME_APPLE2 + "/empty.png",   id: "empty" + THEME_APPLE2 },
-		{ src: themeImagePath + THEME_APPLE2 + "/brick.png",   id: "brick" + THEME_APPLE2  },
-		{ src: themeImagePath + THEME_APPLE2 + "/block.png",   id: "solid" + THEME_APPLE2  },
-		{ src: themeImagePath + THEME_APPLE2 + "/ladder.png",  id: "ladder" + THEME_APPLE2  },
-		{ src: themeImagePath + THEME_APPLE2 + "/rope.png",    id: "rope" + THEME_APPLE2  },
-		{ src: themeImagePath + THEME_APPLE2 + "/trap.png",    id: "trapBrick" + THEME_APPLE2  },
-		{ src: themeImagePath + THEME_APPLE2 + "/hladder.png", id: "hladder" + THEME_APPLE2  },
-		{ src: themeImagePath + THEME_APPLE2 + "/gold.png",    id: "gold" + THEME_APPLE2  },
-		{ src: themeImagePath + THEME_APPLE2 + "/guard1.png",  id: "guard1" + THEME_APPLE2  },
-		{ src: themeImagePath + THEME_APPLE2 + "/runner1.png", id: "runner1" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/empty.png"+noCache,   id: "empty" + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/brick.png"+noCache,   id: "brick" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/block.png"+noCache,   id: "solid" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/ladder.png"+noCache,  id: "ladder" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/rope.png"+noCache,    id: "rope" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/trap.png"+noCache,    id: "trapBrick" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/hladder.png"+noCache, id: "hladder" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/gold.png"+noCache,    id: "gold" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/guard1.png"+noCache,  id: "guard1" + THEME_APPLE2  },
+		{ src: themeImagePath + THEME_APPLE2 + "/runner1.png"+noCache, id: "runner1" + THEME_APPLE2  },
 
-		{ src: themeImagePath + THEME_APPLE2 + "/runner.png",  id: "runner"  + THEME_APPLE2 },
-		{ src: themeImagePath + THEME_APPLE2 + "/guard.png",   id: "guard"  + THEME_APPLE2 },
-		{ src: themeImagePath + THEME_APPLE2 + "/hole.png",    id: "hole"  + THEME_APPLE2 },
-		{ src: themeImagePath + THEME_APPLE2 + "/ground.png",  id: "ground"  + THEME_APPLE2 },
-		{ src: themeImagePath + THEME_APPLE2 + "/over.png",    id: "over"  + THEME_APPLE2 },
-		{ src: themeImagePath + THEME_APPLE2 + "/text.png",    id: "text"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/runner.png"+noCache,  id: "runner"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/guard.png"+noCache,   id: "guard"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/redhat.png"+noCache,  id: "redhat"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/hole.png"+noCache,    id: "hole"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/ground.png"+noCache,  id: "ground"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/over.png"+noCache,    id: "over"  + THEME_APPLE2 },
+		{ src: themeImagePath + THEME_APPLE2 + "/text.png"+noCache,    id: "text"  + THEME_APPLE2 },
 
 		
-		{ src: themeImagePath + THEME_C64 + "/empty.png",   id: "empty" + THEME_C64 },
-		{ src: themeImagePath + THEME_C64 + "/brick.png",   id: "brick" + THEME_C64  },
-		{ src: themeImagePath + THEME_C64 + "/block.png",   id: "solid" + THEME_C64  },
-		{ src: themeImagePath + THEME_C64 + "/ladder.png",  id: "ladder" + THEME_C64  },
-		{ src: themeImagePath + THEME_C64 + "/rope.png",    id: "rope" + THEME_C64  },
-		{ src: themeImagePath + THEME_C64 + "/trap.png",    id: "trapBrick" + THEME_C64  },
-		{ src: themeImagePath + THEME_C64 + "/hladder.png", id: "hladder" + THEME_C64  },
-		{ src: themeImagePath + THEME_C64 + "/gold.png",    id: "gold" + THEME_C64  },
-		{ src: themeImagePath + THEME_C64 + "/guard1.png",  id: "guard1" + THEME_C64  },
-		{ src: themeImagePath + THEME_C64 + "/runner1.png", id: "runner1" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/empty.png"+noCache,   id: "empty" + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/brick.png"+noCache,   id: "brick" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/block.png"+noCache,   id: "solid" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/ladder.png"+noCache,  id: "ladder" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/rope.png"+noCache,    id: "rope" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/trap.png"+noCache,    id: "trapBrick" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/hladder.png"+noCache, id: "hladder" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/gold.png"+noCache,    id: "gold" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/guard1.png"+noCache,  id: "guard1" + THEME_C64  },
+		{ src: themeImagePath + THEME_C64 + "/runner1.png"+noCache, id: "runner1" + THEME_C64  },
 
-		{ src: themeImagePath + THEME_C64 + "/runner.png",  id: "runner"  + THEME_C64 },
-		{ src: themeImagePath + THEME_C64 + "/guard.png",   id: "guard"  + THEME_C64 },
-		{ src: themeImagePath + THEME_C64 + "/hole.png",    id: "hole"  + THEME_C64 },
-		{ src: themeImagePath + THEME_C64 + "/ground.png",  id: "ground"  + THEME_C64 },
-		{ src: themeImagePath + THEME_C64 + "/over.png",    id: "over"  + THEME_C64 },
-		{ src: themeImagePath + THEME_C64 + "/text.png",    id: "text"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/runner.png"+noCache,  id: "runner"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/guard.png"+noCache,   id: "guard"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/redhat.png"+noCache,  id: "redhat"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/hole.png"+noCache,    id: "hole"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/ground.png"+noCache,  id: "ground"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/over.png"+noCache,    id: "over"  + THEME_C64 },
+		{ src: themeImagePath + THEME_C64 + "/text.png"+noCache,    id: "text"  + THEME_C64 },
 		
-		{ src: "image/eraser.png",  id: "eraser" },
+		{ src: "image/eraser.png"+noCache,  id: "eraser" },
 	
-		{ src: "image/help.png",    id: "help" },
-		{ src: "image/editHelp.png",id: "editHelp" },
-		//{ src: "image/demoHelp.png",id: "demoHelp" }, //replace by infoMenu, 5/14/2015
+		{ src: "image/help.png"+noCache,    id: "help" },
+		{ src: "image/editHelp.png"+noCache,id: "editHelp" },
 		
-		{ src: "image/menu.png",    id: "menu" },
-		{ src: "image/select.png",  id: "select" },
-		{ src: "image/check.png",   id: "check" }, //check icon for select menu
+		{ src: "image/menu.png"+noCache,    id: "menu" },
+		{ src: "image/select.png"+noCache,  id: "select" },
+		{ src: "image/check.png"+noCache,   id: "check" }, //check icon for select menu
 		
-		{ src: "image/return.png",  id: "return" },
-		{ src: "image/select1.png", id: "select1" },
-		{ src: "image/next.png",    id: "next" },
+		{ src: "image/return.png"+noCache,  id: "return" },
+		{ src: "image/select1.png"+noCache, id: "select1" },
+		{ src: "image/next.png"+noCache,    id: "next" },
 		
-		{ src: "image/yes.png",     id: "yes" },
-		{ src: "image/no.png",      id: "no" },
+		{ src: "image/yes.png"+noCache,     id: "yes" },
+		{ src: "image/no.png"+noCache,      id: "no" },
 
-		{ src: "image/demo.png",id: "demo" },
+		{ src: "image/demo.png"+noCache,id: "demo" },
 		
-		{ src: "image/soundOn.png",  id: "soundOn" },
-		{ src: "image/soundOff.png", id: "soundOff" },
+		{ src: "image/soundOn.png"+noCache,  id: "soundOn" },
+		{ src: "image/soundOff.png"+noCache, id: "soundOff" },
 		
-		{ src: "image/infoIcon.png", id: "infoIcon" },
-		{ src: "image/helpIcon.png", id: "helpIcon" },
+		{ src: "image/infoIcon.png"+noCache, id: "infoIcon" },
+		{ src: "image/helpIcon.png"+noCache, id: "helpIcon" },
 
-		{ src: "image/repeatOn.png",  id: "repeatOn" },
-		{ src: "image/repeatOff.png", id: "repeatOff" },
+		{ src: "image/repeatOn.png"+noCache,  id: "repeatOn" },
+		{ src: "image/repeatOff.png"+noCache, id: "repeatOff" },
 		
-		{ src: "image/apple2.png",     id: "apple2" },
-		{ src: "image/commodore64.png",id: "C64" },
+		{ src: "image/apple2.png"+noCache,     id: "apple2" },
+		{ src: "image/commodore64.png"+noCache,id: "C64" },
 		
-		{ src: "image/flags32.png",     id: "flag" },
+		{ src: "image/flags32.png"+noCache,     id: "flag" },
 	
-		{ src: themeSoundPath + THEME_APPLE2 + "/born.ogg",    id:"reborn" + THEME_APPLE2},
-		{ src: themeSoundPath + THEME_APPLE2 + "/dead.ogg",    id:"dead" + THEME_APPLE2},
-		{ src: themeSoundPath + THEME_APPLE2 + "/dig.ogg",     id:"dig" + THEME_APPLE2},
-		{ src: themeSoundPath + THEME_APPLE2 + "/getGold.ogg", id:"getGold" + THEME_APPLE2},
-		{ src: themeSoundPath + THEME_APPLE2 + "/fall.ogg",    id:"fall" + THEME_APPLE2},
-		{ src: themeSoundPath + THEME_APPLE2 + "/down.ogg",    id:"down" + THEME_APPLE2},
-		{ src: themeSoundPath + THEME_APPLE2 + "/pass.ogg",    id:"pass" + THEME_APPLE2},
-		{ src: themeSoundPath + THEME_APPLE2 + "/trap.ogg",    id:"trap" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/born.ogg"+noCache,    id:"reborn" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/dead.ogg"+noCache,    id:"dead" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/dig.ogg"+noCache,     id:"dig" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/getGold.ogg"+noCache, id:"getGold" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/fall.ogg"+noCache,    id:"fall" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/down.ogg"+noCache,    id:"down" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/pass.ogg"+noCache,    id:"pass" + THEME_APPLE2},
+		{ src: themeSoundPath + THEME_APPLE2 + "/trap.ogg"+noCache,    id:"trap" + THEME_APPLE2},
 
 		
-		{ src: themeSoundPath + THEME_C64 + "/born.ogg",    id:"reborn" + THEME_C64},
-		{ src: themeSoundPath + THEME_C64 + "/dead.ogg",    id:"dead" + THEME_C64},
-		{ src: themeSoundPath + THEME_C64 + "/dig.ogg",     id:"dig" + THEME_C64},
-		{ src: themeSoundPath + THEME_C64 + "/getGold.ogg", id:"getGold" + THEME_C64},
-		{ src: themeSoundPath + THEME_C64 + "/fall.ogg",    id:"fall" + THEME_C64},
-		{ src: themeSoundPath + THEME_C64 + "/down.ogg",    id:"down" + THEME_C64},
-		{ src: themeSoundPath + THEME_C64 + "/pass.ogg",    id:"pass" + THEME_C64},
-		{ src: themeSoundPath + THEME_C64 + "/trap.ogg",    id:"trap" + THEME_C64},
-		{ src: themeSoundPath + THEME_C64 + "/goldFinish1.ogg",    id:"goldFinish1"},
-		{ src: themeSoundPath + THEME_C64 + "/goldFinish2.ogg",    id:"goldFinish2"},
-		{ src: themeSoundPath + THEME_C64 + "/goldFinish3.ogg",    id:"goldFinish3"},
-		{ src: themeSoundPath + THEME_C64 + "/goldFinish4.ogg",    id:"goldFinish4"},
-		{ src: themeSoundPath + THEME_C64 + "/goldFinish5.ogg",    id:"goldFinish5"},
-		{ src: themeSoundPath + THEME_C64 + "/goldFinish6.ogg",    id:"goldFinish6"},
+		{ src: themeSoundPath + THEME_C64 + "/born.ogg"+noCache,    id:"reborn" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/dead.ogg"+noCache,    id:"dead" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/dig.ogg"+noCache,     id:"dig" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/getGold.ogg"+noCache, id:"getGold" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/fall.ogg"+noCache,    id:"fall" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/down.ogg"+noCache,    id:"down" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/pass.ogg"+noCache,    id:"pass" + THEME_C64},
+		{ src: themeSoundPath + THEME_C64 + "/trap.ogg"+noCache,    id:"trap" + THEME_C64},
+
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish1.ogg"+noCache,    id:"goldFinish1"},
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish2.ogg"+noCache,    id:"goldFinish2"},
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish3.ogg"+noCache,    id:"goldFinish3"},
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish4.ogg"+noCache,    id:"goldFinish4"},
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish5.ogg"+noCache,    id:"goldFinish5"},
+		{ src: themeSoundPath + THEME_C64 + "/goldFinish6.ogg"+noCache,    id:"goldFinish6"},
 		
-		{ src: "sound/goldFinish.ogg",  id:"goldFinish"},
-		{ src: "sound/ending.ogg",      id:"ending"},
-		{ src: "sound/scoreBell.ogg",   id:"scoreBell"},
-		{ src: "sound/scoreCount.ogg",  id:"scoreCount"},
-		{ src: "sound/scoreEnding.ogg", id:"scoreEnding"},
+		{ src: "sound/goldFinish.ogg"+noCache,  id:"goldFinish"},
+		{ src: "sound/ending.ogg"+noCache,      id:"ending"},
+		{ src: "sound/scoreBell.ogg"+noCache,   id:"scoreBell"},
+		{ src: "sound/scoreCount.ogg"+noCache,  id:"scoreCount"},
+		{ src: "sound/scoreEnding.ogg"+noCache, id:"scoreEnding"},
 		
-		{ src: "sound/beep.ogg", id:"beep"},
+		{ src: "sound/beep.ogg"+noCache, id:"beep"},
 		
-		{ src: "cursor/openhand.cur", id:"openHand"}, //preload cursor
-		{ src: "cursor/closedhand.cur", id:"closeHand"}
+		{ src: "cursor/openhand.cur"+noCache, id:"openHand"}, //preload cursor
+		{ src: "cursor/closedhand.cur"+noCache, id:"closeHand"}
 		
 	];	
 	
@@ -293,33 +308,39 @@ function preloadResource()
 	{
 		percentTxt.text = "100%";
 		mainStage.update();
-////		createPreloadSpriteSheet();
+
 		createSoundInstance();
+		createBaseBitmapInstance(); //9/1/2016
 		setTimeout(clearLoadingInfo, 500);
 	}
-	
-/*	
-	function createSoundInstance()
-	{
-		soundFall = createjs.Sound.createInstance("fall"); 
-		soundDig = createjs.Sound.createInstance("dig");
-		soundPass = createjs.Sound.createInstance("pass");
-		
-		soundEnding = createjs.Sound.createInstance("ending");
-		
-	}
-*/
 	
 	function clearLoadingInfo()
 	{
 		mainStage.removeChild(runnerSprite, progress, progressBorder, percentTxt);
+		colorTitleBackground();
 		showSignetBitmap();
 		mainStage.addChild(signetBitmap);
 		showRemakeBitmap();
 		mainStage.addChild(remakeBitmap);
 		mainStage.update();
 	}
-
+	
+	//change title color to rainbow gradient color
+	function colorTitleBackground()
+	{
+		var width = coverBitmap.getBounds().width*tileScale|0;
+	 	var height = coverBitmap.getBounds().height*tileScale|0;
+		
+		//rainbow gradient color
+    	titleBackground.graphics
+		.clear().beginLinearGradientFill(
+			//https://simple.wikipedia.org/wiki/Rainbow
+			["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#8B00FF"], 
+			[0, .14, .28, .42, .56, .70, .84, .98], 
+			0, height/5,width*6/5,height*2/5)
+		.drawRect(0, 0, width, height);
+	}
+	
 	function showSignetBitmap()
 	{
 		var x, y;
@@ -335,7 +356,7 @@ function preloadResource()
 	function showRemakeBitmap()
 	{
 		var x = 372 * tileScale;
-		var y = 128 * tileScale;
+		var y = 130 * tileScale;
 		remakeBitmap = new createjs.Bitmap(preload.getResult("remake"));
 		remakeBitmap.setTransform(x, y, tileScale, tileScale); //x,y, scaleX, scaleY 
 		remakeBitmap.rotation = -5;
@@ -382,6 +403,7 @@ function preloadResource()
 		C64IconBitmap = new createjs.Bitmap(preload.getResult("C64"));
 		themeIconObj = new themeIconClass(screenX1, screenY1, tileScale, apple2IconBitmap, C64IconBitmap);
 
+		themeColorObj = new colorSelectorClass(screenX1, screenY1, tileWScale);
 		checkBitmap = new  createjs.Bitmap(preload.getResult("check"));
 		
 		returnBitmap = new createjs.Bitmap(preload.getResult("return"));
@@ -451,86 +473,31 @@ function setSpeedByAiVersion()
 		maxGuard = MAX_NEW_GUARD;           //change max guard 
 	}
 	
-	themeDataReset(); //4/16/2015
+	themeDataReset(1); //4/16/2015
+	createHoleObj();  //6/27/2016
 }
 
-function themeDataReset()
+function themeDataReset(resetAll)
 {
-	createSoundInstance(); 
-	createSpriteSheet();   //base one theme & Ai Version
-}
-
-function getThemeImage(name) 
-{
-	return preload.getResult(name + curTheme);
-}
-
-function getThemeTileColor()
-{
-	if(curTheme == THEME_APPLE2) return "#0DA1FF"; //APPLE II TILE COLOR
-	else return "#933A4C"; //C64 TILE COLOR
+	if(resetAll) createSoundInstance(); //Base on current theme
+	createSpriteSheet();   //Base on theme & Ai Version
 }
 
 function createSpriteSheet()
 {
 	//createRunnerSpriteSheet(coverPageLoad.getResult("runner"));
-	createRunnerSpriteSheet(getThemeImage("runner"));
+	createRunnerSpriteSheet(getThemeBitmap("runner").image);
 	createPreloadSpriteSheet();
 	createFlagSpriteSheet();
 }
 
 function createPreloadSpriteSheet() 
 {
-	guardData = new createjs.SpriteSheet({
-		images: [getThemeImage("guard")],
+	guardData = createGuardObj("guard");
+	redhatData = createGuardObj("redhat");
 		
-		frames: {regX:0, height: BASE_TILE_Y,  regY: 0, width: BASE_TILE_X},
-		
-		animations: { 
-			runRight: [0,2,  "runRight", GUARD_SPEED], 
-			runLeft : [3,5,  "runLeft",  GUARD_SPEED],
-			runUpDn : [6,7,  "runUpDn",  GUARD_SPEED],
-					 
-			barRight: {
-				frames: [ 11, 12, 12, 13, 13 ],
-				next:  "barRight",
-				speed: GUARD_SPEED
-			},
-				 
-			barLeft: {
-				frames: [ 14, 15, 15, 16, 16 ],
-				next:  "barLeft",
-				speed: GUARD_SPEED
-			},
-
-			reborn: {
-				frames: [ 17, 17, 18 ],
-				speed: GUARD_SPEED
-			},
-
-			fallRight : 8,
-			fallLeft: 19,
-
-			shakeRight: {
-				frames: [ 8, 8, 8, 8, 8, 8, 8,
-				          8, 8, 8, 8, 8, 8,
-				          9, 10, 9, 10, 8 ],
-				next: null,
-				speed: GUARD_SPEED
-			},
-			
-			shakeLeft: {
-				frames: [ 19, 19, 19, 19, 19, 19, 19,
-				          19, 19, 19, 19, 19, 19, 
-				          20, 21, 20, 21, 19],
-				next: null,
-				speed: GUARD_SPEED
-			}
-		}
-	});
-	
 	holeData = new createjs.SpriteSheet( {
-		images: [getThemeImage("hole")],
+		images: [getThemeBitmap("hole").image],
 		
 		frames: [
 			//dig hole Left
@@ -554,9 +521,9 @@ function createPreloadSpriteSheet()
 			[BASE_TILE_X*7,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y*2], //15
 			
 			//fill hole
-			[BASE_TILE_X*8,0,            BASE_TILE_X,BASE_TILE_Y], //16
+			[BASE_TILE_X*7,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y], //16
 			[BASE_TILE_X*8,BASE_TILE_Y,  BASE_TILE_X,BASE_TILE_Y], //17
-			[BASE_TILE_X*8,BASE_TILE_Y*2,BASE_TILE_X,BASE_TILE_Y], //18
+			[BASE_TILE_X*8,0,            BASE_TILE_X,BASE_TILE_Y], //18
 			[BASE_TILE_X*8,BASE_TILE_Y*3,BASE_TILE_X,BASE_TILE_Y]  //19
 		],	
 		
@@ -576,18 +543,8 @@ function createPreloadSpriteSheet()
 		}
 	});
 	
-	holeObj.sprite = new createjs.Sprite(holeData, "digHoleLeft");
-	
-	if(curAiVersion < 3) {
-		holeObj.digLimit = 6; //for check guard is close to runner when digging
-	} else {
-		holeObj.digLimit = 8; //for check guard is close to runner when digging
-	}
-	
-	holeObj.action = ACT_STOP; //no digging 
-
 	textData = new createjs.SpriteSheet({
-		images: [getThemeImage("text")],
+		images: [getThemeBitmap("text").image],
 		
 		frames: {regX:0, height: BASE_TILE_Y,  regY: 0, width: BASE_TILE_X},
 		
@@ -602,7 +559,7 @@ function createPreloadSpriteSheet()
 			"@":40,  //gold
 			"#":41,  //trap
 			"FLASH": { //42 & 43 
-				frames: [42, 42, 42, 43, 43, 43],
+				frames: [42, 42, 43, 43],
 				next: "FLASH",
 				speed: FLASH_SPEED
 			},
@@ -611,6 +568,73 @@ function createPreloadSpriteSheet()
  			"D5": 55, "D6": 56, "D7": 57, "D8": 58, "D9": 59
 		}
 	});
+}
+
+function createGuardObj(imageName)
+{
+	var guard = new createjs.SpriteSheet(
+	{
+		images: [getThemeBitmap(imageName).image],
+		
+		frames: {regX:0, height: BASE_TILE_Y,  regY: 0, width: BASE_TILE_X},
+		
+		animations: { 
+			runRight: [0,2,  "runRight", GUARD_SPEED], 
+			runLeft : [3,5,  "runLeft",  GUARD_SPEED],
+			runUpDn : [6,7,  "runUpDn",  GUARD_SPEED],
+					 
+			barRight: {
+				frames: [ 22, 23, 23, 24, 24 ],
+				next:  "barRight",
+				speed: GUARD_SPEED
+			},
+				 
+			barLeft: {
+				frames: [ 25, 26, 26, 27, 27 ],
+				next:  "barLeft",
+				speed: GUARD_SPEED
+			},
+
+			reborn: {
+				frames: [ 28, 28, 29 ], //if change frame idx, don't forgot change "rebornFrame"
+				speed: GUARD_SPEED
+			},
+
+			fallRight : 8,
+			fallLeft: 30,
+
+			shakeRight: {
+				frames: [ 8, 8, 8, 8, 8, 8, 8,
+				          8, 8, 8, 8, 8, 8,
+				          9, 10, 9, 10, 8 ],
+				next: null,
+				speed: GUARD_SPEED
+			},
+
+			shakeLeft: {
+				frames: [ 30, 30, 30, 30, 30, 30, 30,
+				          30, 30, 30, 30, 30, 30, 
+				          31, 32, 31, 32, 30],
+				next: null,
+				speed: GUARD_SPEED
+			}
+		}
+	});
+	
+	return guard;
+}
+	
+function createHoleObj()
+{
+	holeObj.sprite = new createjs.Sprite(holeData, "digHoleLeft");
+	
+	if(curAiVersion < 3) {
+		holeObj.digLimit = 6; //for check guard is close to runner when digging
+	} else {
+		holeObj.digLimit = 8; //for check guard is close to runner when digging
+	}
+	
+	holeObj.action = ACT_STOP; //no digging 
 }
 
 //=======================================

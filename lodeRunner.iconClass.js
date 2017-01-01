@@ -1,3 +1,6 @@
+
+var mouseOverBGColor = "#fefef1"; //icon background color while mouse over it
+
 function mainMenuIconClass( _screenX1, _screenY1, _scale, _mainMenuBitmap)
 {
 	//_scale = _scale*2/3;
@@ -67,10 +70,8 @@ function mainMenuIconClass( _screenX1, _screenY1, _scale, _mainMenuBitmap)
 		mainMainCanvas.width  = bitmapX+border*2;
 		mainMainCanvas.height = bitmapY+border*2;
 	
-		//var left = (_screenX1 - mainMainCanvas.width - bitmapX/3),
-		//	top  = (_screenY1 - mainMainCanvas.height - bitmapY/4);
 		var left = (_screenX1 - mainMainCanvas.width - screenBorder),
-			top  = bitmapY/2|0;
+		    top  = bitmapY/2|0;
 		
 		mainMainCanvas.style.left = left + "px";
 		mainMainCanvas.style.top =  top + "px";
@@ -84,7 +85,7 @@ function mainMenuIconClass( _screenX1, _screenY1, _scale, _mainMenuBitmap)
 		menuIcon = new createjs.Container();
 		menuBG = new createjs.Shape();
 		
-		menuBG.graphics.beginFill("#fefef1")
+		menuBG.graphics.beginFill(mouseOverBGColor)
 			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
 		menuBG.alpha = 0;
 		menuIcon.addChild(menuBG);
@@ -152,7 +153,6 @@ function mainMenuIconClass( _screenX1, _screenY1, _scale, _mainMenuBitmap)
 
 function selectIconClass( _screenX1, _screenY1, _scale, _bitmap)
 {
-	//_scale = _scale*2/3;
 	var border = 4 * _scale;
 	var selectCanvas, stage;
 	var	selectIcon, selectBG;
@@ -220,11 +220,8 @@ function selectIconClass( _screenX1, _screenY1, _scale, _bitmap)
 		selectCanvas.width  = bitmapX+border*2;
 		selectCanvas.height = bitmapY+border*2;
 	
-		//var left = (_screenX1 - selectCanvas.width - bitmapX/3),
-		//	top  = bitmapY/4|0;
-			//top  = (_screenY1 - selectCanvas.height - bitmapY/4);
 		var left = (_screenX1 - selectCanvas.width - screenBorder),
-			top  = (selectCanvas.height + bitmapY)|0;
+		    top  = (selectCanvas.height + bitmapY)|0;
 		
 		selectCanvas.style.left = left + "px";
 		selectCanvas.style.top =  top + "px";
@@ -238,7 +235,7 @@ function selectIconClass( _screenX1, _screenY1, _scale, _bitmap)
 		selectIcon = new createjs.Container();
 		selectBG = new createjs.Shape();
 		
-		selectBG.graphics.beginFill("#fefef1")
+		selectBG.graphics.beginFill(mouseOverBGColor)
 			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
 		selectBG.alpha = 0;
 		selectIcon.addChild(selectBG);
@@ -288,9 +285,6 @@ function selectIconClass( _screenX1, _screenY1, _scale, _bitmap)
 
 	function activeSelectPlay(level)
 	{
-		//debug("time play:" + level);
-		//if(callbackFun != null) callbackFun();
-		
 		soundStop(soundDig); 
 		soundStop(soundFall);
 		switch(playMode) {
@@ -343,18 +337,8 @@ function selectIconClass( _screenX1, _screenY1, _scale, _bitmap)
 	}
 }
 
-//==============================================================
-//
-// Champ icon will open a new window contains world high score 
-// while back to lode runner main window (onfocus) will auto
-// close "lode runner world high score" window
-//
-// 10/08/2014
-//==============================================================
-
 function demoIconClass( _screenX1, _screenY1, _scale, _bitmap)
 {
-	//_scale = _scale*2/3;
 	var border = 4 * _scale;
 	var canvas, stage;
 	var	iconObj, bgObj;
@@ -442,7 +426,7 @@ function demoIconClass( _screenX1, _screenY1, _scale, _bitmap)
 		
 		//create background shape
 		bgObj = new createjs.Shape();
-		bgObj.graphics.beginFill("#fefef1")
+		bgObj.graphics.beginFill(mouseOverBGColor)
 			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
 		bgObj.alpha = 0;
 		
@@ -485,7 +469,7 @@ function demoIconClass( _screenX1, _screenY1, _scale, _bitmap)
 		demoSoundOff = 1; //always sound off when start demo
 		playMode = PLAY_DEMO_ONCE;
 		anyKeyStopDemo();
-		////setDemoInfo(); //save curLevel to demo info
+
 		startGame(1);
 		setTimeout(function() {showTipsText("HIT ANY KEY TO STOP DEMO", 3500);}, 50);
 	}
@@ -505,7 +489,6 @@ function demoIconClass( _screenX1, _screenY1, _scale, _bitmap)
 
 function soundIconClass( _screenX1, _screenY1, _scale, _soundOnBitmap, _soundOffBitmap)
 {
-	//_scale = _scale*2/3;
 	var border = 4 * _scale;
 	var canvas, stage;
 	var	iconObj, bgObj;
@@ -603,13 +586,13 @@ function soundIconClass( _screenX1, _screenY1, _scale, _soundOnBitmap, _soundOff
 		
 		//create background shape
 		bgObj = new createjs.Shape();
-		bgObj.graphics.beginFill("#fefef1")
+		bgObj.graphics.beginFill(mouseOverBGColor)
 			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
 		bgObj.alpha = 0;
 		
 		//change bitmap size
-		_soundOnBitmap.setTransform(border, border, _scale, _scale); //sound on bitmap
-		_soundOffBitmap.setTransform(border, border, _scale, _scale); //sound iff bitmap
+		_soundOnBitmap.setTransform(border, border, _scale, _scale);
+		_soundOffBitmap.setTransform(border, border, _scale, _scale);
 		
 		iconObj.set({alpha:0})
 		
@@ -617,9 +600,7 @@ function soundIconClass( _screenX1, _screenY1, _scale, _soundOnBitmap, _soundOff
 		self.updateSoundImage();
 		stage.update();
 	}
-	
 
-	
 	function mouseOver()
 	{
 		if( gameState == GAME_PAUSE || (gameState != GAME_START && gameState != GAME_RUNNING) ) return;
@@ -650,9 +631,7 @@ function soundIconClass( _screenX1, _screenY1, _scale, _soundOnBitmap, _soundOff
 		mouseOut();
 	}	
 	
-	
 	init();
-
 }
 
 function repeatActionIconClass( _screenX1, _screenY1, _scale, _repeatActionOnBitmap, _repeatActionOffBitmap)
@@ -722,8 +701,7 @@ function repeatActionIconClass( _screenX1, _screenY1, _scale, _repeatActionOnBit
 		canvas.height = bitmapY+border*2;
 		
 		var left = (_screenX1 - canvas.width - screenBorder),
-			//top  = (_screenY1 - bitmapY*4.8)|0;
-			top  = (_screenY1 - bitmapY*6.4)|0;
+		    top  = (_screenY1 - bitmapY*6.4)|0;
 		
 		canvas.style.left = left + "px";
 		canvas.style.top =  top + "px";
@@ -748,13 +726,13 @@ function repeatActionIconClass( _screenX1, _screenY1, _scale, _repeatActionOnBit
 		
 		//create background shape
 		bgObj = new createjs.Shape();
-		bgObj.graphics.beginFill("#fefef1")
+		bgObj.graphics.beginFill(mouseOverBGColor)
 			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
 		bgObj.alpha = 0;
 		
 		//change bitmap size
-		_repeatActionOnBitmap.setTransform(border, border, _scale, _scale); //sound on bitmap
-		_repeatActionOffBitmap.setTransform(border, border, _scale, _scale); //sound iff bitmap
+		_repeatActionOnBitmap.setTransform(border, border, _scale, _scale);
+		_repeatActionOffBitmap.setTransform(border, border, _scale, _scale);
 		
 		iconObj.set({alpha:0})
 		
@@ -861,8 +839,7 @@ function infoIconClass( _screenX1, _screenY1, _scale, _bitmap)
 		canvas.height = bitmapY+border*2;
 	
 		var left = (_screenX1 - canvas.width - screenBorder),
-			//top  = (_screenY1 - bitmapY*3.2);
-			top  = (_screenY1 - bitmapY*4.8);
+		    top  = (_screenY1 - bitmapY*4.8);
 		
 		canvas.style.left = left + "px";
 		canvas.style.top =  top + "px";
@@ -877,7 +854,7 @@ function infoIconClass( _screenX1, _screenY1, _scale, _bitmap)
 		
 		//create background shape
 		bgObj = new createjs.Shape();
-		bgObj.graphics.beginFill("#fefef1")
+		bgObj.graphics.beginFill(mouseOverBGColor)
 			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
 		bgObj.alpha = 0;
 		
@@ -948,7 +925,6 @@ function infoIconClass( _screenX1, _screenY1, _scale, _bitmap)
 
 function helpIconClass( _screenX1, _screenY1, _scale, _bitmap)
 {
-	//_scale = _scale*2/3;
 	var border = 4 * _scale;
 	var canvas, stage;
 	var	iconObj, bgObj;
@@ -1015,8 +991,7 @@ function helpIconClass( _screenX1, _screenY1, _scale, _bitmap)
 		canvas.height = bitmapY+border*2;
 	
 		var left = (_screenX1 - canvas.width - screenBorder),
-			//top  = (_screenY1 - bitmapY*1.6);
-			top  = (_screenY1 - bitmapY*3.2);
+		    top  = (_screenY1 - bitmapY*3.2);
 		
 		canvas.style.left = left + "px";
 		canvas.style.top =  top + "px";
@@ -1031,7 +1006,7 @@ function helpIconClass( _screenX1, _screenY1, _scale, _bitmap)
 		
 		//create background shape
 		bgObj = new createjs.Shape();
-		bgObj.graphics.beginFill("#fefef1")
+		bgObj.graphics.beginFill(mouseOverBGColor)
 			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
 		bgObj.alpha = 0;
 		
@@ -1103,7 +1078,6 @@ function helpIconClass( _screenX1, _screenY1, _scale, _bitmap)
 
 function themeIconClass( _screenX1, _screenY1, _scale, _themeBitmapApple2, _themeBitmapC64)
 {
-	//_scale = _scale*2/3;
 	var border = 4 * _scale;
 	var themeCanvas, stage;
 	var	themeIcon, themeBG;
@@ -1114,6 +1088,8 @@ function themeIconClass( _screenX1, _screenY1, _scale, _themeBitmapApple2, _them
 	var bitmapY = _themeBitmapApple2.getBounds().height * _scale;	
 	var self = this;
 	var enabled = 0;
+	
+	var outColor = backgroundColor;
 	
 	init();
 	
@@ -1171,8 +1147,7 @@ function themeIconClass( _screenX1, _screenY1, _scale, _themeBitmapApple2, _them
 		themeCanvas.height = bitmapY+border*2;
 	
 		var left = (_screenX1 - themeCanvas.width - screenBorder),
-			//top  = (_screenY1 - themeCanvas.height)/2|0;
-			top  = (_screenY1 - bitmapY*1.5);
+		    top  = (_screenY1 - bitmapY*1.5);
 		
 		themeCanvas.style.left = left + "px";
 		themeCanvas.style.top =  top + "px";
@@ -1187,9 +1162,9 @@ function themeIconClass( _screenX1, _screenY1, _scale, _themeBitmapApple2, _them
 		
 		//create background shape
 		themeBG = new createjs.Shape();
-		themeBG.graphics.beginFill("#fefef1")
+		themeBG.graphics.beginFill(outColor)
 			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
-		themeBG.alpha = 0;
+		//themeBG.alpha = 0;
 		
 		//change bitmap size
 		_themeBitmapApple2.setTransform(border, border, _scale, _scale);
@@ -1198,7 +1173,6 @@ function themeIconClass( _screenX1, _screenY1, _scale, _themeBitmapApple2, _them
 		themeIcon.set({alpha:0})
 		stage.addChild(themeIcon);
 		updateThemeImage(0);
-		//stage.update();
 	}
 	
 	function updateThemeImage(showTips)
@@ -1219,41 +1193,35 @@ function themeIconClass( _screenX1, _screenY1, _scale, _themeBitmapApple2, _them
 	
 	function mouseOver()
 	{
-		if(gameState == GAME_PAUSE || (gameState == GAME_WAITING && playMode != PLAY_EDIT) || 
-		   (gameState != GAME_START  && playMode != PLAY_DEMO && playMode != PLAY_DEMO_ONCE && playMode != PLAY_EDIT))
-			return;
-		
+		if(gameState == GAME_PAUSE || (gameState == GAME_WAITING && playMode != PLAY_EDIT)) return;
 		stage.cursor = "pointer";
-		themeBG.alpha = 1;
 		stage.update();
 	}
 	
 	function mouseOut()
 	{
 		stage.cursor = "default";
-		themeBG.alpha = 0;
 		stage.update();
 	}
 
 	function mouseClick()
 	{
-		if(gameState == GAME_PAUSE || (gameState == GAME_WAITING && playMode != PLAY_EDIT) || 
-		   (gameState != GAME_START && playMode != PLAY_DEMO && playMode != PLAY_DEMO_ONCE && playMode != PLAY_EDIT))
-			return;
-		
+		if(gameState == GAME_PAUSE || (gameState == GAME_WAITING && playMode != PLAY_EDIT)) return;
 		curTheme = (curTheme == THEME_APPLE2?THEME_C64:THEME_APPLE2);
-		saveState();
 		
+		saveState();
+
 		soundStop(soundDig); 
 		soundStop(soundFall);
-		
-		themeDataReset();
+	
+		themeDataReset(1);
 		updateThemeImage(1);
-		mouseOut();
+		themeColorIconUpdate();
+		
 		if(playMode == PLAY_EDIT) {
 			startEditMode();		
 		} else {
-			startGame(1);
+			changeThemeScreen(); //real time change theme screen
 		}
 	}
 	
@@ -1263,237 +1231,128 @@ function themeIconClass( _screenX1, _screenY1, _scale, _themeBitmapApple2, _them
 		if(playMode == PLAY_EDIT) {
 			if(editLevelModified()) saveTestState();
 			stopEditTicker();
-		} else {
-			stopPlayTicker();
-			stopAllSpriteObj();
 		}
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-function iconBase(_screenX, _screenY, _scale, _bitmap1, _bitmap2, _posY)
+function themeColorIconUpdate()
 {
-	var	border = 4 * _scale;
-	var canvas, stage;
-
-	var	iconObj, bgObj;
-	var mouseOverHandler = null, mouseOutHandler = null, mouseClickHandler = null;
-	
-	var bitmapX = _bitmap1.getBounds().width * _scale;
-	var bitmapY = _bitmap1.getBounds().height * _scale;	
-	var self = this;
-	var enabled = 0;
-	
-	function enableMouseHandler()
-	{
-		mouseOverHandler = iconObj.on("mouseover", mouseOver);
-		mouseOutHandler = iconObj.on("mouseout", mouseOut);
-		mouseClickHandler = iconObj.on("click", mouseClick);
-	}
-	
-	function disableMouseHandler()
-	{
-		iconObj.removeEventListener("mouseover", mouseOverHandler);
-		iconObj.removeEventListener("mouseout", mouseOutHandler);
-		iconObj.removeEventListener("click", mouseClickHandler);
-		stage.cursor = "default";
-		stage.update();
-	}
-	
-	function createCanvas()
-	{
-		canvas = document.createElement('canvas');
-		canvas.id = "theme_menu";
-		canvas.width  = bitmapX+border*2;
-		canvas.height = bitmapY+border*2;
-	
-		var left = (_screenX1 - canvas.width),
-			top  = (_screenY1 - _posY)|0;
-		
-		canvas.style.left = left + "px";
-		canvas.style.top =  top + "px";
-		canvas.style.position = "absolute";
-		document.body.appendChild(canvas);
-	}
-	
-	function createIcon()
-	{
-		stage = new createjs.Stage(canvas);
-		iconObj = new createjs.Container();
-		
-		//create background shape
-		bgObj = new createjs.Shape();
-		bgObj.graphics.beginFill("#fefef1")
-			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
-		bgObj.alpha = 0;
-		
-		//change bitmap size
-		_bitmap1.setTransform(border, border, _scale, _scale);
-		if(_bitmap2) _bitmap2.setTransform(border, border, _scale, _scale);
-		
-		iconObj.set({alpha:0})
-		stage.addChild(iconObj);
-		
-		updateImage();
-		//stage.update();
-	}	
-	
-	function updateImage()
-	{
-		iconObj.addChild(bgObj);
-		iconObj.addChild(_bitmap1);
-		stage.update();
-	}
-
-	function invalidState()
-	{
-		if(gameState == GAME_PAUSE || 
-		   (gameState != GAME_START && gameState != GAME_RUNNING && playMode != PLAY_EDIT)) return 1;
-		
-		return 0;
-	}
-	
-	function mouseOver()
-	{
-		if(invalidState()) return;
-		
-		stage.cursor = "pointer";
-		bgObj.alpha = 1;
-		stage.update();
-	}
-	
-	function mouseOut()
-	{
-		stage.cursor = "default";
-		bgObj.alpha = 0;
-		stage.update();
-	}	
-
-	function mouseClick()
-	{
-		if(gameState == GAME_PAUSE || 
-		   (gameState != GAME_START && playMode != PLAY_DEMO && playMode != PLAY_DEMO_ONCE && playMode != PLAY_EDIT))
-			return;
-		
-		curTheme = (curTheme == THEME_APPLE2?THEME_C64:THEME_APPLE2);
-		saveState();
-		
-		soundStop(soundDig); 
-		soundStop(soundFall);
-		
-		themeDataReset();
-		updateThemeImage();
-		mouseOut();
-		if(playMode == PLAY_EDIT) {
-			startEditMode();		
-		} else {
-			startGame(1);
-		}
-	}
-		
-	
+	themeColorObj.themeChange();
 }
 
-iconBase.prototype.init = function()
+//======================================
+// BEGIN: Change Theme Screen real time
+//======================================
+
+function changeThemeScreen()
 {
-	this.createCanvas();
-	this.createIcon();
-}
-
-iconBase.prototype.enable = function()
-{
-	if(enabled) return;
-	enabled = 1;
-	disableMouseHandler();
-	enableMouseHandler();
-	iconObj.set({alpha:1})
-	stage.enableMouseOver(60);
-	stage.update();
-}
-
-iconBase.prototype.disable = function(hidden)
-{
-	disableMouseHandler();
-	if(hidden) {
-		iconObj.set({alpha:0});
-	} else {
-		iconObj.set({alpha:1})
-	}
-	stage.update();
-	enabled = 0;
-	stage.enableMouseOver(0);
-}
-
-
-function themeIconClass( _screenX1, _screenY1, _scale, _themeBitmapApple2, _themeBitmapC64)
-{
-	//_scale = _scale*2/3;
-	var border = 4 * _scale;
-	var themeCanvas, stage;
-	var	themeIcon, themeBG;
-	var saveStateObj;
-	var mouseOverHandler = null, mouseOutHandler = null, mouseClickHandler = null;
+	rebuildMap();
 	
-	var bitmapX = _themeBitmapApple2.getBounds().width * _scale;
-	var bitmapY = _themeBitmapApple2.getBounds().height * _scale;	
-	var self = this;
-	var enabled = 0;
+	//Change runner theme
+	runner.sprite.spriteSheet = runnerData;
 	
-	init();
-
-	
-
-
-	
-	function updateThemeImage()
-	{
-		themeIcon.removeAllChildren();
-		themeIcon.addChild(themeBG);
-		
-		if(curTheme == THEME_APPLE2) {
-			themeIcon.addChild(_themeBitmapApple2);
-		} else {
-			themeIcon.addChild(_themeBitmapC64);
-		}
-		stage.update();
+	//change guard theme
+	for(var i = 0; i < guardCount; i++) {
+		if(redhatMode && guard[i].hasGold > 0)
+			guard[i].sprite.spriteSheet = redhatData;
+		else
+			guard[i].sprite.spriteSheet = guardData;
 	}
 	
-
-
-	function mouseClick()
-	{
-		if(gameState == GAME_PAUSE || 
-		   (gameState != GAME_START && playMode != PLAY_DEMO && playMode != PLAY_DEMO_ONCE && playMode != PLAY_EDIT))
-			return;
-		
-		curTheme = (curTheme == THEME_APPLE2?THEME_C64:THEME_APPLE2);
-		saveState();
-		
-		soundStop(soundDig); 
-		soundStop(soundFall);
-		
-		themeDataReset();
-		updateThemeImage();
-		mouseOut();
-		if(playMode == PLAY_EDIT) {
-			startEditMode();		
-		} else {
-			startGame(1);
-		}
+	//change holeObj theme
+	holeObj.sprite.spriteSheet = holeData;
+	
+	//change fillHoleObj theme
+	for(var i = 0; i < fillHoleObj.length; i++) {
+		fillHoleObj[i].spriteSheet = holeData;
 	}
 	
-	function saveState()
-	{
-		setThemeMode(curTheme);
-		if(playMode == PLAY_EDIT) {
-			if(editLevelModified()) saveTestState();
-			stopEditTicker();
-		} else {
-			stopPlayTicker();
-			stopAllSpriteObj();
+	moveSprite2Top();
+	
+	clearGround();
+	clearInfo();
+	initInfoVariable();
+	buildGroundInfo();
+}
+
+function rebuildMap() 
+{
+	var curTile;
+	
+	for(var x = 0; x < NO_OF_TILES_X; x++) {
+		for(var y = 0; y < NO_OF_TILES_Y; y++) {
+			switch(map[x][y].base) {
+			default:		
+			case EMPTY_T: //empty		
+				continue;
+			case BLOCK_T: //Normal Brick		
+				curTile = getThemeBitmap("brick");		
+				if(map[x][y].bitmap.alpha < 1) curTile.set({alpha:0}); //hide brick digging
+				break;	
+			case SOLID_T: //Solid Brick		
+				curTile = getThemeBitmap("solid");		
+				break;	
+			case LADDR_T: //Ladder
+				curTile = getThemeBitmap("ladder");
+				break;	
+			case BAR_T: //Line of rope
+				curTile = getThemeBitmap("rope");
+				break;	
+			case TRAP_T: //False brick
+				curTile = getThemeBitmap("brick");
+				if(map[x][y].bitmap.alpha < 1) curTile.set({alpha:0.5}); //show trap tile
+				break;
+			case HLADR_T: //Ladder appears at end of level
+				curTile = getThemeBitmap("ladder");
+				curTile.set({alpha:0});	//hide the laddr
+				break;
+			case GOLD_T: //Gold
+				curTile = getThemeBitmap("gold");
+				break;	
+			}
+			mainStage.removeChild(map[x][y].bitmap); //remove old
+			curTile.setTransform(x * tileWScale, y * tileHScale, tileScale, tileScale); //x,y, scaleX, scaleY 
+			mainStage.addChild(curTile);  //add new
+			map[x][y].bitmap = curTile;   //replace bitmap 
 		}
 	}
 }
 
-*/
+function clearGround()
+{
+	for(var i = 0; i < groundTile.length; i++) 
+		mainStage.removeChild(groundTile[i]);
+}
+
+function clearInfo()
+{
+	var i;
+
+	if(playMode == PLAY_CLASSIC || playMode == PLAY_AUTO || playMode == PLAY_DEMO) {
+		for(i = 0; i < scoreTxt.length; i++) mainStage.removeChild(scoreTxt[i]);
+		for(i = 0; i < scoreTile.length; i++) mainStage.removeChild(scoreTile[i]);
+
+		if(playMode == PLAY_DEMO) {
+			for(i = 0; i < demoTxt.length; i++) mainStage.removeChild(demoTxt[i]);
+		} else {
+			for(i = 0; i < lifeTxt.length; i++) mainStage.removeChild(lifeTxt[i]);
+			for(i = 0; i < lifeTile.length; i++) mainStage.removeChild(lifeTile[i]);
+		}
+	} else { //PLAY_MODERN, PLAY_DEMO_ONCE
+		for(i = 0; i < goldTxt.length; i++) mainStage.removeChild(goldTxt[i]);
+		for(i = 0; i < goldTile.length; i++) mainStage.removeChild(goldTile[i]);
+
+		for(i = 0; i < guardTxt.length; i++) mainStage.removeChild(guardTxt[i]);
+		for(i = 0; i < guardTile.length; i++) mainStage.removeChild(guardTile[i]);
+
+		for(i = 0; i < timeTxt.length; i++) mainStage.removeChild(timeTxt[i]);
+		for(i = 0; i < timeTile.length; i++) mainStage.removeChild(timeTile[i]);
+	}
+	
+	for(i = 0; i < levelTxt.length; i++) mainStage.removeChild(levelTxt[i]);
+	for(i = 0; i < levelTile.length; i++) mainStage.removeChild(levelTile[i]);	
+}
+
+//======================================
+// END: Change Theme Screen real time
+//======================================

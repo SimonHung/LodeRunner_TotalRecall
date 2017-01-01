@@ -1,5 +1,5 @@
 /** 
- * @license ============================================================================= 
+ * @license ================================================================================== 
  * Lode Runner main program
  *
  * This program is a HTML5 remake of the Lode Runner games (APPLE II & C64 version).
@@ -9,11 +9,13 @@
  *
  * The AI algorithm reference book:
  * http://www.kingstone.com.tw/book/book_page.asp?kmcode=2014710650538
+ * http://www.amazon.co.jp/Lode-Runnerで学ぶ実践C言語-ビー・エヌ・エヌ企画部/dp/4893690116
  * 
- * Source Code: https://github.com/SimonHung/LodeRunner
+ * Source Code: https://github.com/SimonHung/LodeRunner_TotalRecall
+ * Web page: http://LodeRunnerWebGame.com
  *
- * by Simon Hung 2014/06/20, 2015/06/13 (http://simonsays-tw.com)
- * ============================================================================= 
+ * by Simon Hung 06/20/2014, 06/13/2015, 09/28/2016
+ * ==================================================================================
  */
 
 window.name = 'lodeRunnerParent'; //for world high score switch back 5/31/2015
@@ -34,11 +36,11 @@ var canvas;
 var mainStage, scoreStage;
 var loadingTxt;
 
-var gameState, lastGameState ;
+var gameState, lastGameState;
 var tileScale, xMove, yMove;
 
-//var speedMode = [15, 20, 25, 30, 35]; //slow   normal  fast 
 var speedMode = [14, 18, 23, 29, 35]; //slow   normal  fast , slow down all speed 6/2/2016
+
 var speedText = ["VERY SLOW", "SLOW", "NORMAL", "FAST", "VERY FAST"];
 var speed = 2; //normal 
 var demoSpeed = 35;
@@ -50,20 +52,21 @@ var playMode = PLAY_CLASSIC;
 var playData = 1; //classic lode runner
 var curTime = 0; //count from 0 to MAX_TIME_COUNT
 
+var backgroundColor = "#250535"; //background color
+
 var playerName = "";
 var playerUId = "";
 
 var curTheme = THEME_APPLE2; //support 2 themes: apple2 & C64
 
-var dbName="LodeRunner";
+var dbName = "LodeRunner";
 
-function init() 
+function init()
 {
 	var screenSize = getScreenSize();
 	screenX1 = screenSize.x;
 	screenY1 = screenSize.y;
 	
-	//loadDataJS(); //load demo data file
 	canvasReSize();
 	createStage();
 	setBackground();
@@ -80,29 +83,6 @@ function init()
 	showLoadingPage(); //preload function 
 }
 
-/*
-function loadDataJS()
-{
-	var arg = getUrlArgument();
-	var js = document.createElement('script');
-	
-	js.type = "text/javascript";
-	
-	////js.src = "lodeRunner.wData.jss" + ((arg == null)?"": ("?" + arg));
-	js.src = "lodeRunner.wData.jss" + ("?dbName=" + dbName) + ((arg == null)? "" : ("&" + arg)); //add set dbName
-	//console.log(js.src);
-	
-	js.onload = function() {
-		loadStoreVariable(); //load data from localStorage
-		initMenuVariable();  //init menu variable
-		initDemoModeVariable();
-		debug('demo data load complete');
-	}; 
-	//document.body.appendChild(js);
-	document.getElementsByTagName('head')[0].appendChild(js);
-}
-*/
-
 function loadStoreVariable()
 {
 	playerName = getPlayerName();
@@ -111,17 +91,19 @@ function loadStoreVariable()
 		setUid(playerUid);
 	}
 	curTheme = getThemeMode();
+	getThemeColor();
 	getRepeatAction();
+	if(getGamepadMode()) gamepadEnable();
 }
 
 function canvasReSize() 
 {
 	var iconSizeX;
-	for (var scale = MAX_SCALE*100; scale >= MIN_SCALE*100; scale -= 25) {
+	for (var scale = MAX_SCALE*100; scale >= MIN_SCALE*100; scale -= 5) {
 		tileScale = scale / 100;
 		canvasX = BASE_SCREEN_X * tileScale;
 		canvasY = BASE_SCREEN_Y * tileScale;
-		if (canvasX <= screenX1 && canvasY <= screenY1 || tileScale <= MIN_SCALE) break;
+		//if (canvasX <= screenX1 && canvasY <= screenY1 || tileScale <= MIN_SCALE) break;
 		iconSizeX = BASE_ICON_X * 2 * tileScale;
 		if( (canvasX+iconSizeX) <= screenX1 && canvasY <= screenY1 || tileScale <= MIN_SCALE) break;
 	}
@@ -156,9 +138,6 @@ function canvasReSize()
 	W4 = (tileW/4|0); //10, 7, 5,
 	H4 = (tileH/4|0); //11, 8, 5,
 	
-	//xMove and yMove initial by setSpeedByAiVersion() 
- 	//xMove = 4 * tileScale * 2;
- 	//yMove = 4 * tileScale * 2;		
 }
 
 function createStage() 
@@ -178,7 +157,7 @@ function setBackground()
 	var background = new createjs.Shape();
 	background.graphics.beginFill("#000000").drawRect(0, 0, canvas.width, canvas.height);
 	mainStage.addChild(background);
-	document.body.style.background = "#301050";
+	document.body.style.background = backgroundColor;
 }
 
 function showCoverPage()
@@ -186,6 +165,7 @@ function showCoverPage()
 	menuIconDisable(1);
 	clearIdleDemoTimer();
 	mainStage.removeAllChildren();	
+	mainStage.addChild(titleBackground); //colorful background
 	mainStage.addChild(coverBitmap);
 	mainStage.addChild(signetBitmap);
 	mainStage.addChild(remakeBitmap);
@@ -194,6 +174,13 @@ function showCoverPage()
 }
 
 var idleTimer=null, startIdleTime;
+
+function clearIdleDemoTimer()
+{
+	if(idleTimer) clearInterval(idleTimer);
+	idleTimer = null;
+}
+
 function waitIdleDemo(maxIdleTime)
 {
 	startIdleTime = new Date();
@@ -247,12 +234,6 @@ function disableStageClickEvent()
 	return rc;
 }
 
-function clearIdleDemoTimer()
-{
-	if(idleTimer) clearInterval(idleTimer);
-	idleTimer = null;
-}
-
 function noKeyDown()
 {
 	return false;
@@ -260,7 +241,6 @@ function noKeyDown()
 
 function anyKeyDown()
 {
-	//if(changingLevel) return false;
 	stopDemoAndPlay();
 }
 
@@ -293,8 +273,6 @@ function getLastPlayInfo()
 	if( (playMode != PLAY_CLASSIC && playMode != PLAY_MODERN) || 
 	    (playData < 1 || (playData > maxPlayId && playData != PLAY_DATA_USERDEF) )
 	){
-	    //(playData != PLAY_DATA_1 && playData != PLAY_DATA_2 && playData != PLAY_DATA_3 && playData != PLAY_DATA_USERDEF) )
-	    //{
 		playMode = PLAY_CLASSIC;
 		playData = 1; //classic lode runner
 	}
@@ -317,7 +295,6 @@ function startPlayTicker()
 	stopPlayTicker();
 	//createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	if(playMode == PLAY_AUTO || playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) {
-		//createjs.Ticker.setFPS(speedMode[speedMode.length-1]); //very fast
 		createjs.Ticker.setFPS(demoSpeed); //06/12/2014
 	} else {
 		createjs.Ticker.setFPS(speedMode[speed]);
@@ -408,29 +385,26 @@ function initVariable()
 
 function buildLevelMap(levelMap) 
 {
+	var index = 0;
+	var mapGuardCount = 0; //Number of original guards 
+	
 	//(1) create empty map[x][y] array;
 	map = [];
 	for(var x = 0; x < NO_OF_TILES_X; x++) {
 		map[x] = [];
 		for(var y = 0; y < NO_OF_TILES_Y; y++) {
 			map[x][y] = {}; 
+			if(levelMap.charAt(index++) == '0') mapGuardCount++;
 		}
 	}
-
 	
 	//(2) draw map
-/*	
-	var index = 0;
+	index = 0;
 	for(var y = 0; y < NO_OF_TILES_Y; y++) {
 		for(var x = 0; x < NO_OF_TILES_X; x++) {
 			var id = levelMap.charAt(index++);
-*/	
-	var index = NO_OF_TILES_Y * NO_OF_TILES_X - 1;
-	for(var y = NO_OF_TILES_Y-1; y >= 0; y--) {
-		for(var x = NO_OF_TILES_X-1; x >= 0; x--) {
-			var id = levelMap.charAt(index--);
-			
-			var curTile;	
+			var curTile;
+
 			switch(id) {
 			default:		
 			case ' ': //empty
@@ -441,73 +415,60 @@ function buildLevelMap(levelMap)
 			case '#': //Normal Brick
 				map[x][y].base = BLOCK_T;
 				map[x][y].act = BLOCK_T;	
-				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("brick"));
+				curTile = map[x][y].bitmap = getThemeBitmap("brick");
 				break;	
 			case '@': //Solid Brick
 				map[x][y].base = SOLID_T;
 				map[x][y].act  = SOLID_T;
-				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("solid"));
+				curTile = map[x][y].bitmap = getThemeBitmap("solid");
 				break;	
 			case 'H': //Ladder
 				map[x][y].base =LADDR_T;
 				map[x][y].act  =LADDR_T;
-				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("ladder"));
+				curTile = map[x][y].bitmap = getThemeBitmap("ladder");
 				break;	
 			case '-': //Line of rope
 				map[x][y].base = BAR_T;
 				map[x][y].act  = BAR_T;
-				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("rope"));
+				curTile = map[x][y].bitmap = getThemeBitmap("rope");
 				break;	
 			case 'X': //False brick
 				map[x][y].base = TRAP_T; //behavior same as empty
 				map[x][y].act  = TRAP_T; 
-				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("brick"));
+				curTile = map[x][y].bitmap = getThemeBitmap("brick");
 				break;
 			case 'S': //Ladder appears at end of level
 				map[x][y].base = HLADR_T; //behavior same as empty before end of level
 				map[x][y].act  = EMPTY_T; //behavior same as empty before end of level
-				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("ladder"));
+				curTile = map[x][y].bitmap = getThemeBitmap("ladder");
 				curTile.set({alpha:0});	//hide the laddr
 				break;
 			case '$': //Gold chest
 				map[x][y].base = GOLD_T; //keep gold on base map
 				map[x][y].act  = EMPTY_T;
-				curTile = map[x][y].bitmap = new createjs.Bitmap(getThemeImage("gold"));
+				curTile = map[x][y].bitmap = getThemeBitmap("gold");
 				goldCount++;	
 				break;	
 			case '0': //Guard
 				map[x][y].base = EMPTY_T;
 				map[x][y].act  = GUARD_T;  
 				map[x][y].bitmap = null;
-				if(guardCount >= maxGuard) {
+				if(--mapGuardCount >= maxGuard) {
 					map[x][y].act = EMPTY_T;
-					continue;  //too many guard , set this tile as empty
+					continue;  //too many guards, set this tile as empty
 				}
-/*				
-				guard[guardCount] = {};	
-				curTile = guard[guardCount].sprite = new createjs.Sprite(guardData, "runLeft");
-				guard[guardCount].pos = { x:x, y:y, xOffset:0, yOffset:0};	
-				guard[guardCount].action = ACT_STOP;
-				guard[guardCount].shape = "runLeft";
-				guard[guardCount].lastLeftRight = "ACT_LEFT";
-				guard[guardCount].hasGold = 0;
-					
-*/
-				//for backward compatible guard order must same as old, so add to beginning of array					
+
 				curTile = new createjs.Sprite(guardData, "runLeft");
-				guard.unshift({ 
+				guard[guardCount] = { 
 					sprite: curTile,
 					pos: { x:x, y:y, xOffset:0, yOffset:0}, 
 					action: ACT_STOP,
 					shape: "runLeft",
 					lastLeftRight: "ACT_LEFT",
 					hasGold: 0
-				});
-
+				};					
 				guardCount++;	
-				//curTile.gotoAndPlay();	
 				curTile.stop();	
-				//curTile.framerate = 60;	
 				break;	
 			case '&': //Player
 				map[x][y].base = EMPTY_T;
@@ -523,15 +484,14 @@ function buildLevelMap(levelMap)
 				runner.action = ACT_UNKNOWN;	
 				runner.shape = "runRight";	
 				runner.lastLeftRight = "ACT_RIGHT";
-				//curTile.gotoAndPlay();	
 				curTile.stop();	
-				//curTile.framerate = 60;	
 				break;	
 			}
 			curTile.setTransform(x * tileWScale, y * tileHScale, tileScale, tileScale); //x,y, scaleX, scaleY 
 			mainStage.addChild(curTile); 
 		}
 	}
+	assert(mapGuardCount == 0, "Error: mapCuardCount design error !" );
 	moveSprite2Top();
 }
 
@@ -559,7 +519,7 @@ function moveSprite2Top()
 function buildGroundInfo()
 {
 	drawGround();
-	drawInfo(levelData);
+	drawInfo();
 }
 
 var groundTile;
@@ -567,7 +527,7 @@ function drawGround()
 {
 	groundTile = [];
 	for(var x = 0; x < NO_OF_TILES_X; x++) {
-		groundTile[x] = new createjs.Bitmap(getThemeImage("ground"));
+		groundTile[x] = getThemeBitmap("ground");
 		groundTile[x].setTransform(x * tileWScale, NO_OF_TILES_Y * tileHScale, tileScale, tileScale);
 		mainStage.addChild(groundTile[x]); 
 	}
@@ -671,9 +631,6 @@ function drawLevelTxt()
 {
 	var xOffset = 20;
 	
-	//if(playMode == PLAY_CLASSIC || playMode == PLAY_AUTO) xOffset = 20;
-	//else xOffset = 19;
-	
 	levelTxt = drawText(xOffset*tileWScale, infoY, "LEVEL", mainStage);
 }
 
@@ -707,9 +664,6 @@ function drawScore(addScore)
 	curScore += addScore;
 	for(var i = 0; i < scoreTile.length; i++) 
 		mainStage.removeChild(scoreTile[i]);
-	
-	//if(playMode == PLAY_CLASSIC || playMode == PLAY_AUTO) digitNo = 7;
-	//else digitNo = 6
 	
 	scoreTile = drawText(5*tileWScale, infoY, ("000000"+curScore).slice(-7), mainStage);
 }
@@ -870,8 +824,6 @@ function playGame(deltaS)
 		playTickTimer = 0;
 	}
 	
- 	//runner.xMove = 4 * tileScale * 2;
- 	//runner.yMove = 4 * tileScale * 2;
 	if(playMode == PLAY_AUTO || playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) playDemo();
 	if(recordMode) processRecordKey();
 	if(!isDigging()) moveRunner();
@@ -1056,7 +1008,7 @@ function stopAllSpriteObj()
 
 function gameOverAnimation()
 {
-	var gameOverImage = new createjs.Bitmap(getThemeImage("over"));
+	var gameOverImage = getThemeBitmap("over");
 	var bound = gameOverImage.getBounds();
 	var x = (NO_OF_TILES_X*tileWScale)/2|0;
 	var y = (NO_OF_TILES_Y*tileHScale)/2|0;
@@ -1159,11 +1111,7 @@ function closingScreen(r)
 		
 		if(playMode == PLAY_AUTO) getAutoDemoLevel(0);
 		if(playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) getNextDemoLevel();
-/*		
-		if(playMode == PLAY_MODERN || playMode == PLAY_EDIT) {
-			curScore = 0; curGetGold = 0; curGuardDeadNo = 0;
-		}
-*/		
+
 		if(playMode == PLAY_TEST) {
 			levelMap = getTestLevelMap();
 		} else {
@@ -1186,6 +1134,9 @@ function menuIconEnable()
 		soundIconObj.enable();
 		soundIconObj.updateSoundImage();
 		repeatActionIconObj.enable();
+		themeColorObj.enable();
+	} else {
+		if(!editInNarrowScreen) themeColorObj.enable();
 	}
 	infoIconObj.enable();
 	helpIconObj.enable();
@@ -1204,6 +1155,7 @@ function menuIconDisable(hidden)
 	helpIconObj.disable(hidden);
 	repeatActionIconObj.disable(hidden);
 	themeIconObj.disable(hidden);
+	themeColorObj.disable(hidden);
 }
 
 var showStartTipsMsg = 1;
@@ -1249,25 +1201,12 @@ function showDataMsg()
 function showHelpMenu()
 {
 	if(firstPlay) { 
-		helpObj.showHelp(0, initForPlay, null); 
+		helpObj.showHelp(0, initForPlay, tileScale, null); 
 		setFirstPlayInfo();
 	} else {	
 		initForPlay();
 	}	
 }
-
-/* Don't show main menu  
-var first = 1
-function showMainMenu()
-{
-	if(firstPlay && first) {
-		mainMenu(null);
-	} else {
-		showHelpMenu();
-	}
-	first = 0;
-}
-*/ 
 
 function initForPlay()
 {
@@ -1304,14 +1243,8 @@ function beginPlay()
 		initPlayDemo();
 		if(playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) initForPlay();
 	} else { 
-/*	Don't display GAME VERSION SELECTION , 6/7/2015		
-		if(playerName == "") {
-			inputPlayerName(mainStage, showMainMenu);
-		} else {
-			showMainMenu();
-		}
-*/
-		if(playerName == "") {
+
+		if(playerName == "" || playerName.length <= 1) {
 			inputPlayerName(mainStage, showHelpMenu);
 		} else {
 			showHelpMenu();
@@ -1406,15 +1339,11 @@ function mainTick(event)
 	
 	switch(gameState) {
 	case GAME_START:
-		//if(demoDataLoading) { showGameLoading(); break }	
-	
-		//if(playMode == PLAY_AUTO) initPlayDemo();
-		//if(recordMode) initRecordVariable();
 		countAutoDemoTimer();	
 		if(keyAction != ACT_STOP && keyAction != ACT_UNKNOWN) {
 			disableAutoDemoTimer();	
+			gamepadClearId();	
 			gameState = GAME_RUNNING;
-			//if(playMode != PLAY_DEMO && playMode != PLAY_DEMO_ONCE) themeIconObj.disable(1);
 			if(playMode == PLAY_MODERN) demoIconObj.disable(1);
 			playTickTimer = 0; //modern mode time counter
 			if(goldCount <= 0) showHideLaddr();
@@ -1424,7 +1353,6 @@ function mainTick(event)
 		playGame(deltaS);
 		break;
 	case GAME_RUNNER_DEAD:
-		//mainStage.update();
 		//console.log("Time=" + curTime + ", Tick= " + playTickTimer);
 		//if(recordMode) recordModeToggle(GAME_RUNNER_DEAD); //for debug only (if enable it must disable below statement)
 		if(recordMode == RECORD_KEY) recordModeDump(GAME_RUNNER_DEAD);	
@@ -1443,7 +1371,6 @@ function mainTick(event)
 				if(playMode == PLAY_CLASSIC) clearClassicInfo();
 				gameState = GAME_OVER_ANIMATION;
 			} else {
-				//stopAllSpriteObj();
 				setTimeout(function() {gameState = GAME_NEW_LEVEL; }, 500);
 				gameState = GAME_WAITING;	
 				if(playMode == PLAY_CLASSIC) setClassicInfo(0);
@@ -1477,19 +1404,14 @@ function mainTick(event)
 		}
 		break;	
 	case GAME_OVER_ANIMATION:
-		//if(playMode == PLAY_CLASSIC) clearClassicInfo();
 		break;	
 	case GAME_OVER:
-		////getClassicInfo();
 		scoreInfo = null;	
 		if(playMode == PLAY_CLASSIC && !sometimePlayInGodMode) {	
-			//try to set hi-score record
-			//scoreInfo = {s:curScore, l:(curLevel>maxLevel)?curLevel:maxLevel};
 			scoreInfo = {s:curScore, l: passedLevel+1 };
 		}	
 			
 		showScoreTable(playData, scoreInfo , function() { showCoverPage();});	
-		//setTimeout(function(){ showCoverPage();}, 2000);
 		gameState = GAME_WAITING;	
 		return;
 	case GAME_FINISH: 
@@ -1606,4 +1528,4 @@ function mainTick(event)
 	}
 	
 	mainStage.update();
-}	
+}
