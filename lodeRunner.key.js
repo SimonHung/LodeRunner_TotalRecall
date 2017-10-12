@@ -241,6 +241,7 @@ function pressKey(code)
 		keyAction = ACT_DOWN;
 		break;
 	case KEYCODE_Z:
+	case KEYCODE_Y:  //Y key to dig left, for German keyboards
 	case KEYCODE_U:	
 	case KEYCODE_Q:		
 	case KEYCODE_COMMA: //,

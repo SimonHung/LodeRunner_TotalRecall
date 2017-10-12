@@ -1,4 +1,4 @@
-var VERSION = "2.21c";
+var VERSION = "2.21d";
 var AI_VERSION = 4;
 
 var NO_OF_TILES_X = 28,
@@ -26,8 +26,9 @@ var KEYCODE_BKSPACE = 8, //backspace
 	KEYCODE_SPACE = 32,
 	KEYCODE_ESC = 27, //escape
 	
-	KEYCODE_Z = 90,  //dig left
 	KEYCODE_X = 88,  //dig right
+	KEYCODE_Y = 89,  //dig left (for German keyboards)
+	KEYCODE_Z = 90,  //dig left
 
 	KEYCODE_LEFT  = 37, //move left
 	KEYCODE_RIGHT = 39, //move right
