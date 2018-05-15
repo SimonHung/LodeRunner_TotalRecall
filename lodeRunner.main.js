@@ -204,6 +204,8 @@ function stopDemoAndPlay()
 	soundStop(soundFall);		
 	stopAllSpriteObj();
 	
+	resumeAudioContext(); //05/15/2018, chrome 66 default mute autoplay, need resume it
+	
 	if(playMode == PLAY_DEMO || playMode == PLAY_DEMO_ONCE) selectIconObj.disable(1); 
 	if(playMode == PLAY_DEMO_ONCE) showStartMsg = 0;
 	////genUserLevel(MAX_EDIT_LEVEL); //for debug only

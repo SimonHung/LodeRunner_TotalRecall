@@ -277,3 +277,30 @@ function getDemoData(playData)
 		playerDemoData[wDemoData[i].level-1] = wDemoData[i]; 
 	}
 }
+
+//===========================================================================
+// Chrome 66 policy changes default mute autoplay, need resume it 
+// https://developers.google.com/web/updates/2017/09/autoplay-policy-changes 
+//
+// Reference: https://github.com/CreateJS/SoundJS/issues/297
+//===========================================================================
+function resumeAudioContext() 
+{
+	// handler for fixing suspended audio context in Chrome
+	//------------------------------------------------------------------
+	// Error Msgs:
+	// "The AudioContext was not allowed to start. 
+	//  It must be resume (or created) after a user gesture on the page.
+	//  https://goo.gl/7K7WLu"
+	//------------------------------------------------------------------
+	try {
+		if (createjs.WebAudioPlugin.context.state === "suspended") {
+			createjs.WebAudioPlugin.context.resume();
+			console.log("Resume Web Audio context...");
+		}
+	} catch (e) {
+		// SoundJS context or web audio plugin may not exist
+		console.error("There was an error while trying to resume the SoundJS Web Audio context...");
+		console.error(e);
+	}
+}
