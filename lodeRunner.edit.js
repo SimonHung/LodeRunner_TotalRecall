@@ -794,15 +794,33 @@ function saveEditLevel()
 	
 function stageMouseDown(event)
 {
-	mouseDown = 1;
-	//console.log("DOWN");
+	var e = event.nativeEvent;
+	// ------------------------------------------------------------------------
+	// nativeEvent: https://createjs.com/docs/easeljs/classes/MouseEvent.html
+	// which: https://www.w3schools.com/jsref/event_which.asp
+	// ------------------------------------------------------------------------
+	if( e.which === undefined || e.which == 1 ) { // 1: left, 2: middle, 3: right 
+		// only support left mouse button
+		mouseDown = 1;
+		//console.log(e.which)
+		//console.log("DOWN");
+	} 	
 }
 	
 function stageMouseUp(event)
 {
-	mouseDown = 0;
-	lastDown = {x:-1, y:-1};
-	//console.log("UP");
+	var e = event.nativeEvent;	
+	// ------------------------------------------------------------------------
+	// nativeEvent: https://createjs.com/docs/easeljs/classes/MouseEvent.html
+	// which: https://www.w3schools.com/jsref/event_which.asp
+	// ------------------------------------------------------------------------
+	if( e.which === undefined || e.which == 1 ) { // 1: left, 2: middle, 3: right
+		// only support left mouse button
+		mouseDown = 0;
+		lastDown = {x:-1, y:-1};
+		//console.log(e.which)
+		//console.log("UP");
+	}
 }
 
 function initMapInfo()
