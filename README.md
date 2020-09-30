@@ -25,7 +25,7 @@ This program build with Javascript + [CreateJS](http://www.createjs.com).
 
 </table>
 
-###* Include 5 Game Versions
+### * Include 5 Game Versions
 <table>
 <tr>
 <td><b>(1) <a target="_blank" href="https://en.wikipedia.org/wiki/Lode_Runner">Classic Lode Runner</a></b></td>
