@@ -89,6 +89,6 @@ This program build with Javascript + [CreateJS](http://www.createjs.com).
 
 
 ### * PLAY
-<a target="_blank" href="http://loderunnerwebgame.com/game/">http://loderunnerwebgame.com/game/</a>
+<a target="_blank" href="https://loderunnerwebgame.com/game/">https://loderunnerwebgame.com/game/</a>
 
 ------------------------------------
