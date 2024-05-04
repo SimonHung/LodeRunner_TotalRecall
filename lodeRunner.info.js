@@ -49,6 +49,19 @@ var championInfo = [
 	{type: 'TEXT' , contain: "Difficulty : \u2605 \u2605 \u2605 \u2605 \u2605" } //★ ★ ★ ★ ★
 ];
 
+var sneakyInfo = [
+	{type: 'TITLE', contain: " Stephen Linhart's Sneaky Levels " },
+	{type: 'TEXT' , contain: 'Release year : 1996'},
+	{type: 'TEXT' , contain: "Platform : Apple Macintosh"},
+	{type: 'TEXT' , contain: "Publisher : https://www.stephen.com/" },
+	{type: 'TEXT' , contain: 'Developer : Stephen Linhart and Doug Hewitt'},
+	{type: 'TEXT_LINK' , text: "URL : ",
+	 				     textLink: "https://www.stephen.com/other/other.html",
+	 				     url: "https://web.archive.org/web/19961121010816/https://www.stephen.com/other/other.html"
+	},
+	{type: 'TEXT' , contain: "Difficulty : \u2605 \u2605 \u2605 \u2605 \u2605" } //★ ★ ★ ★ ★
+];
+
 //=========================================================================================
 
 var editInfo = [
