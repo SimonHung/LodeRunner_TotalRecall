@@ -314,16 +314,16 @@ function closeIconClass(_width, _height, _stage, _scale, _activeColor, _callBack
 //
 //               
 //                        |<   3    >|                  |<4>|<4>|
-//                    +--------------------------------------------------------+ -+-
-//                    |   001            |   002            |   003            |  |
+//               -+-  +--------------------------------------------------------+ -+-
+//    SLIDE_GAP_Y |   |   001            |   002            |   003            |  |
 //               -+-  |   +----------+       +----------+       +----------+   |
 //  SELECT_SIZE_Y |   |   |          |   |   |          |   |   |          |   |
 //                |   |   |          |       |          |       |          |   |
 //               -+-  |   +----------+   |   +----------+   |   +----------+   |
-//    SLIDE_GAP_Y |   |                                                        |
+//   SLIDE_GAP_Y1 |   |                                                        |
 //               -+-  | - - - - - - - -  | - - - - - - - -  | - - - - - - - -  | SLIDE_AREA_Y
-//    SLIDE_GAP_Y |   |   004                005                006            |
-//               -+-  |   +----------+   |   +----------+   |   +----------+   |
+//                    |   004                005                006            |
+//                    |   +----------+   |   +----------+   |   +----------+   |
 //                    |   |          |       |          |       |          |   |
 //                    |   |          |   |   |          |   |   |          |   |
 //                    |   +----------+       +----------+       +----------+   |
@@ -343,7 +343,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 	var TITLE_TEXT_SIZE = 36 * _scale;
 	var TABS_TEXT_SIZE = 20  * _scale;
 	
-	var TOP_BORDER1 = TITLE_TEXT_SIZE * 3/2 | 0;
+	var TOP_BORDER1 = TITLE_TEXT_SIZE * 2 | 0; //new: *2, old: *3/2
 	var TOP_BORDER2 = TABS_TEXT_SIZE * 3/2 | 0;
 	var BORDER1 = 20 * _scale;
 	var BORDER2 = 16 * _scale;
@@ -354,12 +354,14 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 	var SELECT_SIZE_X = NO_OF_TILES_X*BASE_TILE_X*MAP_SCALE;
 	var SELECT_SIZE_Y = NO_OF_TILES_Y*BASE_TILE_Y*MAP_SCALE;
 	var SLIDE_PAGE_ITEMS = 3 * 10;
-	var SLIDE_GAP_X = BASE_TILE_X * _scale * 3/4;
+	var SLIDE_GAP_X = BASE_TILE_X * _scale * 3/5; //new: 3/5, old: 3/4
 	var SLIDE_GAP_Y = BASE_TILE_Y * _scale * 3/4;
+	var SLIDE_GAP_Y1 = BASE_TILE_Y * _scale * 2/4; //new: 2/4, old: 3/4 
+	
 	var SLIDE_ITEM_X = 3;
 	var SLIDE_ITEM_Y = 3;
 	var SLIDE_AREA_X = (SLIDE_GAP_X*2+SELECT_SIZE_X)*SLIDE_ITEM_X;
-	var SLIDE_AREA_Y = (SLIDE_GAP_Y*2+SELECT_SIZE_Y)*SLIDE_ITEM_Y;
+	var SLIDE_AREA_Y = (SLIDE_GAP_Y+SLIDE_GAP_Y1+SELECT_SIZE_Y)*SLIDE_ITEM_Y;
 	
 	var CANVAS_SIZE_X = (BORDER1+BORDER2)*2 + SLIDE_AREA_X;
 	var CANVAS_SIZE_Y = TOP_BORDER1 + TOP_BORDER2 + BORDER2 + SLIDE_AREA_Y +BORDER1+BORDER2;
@@ -407,10 +409,13 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 
 	var activeState = 0; //for edit mode only (1: active level shift, -1: active level deleted)
 	var levelDeleted = 0; //for edit mode only
+	var saveKeyStateObj;
 	
 	init();
+	
 	function init()
 	{
+		saveKeyState();
 		createCanvas1();
 		createDialogStage();
 		setBackground();
@@ -469,10 +474,38 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 		document.body.appendChild(canvas1);
 	}
 	
+	function saveKeyState()
+	{
+		saveKeyStateObj = saveKeyHandler(handleEscKeyDown);
+	}
+	
+	function restoreKeyState()
+	{
+		restoreKeyHandler(saveKeyStateObj);
+	}
+	
+	function handleEscKeyDown(event) 
+	{
+		if(!event){ event = window.event; } //cross browser issues exist
+	
+		if(event.shiftKey || event.ctrlKey) return false;
+
+		switch(event.keyCode) {
+		case KEYCODE_ESC:
+			closeBox();
+			break;	
+		default:
+			//debug("keycode = " + code);	
+			break;	
+		}
+		return false;
+	}	
+	
 	function closeBox()
 	{
 		removeCanvas1();
 		removeCoverBackground();
+		restoreKeyState();
 		if(_postFun) _postFun();
 		if(_closeFun) _closeFun(levelDeleted, _activeLevel, activeState);		//for edit mode
 	}
@@ -481,6 +514,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 	{
 		dialogStage.removeAllChildren();
 		dialogStage.enableMouseOver(0);
+		dialogStage.cursor ="default";
 		createjs.Ticker.removeEventListener(dialogStage);
 		document.body.removeChild(canvas1);
 	}		
@@ -539,7 +573,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 			      .drawRect(BORDER1+BORDER2-1, CANVAS_SIZE_Y-BORDER1, SLIDE_AREA_X+2, BORDER1).endFill();
 		
 		border1.addChild(vBorder1, vBorder2);
-		border1.on("mouseover", function() { dialogStage.cursor ="default" });
+		border1.on("mouseover", function() { dialogStage.cursor ="default"; });
 		dialogStage.addChild(border1);
 	}
 	
@@ -681,7 +715,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 		var selectItemY = Math.ceil(pageItems/SLIDE_ITEM_X);
 		
 		var slideX = SLIDE_AREA_X;
-		var slideY = (SLIDE_GAP_Y*2+SELECT_SIZE_Y) * (selectItemY < SLIDE_ITEM_Y?SLIDE_ITEM_Y:selectItemY);
+		var slideY = (SLIDE_GAP_Y+SLIDE_GAP_Y1+SELECT_SIZE_Y) * (selectItemY < SLIDE_ITEM_Y?SLIDE_ITEM_Y:selectItemY);
 		var slideStartX = BORDER1 + BORDER2;
 		var slideStartY = TOP_BORDER1 + TOP_BORDER2 + BORDER2;
 		
@@ -759,7 +793,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 				//---------------------
 				// move to block bound
 				//---------------------
-				var blockSizeY = (SLIDE_GAP_Y*2+SELECT_SIZE_Y);
+				var blockSizeY = (SLIDE_GAP_Y+SLIDE_GAP_Y1+SELECT_SIZE_Y);
 				var startY = maxSliderY
 				var mod = (maxSliderY - slider.y) % blockSizeY; //division remainder value to block bound
 				
@@ -775,7 +809,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 			slider.x = slideStartX;
 			slider.y = slideStartY;
 			if(activeItemY > 0) { //scroll to active level 
-				slider.y -= activeItemY*(SLIDE_GAP_Y*2+SELECT_SIZE_Y);
+				slider.y -= activeItemY*(SLIDE_GAP_Y+SLIDE_GAP_Y1+SELECT_SIZE_Y);
 			}
 			
 			dialogStage.update();
@@ -799,12 +833,12 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 				textColor);
 					
 			selectText[id].x = (SLIDE_GAP_X*2+SELECT_SIZE_X) * x + SLIDE_GAP_X;
-			selectText[id].y = (SLIDE_GAP_Y*2+SELECT_SIZE_Y) * y + SLIDE_GAP_Y - SELECT_TEXT_SIZE*4/3;
+			selectText[id].y = (SLIDE_GAP_Y+SLIDE_GAP_Y1+SELECT_SIZE_Y) * y + SLIDE_GAP_Y - SELECT_TEXT_SIZE*4/3;
 			slider.addChild(selectText[id]);
 					
 			selectRect[id] = buildSelectMap(level, id);
 			selectRect[id].x = (SLIDE_GAP_X*2+SELECT_SIZE_X) * x + SLIDE_GAP_X;
-			selectRect[id].y = (SLIDE_GAP_Y*2+SELECT_SIZE_Y) * y + SLIDE_GAP_Y;
+			selectRect[id].y = (SLIDE_GAP_Y+SLIDE_GAP_Y1+SELECT_SIZE_Y) * y + SLIDE_GAP_Y;
 			slider.addChild(selectRect[id]);
 			
 			if(playMode != PLAY_DEMO || (playMode == PLAY_DEMO && (typeof demoData[level-1] != "undefined"))) {
@@ -839,11 +873,11 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 				selectText[id].text = ("00"+level).slice(-3);
 				selectText[id].color = (_activeLevel == level)?SELECT_TEXT_ACTIVE_COLOR:SELECT_TEXT_COLOR; 
 				selectText[id].x = (SLIDE_GAP_X*2+SELECT_SIZE_X) * x + SLIDE_GAP_X;
-				selectText[id].y = (SLIDE_GAP_Y*2+SELECT_SIZE_Y) * y + SLIDE_GAP_Y - SELECT_TEXT_SIZE*4/3;
+				selectText[id].y = (SLIDE_GAP_Y+SLIDE_GAP_Y1+SELECT_SIZE_Y) * y + SLIDE_GAP_Y - SELECT_TEXT_SIZE*4/3;
 					
 				selectRect[id] = selectRect[id+1];
 				selectRect[id].x = (SLIDE_GAP_X*2+SELECT_SIZE_X) * x + SLIDE_GAP_X;
-				selectRect[id].y = (SLIDE_GAP_Y*2+SELECT_SIZE_Y) * y + SLIDE_GAP_Y;
+				selectRect[id].y = (SLIDE_GAP_Y+SLIDE_GAP_Y1+SELECT_SIZE_Y) * y + SLIDE_GAP_Y;
 				selectRect[id].myLevel = level;
 				selectRect[id].myId = level - startLevel;
 				
@@ -874,7 +908,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 				
 				pageItems = endLevel - startLevel+1;
 				selectItemY = Math.ceil(pageItems/SLIDE_ITEM_X);
-				slideY = (SLIDE_GAP_Y*2+SELECT_SIZE_Y) * (selectItemY < SLIDE_ITEM_Y?SLIDE_ITEM_Y:selectItemY);
+				slideY = (SLIDE_GAP_Y+SLIDE_GAP_Y1+SELECT_SIZE_Y) * (selectItemY < SLIDE_ITEM_Y?SLIDE_ITEM_Y:selectItemY);
 				minSliderY = slideStartY + SLIDE_AREA_Y - slideY;
 				if(slider.y < minSliderY) slider.y = minSliderY; //shift slider 
 			}
@@ -982,7 +1016,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 				}
 			}	
 			container.cache(0, 0, SELECT_SIZE_X, SELECT_SIZE_Y);
-			bitmap = new createjs.Bitmap( container.getCacheDataURL());
+			bitmap = new createjs.Bitmap( container.cacheCanvas); //change "cont.getCacheDataURL()" to "cont.cacheCanvas"
 			container.removeAllChildren();
 			return bitmap;
 		}
@@ -1043,6 +1077,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 			debug("selectClick");
 			removeCanvas1();
 			removeCoverBackground();
+			restoreKeyState();
 			if(_postFun) _postFun();
 			_activeFun(this.myLevel);
 		}
@@ -1080,7 +1115,7 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 			direction = (direction>0)?1: -1;	
 	
 			
-			slider.y += ((SLIDE_GAP_Y*2+SELECT_SIZE_Y)) * direction;
+			slider.y += ((SLIDE_GAP_Y+SLIDE_GAP_Y1+SELECT_SIZE_Y)) * direction;
 			//boundLine1.alpha = boundLine2.alpha = 0;
 			if(slider.y > maxSliderY) {
 				slider.y = maxSliderY;
@@ -1219,8 +1254,23 @@ function selectDialog(_titleName, _checkBitmap, _levelData, _activeLevel, _scree
 			if(_activeLevel == level) {
 				_activeLevel = 0;
 				activeState = -1; //active level deleted
+				
+				clearTestLevel(); //test level deleted
+				
 			} else if( _activeLevel > level) {
-				_activeLevel--; activeState = 1; //active level shift
+				_activeLevel--; 
+				activeState = 1; //active level shift
+
+				getTestLevel(testLevelInfo);
+				testLevelInfo.level = _activeLevel; // change level no
+				setTestLevel(testLevelInfo);
+				
+			} else if (_activeLevel == 0) { //0 meaings test level is new level
+				
+				if(testLevelInfo.modified == 1) {	
+					testLevelInfo.level = editLevels+1;
+					setTestLevel(testLevelInfo);
+				} 
 			}
 			
 			//(3) shift or delete playInfo of user created
@@ -1296,7 +1346,7 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeIconEnable, _cl
 	var ITEM_TEXT_COLOR = "white";
 	var ITEM_TEXT_SHADOW_COLOR = "gold";
 	
-	var TITLE_AREA_Y = TITLE_TEXT_SIZE * 2 | 0;
+	var TITLE_AREA_Y = TITLE_TEXT_SIZE * 2.5 | 0;
 	
 	var ITEM_AREA_Y = ITEM_TEXT_SIZE * 3/2 | 0;
 	var ITEM_GAP_Y = ITEM_TEXT_SIZE * 2/3 | 0;
@@ -1444,6 +1494,7 @@ function menuDialog(_titleName, _itemList, _stage, _scale, _closeIconEnable, _cl
 		 _itemList[0].activeItem = activeItemBackup; //recover menu active item
 		restoreKeyHandler(saveKeyStateObj);
 		removeAllObj();
+		_stage.cursor = 'default';
 		_stage.enableMouseOver(0);
 		if(_closeCallBack) _closeCallBack(_args);
 	}
@@ -1558,12 +1609,26 @@ var playVersionInfo = [
 	{ id:2, verData: championData, name: gameVersionName[1], info: championInfo }
 ];
 
-var customItemInfo = { id:999, name:" Custom Levels " };
+//var customItemInfo = { id:999, name:" Custom Levels " };
+var customItemIdx = -1;
 var maxPlayId;
 
 var gameVersionMenuList = [
 	{ activeItem: 0 } //game version menu ID
 ];
+
+function getCustomItemInfo(withLevel)
+{
+	var customItemName = " Custom Levels ";
+	if(withLevel) {
+		if (editLevels == 1) {
+			return customItemName + "(1 Level)";
+		} else if(editLevels > 1) {
+			return customItemName + "(" + editLevels + " Levels)";
+		}
+	}
+	return customItemName;
+}
 
 function initMenuVariable()
 {
@@ -1578,7 +1643,9 @@ function initMenuVariable()
 		);
 		if(maxPlayId < playVersionInfo[i].id) maxPlayId = playVersionInfo[i].id;
 	}
-	gameVersionMenuList.push({name: customItemInfo.name, activeFun: subEditMenu});
+	var customItemName = getCustomItemInfo(1);
+	gameVersionMenuList.push({name: customItemName, activeFun: subEditMenu});
+	customItemIdx = gameVersionMenuList.length-1;
 }
 
 function getPlayVerData(id) 
@@ -1587,7 +1654,7 @@ function getPlayVerData(id)
 		if(playVersionInfo[i].id == id) return playVersionInfo[i].verData;
 	}
 	
-	error(arguments.callee.name, "Error: versionData can not find, id = " + id );
+	error("Error: versionData can not find, id = " + id );
 	return playVersionInfo[0].verData;
 }
 
@@ -1597,7 +1664,7 @@ function getPlayVerInfo(id)
 		if(playVersionInfo[i].id == id) return playVersionInfo[i].info;
 	}
 	
-	error(arguments.callee.name, "Error: version info can not find, id = " + id );
+	error("Error: version info can not find, id = " + id );
 	return playVersionInfo[0].info;
 }
 
@@ -1611,7 +1678,7 @@ function menuIdToPlayData(menuId)
 	if(menuId == playVersionInfo.length) return PLAY_DATA_USERDEF; //user created
 	else if (menuId < playVersionInfo.length) return playVersionInfo[menuId].id;
 	
-	error(arguments.callee.name, "design error, menuId =" + menuId );
+	error("design error, menuId =" + menuId );
 	
 	return playVersionInfo[0].id;
 }
@@ -1625,17 +1692,19 @@ function playDataToTitleName(verId)
 		if(playVersionInfo[i].id == verId) return playVersionInfo[i].name;
 	}
 	
-	error(arguments.callee.name, "design error, id =" + verId );
+	error("design error, id =" + verId );
 	return "Unknown";
 }
 
 function mainMenu(callbackFun)
 {	
+	gameVersionMenuList[customItemIdx].name = getCustomItemInfo(1);
 	menuDialog(" Select Game Version ", gameVersionMenuList, mainStage, tileScale, 0, mainMenuClose, callbackFun);
 }
 
 function gameVersionMenu(id, callbackFun)
 {
+	gameVersionMenuList[customItemIdx].name = getCustomItemInfo(1);
 	menuDialog(" Select Game Version ", gameVersionMenuList, mainStage, tileScale, 1, mainMenuClose, callbackFun);
 }
 
@@ -1654,7 +1723,7 @@ function playData2GameVersionMenuId()
 		}
 	}
 	
-	error(arguments.callee.name, "design error, value =" + playData );
+	error("design error, value =" + playData );
 	gameVersionMenuList[0].activeItem = 0;
 	return 0;
 }
@@ -1675,8 +1744,10 @@ function gameMenu(callbackFun)
 {
 	var titleName;
 	
-	var demoItemObj = { name: " Demo Mode ",      activeFun: demoPlay };
-	var editPlayItemObj = { name: " Play Mode ",       activeFun: editPlay };	
+	var demoItemObj =        { name: " Demo Mode ",  activeFun: demoPlay };
+	var editPlayItemObj =    { name: " Play Mode ",  activeFun: editPlay };
+	var editBackupItemObj =  { name: " Backup ",     activeFun: backupDialog };
+	var	editRestoreItemObj = { name: " Restore ",    activeFun: restoreDialog };
 
 	var gameMenuList = [
 		{ activeItem: 0 },
@@ -1687,18 +1758,26 @@ function gameMenu(callbackFun)
 	];
 
 	var editMenuList = [
-		{ activeItem: 0 },
-		{ name: " Edit Mode",           activeFun: editEdit },
-//		{ name: " Play ",           activeFun: editPlay }, 
-		{ name: " Change Game Version ",      activeFun: gameVersionMenu }    
+		{ activeItem: 0 },  //[0]
+		{ name: " Edit Mode",            activeFun: editEdit }, //[1]
+//		{ name: " Play ",                activeFun: editPlay }, 
+		{ name: " Change Game Version ", activeFun: gameVersionMenu } //[2]    
 	];	
 	
 	switch(true) {
 	case (gameVersionMenuList[0].activeItem == playVersionInfo.length):
-		titleName = customItemInfo.name;
-		if(playMode == PLAY_EDIT || playMode == PLAY_TEST) 	editMenuList[0].activeItem = 0; //edit.edit
-		else editMenuList[0].activeItem = 1; // edit.play
-		if(editLevels > 0) addMenuItem(editMenuList,  editPlayItemObj, 2);
+		titleName = getCustomItemInfo(0);
+		if(playMode == PLAY_EDIT || playMode == PLAY_TEST) {
+			editMenuList[0].activeItem = 0; //edit.edit
+		} else 
+			editMenuList[0].activeItem = 1; // edit.play
+
+		addMenuItem(editMenuList,  editRestoreItemObj, 2);
+			
+		if(editLevels > 0) { 
+			addMenuItem(editMenuList,  editBackupItemObj, 2);
+			addMenuItem(editMenuList,  editPlayItemObj, 2);
+		}
 		menuDialog(titleName, editMenuList, mainStage, tileScale, 1, mainMenuClose, callbackFun);	
 		return;
 	case (gameVersionMenuList[0].activeItem < playVersionInfo.length):
@@ -1706,7 +1785,7 @@ function gameMenu(callbackFun)
 		if(playerDemoData.length > 0) addMenuItem(gameMenuList,  demoItemObj, 3);
 		break
 	default:
-		error(arguments.callee.name, "design error, value =" + gameVersionMenuList[0].activeItem );
+		error("design error, value =" + gameVersionMenuList[0].activeItem );
 		return;	
 	}
 	
@@ -1763,6 +1842,7 @@ function classicPlay(id, callbackFun)
 	setLastPlayMode();
 	selectIconObj.disable(1);
 	demoIconObj.disable(1);
+	pasteIconObj.disable();
 	initShowDataMsg();
 	startGame();
 }
@@ -1777,6 +1857,7 @@ function modernPlay(id, callbackFun)
 	soundStop(soundFall);
 	disableStageClickEvent();
 	document.onkeydown = handleKeyDown;
+	pasteIconObj.disable();
 	setLastPlayMode();
 	initShowDataMsg();
 	startGame();
@@ -1795,6 +1876,7 @@ function demoPlay(id, callbackFun)
 	anyKeyStopDemo();
 	initShowDataMsg();
 	demoIconObj.disable(1);
+	pasteIconObj.disable();
 	startGame();
 }
 
@@ -1808,10 +1890,17 @@ function editPlay(id, callbackFun)
 	disableStageClickEvent();
 	document.onkeydown = handleKeyDown;
 	setLastPlayMode();
-	selectIconObj.disable(1);
+	//selectIconObj.disable(1);
 	demoIconObj.disable(1);
-	initShowDataMsg();
-	startGame();
+	pasteIconObj.disable();
+	if (id < 0) { //id < 0 ==> means call from restore custom levels
+		initShowDataMsg(0); //no tips message
+		setTimeout(function() { showTipsText("RESTORE COMPLETE", 2500);}, 50);
+		startGame(1); // no cycle
+	} else {
+		initShowDataMsg();
+		startGame();
+	}
 }
 
 function editEdit(id, callbackFun)
@@ -1819,7 +1908,13 @@ function editEdit(id, callbackFun)
 	if(callbackFun != null) callbackFun();
 	disableStageClickEvent();
 	demoIconObj.disable(1);
-	initShowDataMsg();
+	pasteIconObj.disable();
+	if (id < 0) { //id < 0 ==> means call from restore custom levels
+		initShowDataMsg(0);
+		setTimeout(function() { showTipsText("RESTORE COMPLETE", 2500);}, 50);
+	} else {
+		initShowDataMsg();
+	}
 	startEditMode();
 }
 
@@ -1853,8 +1948,9 @@ function activeSelectMenu(activeFun, postFun)
 	}
 }		
 
+// if _level < 0 means "share level" pass dialog
 function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore, 
-						  _returnBitmap, _menuBitmap, _nextBitmap,
+						  _button1Bitmap, _button2Bitmap, _button3Bitmap,
 						  _stage, _scale, _callBack)
 {
 	var TITLE_TEXT_SIZE = 48 * _scale;
@@ -1884,8 +1980,8 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 	var BUTTON_COLOR = "#eeffff"
 	var BUTTON_BACKGROUND_COLOR = BACKGROUND_COLOR;
 
-	var buttonX = _returnBitmap.getBounds().width * _scale,
-	   	buttonY = _returnBitmap.getBounds().height * _scale;
+	var buttonX = _button1Bitmap.getBounds().width * _scale,
+	   	buttonY = _button1Bitmap.getBounds().height * _scale;
 	
 	var titleTextObj, goldTextObj, guardTextObj, timeTextObj;
 	var goldObj, guardObj, timeNameObj;
@@ -1899,7 +1995,7 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 	var menuX, menuY, startX, startY
 	var timeNameX, maxTextSize;
 	var menuButton = [];
-	var bitmap = [ _returnBitmap, _menuBitmap, _nextBitmap ];
+	var bitmap = [ _button1Bitmap, _button2Bitmap, _button3Bitmap ];
 
 	var centerX, xOffset, yOffset;
 
@@ -1983,7 +2079,7 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 		xOffset = centerX;
 		yOffset = startY+TITLE_TEXT_SIZE*3;
 		
-		goldObj = drawText(xOffset, yOffset, "@", _stage); //@: gold
+		goldObj = drawText(xOffset, yOffset-TEXT_GAP_Y/3, "@", _stage); //@: gold
 		var xOffset = centerX - GOLD_X  - centerGap;
 		goldObj[0].x = xOffset;
 		goldObj[0].alpha = 0;
@@ -1994,7 +2090,7 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 		_stage.addChild(goldTextObj);
 		
 		yOffset += (ITEM_TEXT_SIZE + TEXT_GAP_Y);
-		guardObj = drawText(xOffset, yOffset, "#", _stage); //#: trap (陷井)
+		guardObj = drawText(xOffset, yOffset-TEXT_GAP_Y/3, "#", _stage); //#: trap (陷井)
 		guardObj[0].alpha = 0;
 		
 		guardTextObj.x =centerX + centerGap;
@@ -2029,7 +2125,7 @@ function levelPassDialog(_level, _getGold, _guardDead, _time, _hiScore,
 		hiScoreTextObj.y = yOffset;
 		_stage.addChild(hiScoreNameObj, hiScoreTextObj);
 		
-		yOffset += (ITEM_TEXT_SIZE + buttonY); //xOffset for menu button
+		yOffset += (ITEM_TEXT_SIZE + buttonY); //yOffset for menu button
 	}
  	
 	function updateHiScore()
@@ -2306,7 +2402,8 @@ function yesNoDialog(_txtMsg, _yesBitmap, _noBitmap, _stage, _scale, _callBack)
 		textObj = [];
 		for(var i = 0; i < _txtMsg.length; i++) {
 			textObj[i] = new createjs.Text(_txtMsg[i], "bold " + TEXT_MSG_SIZE + "px Helvetica",TEXT_MSG_COLOR);
-			textObj[i].shadow = new createjs.Shadow(TEXT_MSG_SHADOW_COLOR, 0, 0, 10 );
+			if( i == 0 ) //only first line message has shadow 
+				textObj[i].shadow = new createjs.Shadow(TEXT_MSG_SHADOW_COLOR, 0, 0, 10 );
 			tmpTextSize = textObj[i].getBounds().width;
 			if(maxTextSize < tmpTextSize) maxTextSize = tmpTextSize;
 		}
@@ -2435,5 +2532,1240 @@ function yesNoDialog(_txtMsg, _yesBitmap, _noBitmap, _stage, _scale, _callBack)
 		}
 		
 		_stage.update();
+	}	
+}
+
+
+function backupDialog(id, _callBackFun)
+{
+	var _stage = mainStage;
+	var _scale = tileScale;
+	
+	var TITLE_TEXT_SIZE = 48 * _scale;
+	var MSG_TEXT_SIZE = 40 * _scale;
+	var BUTTON_TEXT_SIZE = 40 * _scale;
+	
+	var BUTTON_BORDER_SIZE = 8 * _scale;
+	var BUTTON_ROUND_RADIUD = 2+ 4 * _scale; 
+
+	var COVER_BACKGROUND_COLOR = "black";
+
+	var BUTTON_BACKGROUND_BORDER_COLOR = "white";
+	var BUTTON_BACKGROUND_SHADOW = "gold";
+	var BUTTON_BACKGROUND_COLOR = "#5b0680"; //"#890ee0";
+	var BUTTON_BACKGROUND_BORDER_SIZE = 8 * _scale;;
+	
+	var TITLE_TEXT_COLOR = "white";
+	var TITLE_TEXT_SHADOW_COLOR = "gold";
+	
+	var MSG_TEXT_COLOR = "white";
+
+	var BUTTON_TEXT_COLOR = "white"
+	var BUTTON_TEXT_SHADOW_COLOR = "gold";
+
+	var BUTTON_BORDER0_COLOR = "white"; //"#890ee0";
+	var BUTTON_COLOR = "#5d7cff";
+	var BUTTON_BORDER1_COLOR = "gold";
+
+	var CLOSE_ICON_ACTIVE_COLOR = "#ff5050";
+
+	var MSG_AREA_Y = MSG_TEXT_SIZE * 3/2 | 0;
+	var MSG_GAP_Y = MSG_TEXT_SIZE * 2/3 | 0;
+
+	var coverBackgroundObj;
+	var background1Obj, background2Obj;
+	var titleTextObj, msgTextObj;
+	
+	var buttonTextObj, buttonObj;
+	
+	var closeIconObj;
+	var saveKeyStateObj;
+
+	var buttonSizeX;
+	var menuX, menuY;
+	var startX, startY;
+
+	var screenX1 = _stage.canvas.width;
+	var screenY1 = _stage.canvas.height;
+
+	init();
+	
+	function init()
+	{
+		saveKeyState();
+		coverParentStage();
+		initContent();
+		creatBackground();
+		createContent();
+		closeIconObj = new closeIconClass(startX+menuX, startY, _stage, _scale, CLOSE_ICON_ACTIVE_COLOR, closeDialog, null);
+		
+		_stage.enableMouseOver(120);
+		_stage.update();
+	}
+	
+	function saveKeyState()
+	{
+		saveKeyStateObj = saveKeyHandler(handleEscKeyDown);
+	}
+	
+	function restoreKeyState()
+	{
+		restoreKeyHandler(saveKeyStateObj);
+	}
+	
+	function coverParentStage()
+	{
+		coverBackgroundObj = new createjs.Shape();
+		coverBackgroundObj.graphics.beginFill(COVER_BACKGROUND_COLOR).drawRect(0, 0, screenX1, screenY1).endFill();
+		coverBackgroundObj.alpha = 0.6;
+		_stage.addChild(coverBackgroundObj);		
+	}
+	
+	function initContent()
+	{
+		titleTextObj = new createjs.Text("   Backup   ", "bold "+TITLE_TEXT_SIZE + "px Helvetica",TITLE_TEXT_COLOR);
+		titleTextObj.shadow = new createjs.Shadow(TITLE_TEXT_SHADOW_COLOR, 0, 0, 10 );
+		
+		msgTextObj = new createjs.Text("Back up all custom levels to a file", "bold " + MSG_TEXT_SIZE + "px Helvetica", MSG_TEXT_COLOR);
+		
+		buttonTextObj = new createjs.Text("Backup", "bold " + BUTTON_TEXT_SIZE + "px Helvetica", BUTTON_TEXT_COLOR);
+
+		buttonSizeX = buttonTextObj.getBounds().width + BUTTON_TEXT_SIZE; 
+		menuX = msgTextObj.getBounds().width + TITLE_TEXT_SIZE * 2;
+		menuY = TITLE_TEXT_SIZE * 2.5 + (MSG_TEXT_SIZE *2) + MSG_GAP_Y * 4|0;
+
+		startX = (screenX1-menuX)/2|0;
+		startY = (screenY1-menuY)/2|0;
+	}
+	
+	function creatBackground()
+	{
+		background1Obj = new createjs.Shape();
+		background1Obj.graphics.beginFill(BUTTON_BACKGROUND_BORDER_COLOR)
+			.drawRoundRect(startX, startY, menuX, menuY, 8*_scale).endFill();
+		background1Obj.shadow = new createjs.Shadow(BUTTON_BACKGROUND_SHADOW, 3, 3, 5 );
+
+		background2Obj = new createjs.Shape();
+		background2Obj.graphics.beginFill(BUTTON_BACKGROUND_COLOR)
+			.drawRoundRect(startX+BUTTON_BACKGROUND_BORDER_SIZE, startY+BUTTON_BACKGROUND_BORDER_SIZE, 
+						   menuX-BUTTON_BACKGROUND_BORDER_SIZE*2, menuY-BUTTON_BACKGROUND_BORDER_SIZE*2, 8*_scale).endFill();
+		_stage.addChild(background1Obj, background2Obj);
+	}
+	
+	function createContent()
+	{
+		titleTextObj.x = startX + (menuX - titleTextObj.getBounds().width)/2|0;
+		titleTextObj.y = startY + TITLE_TEXT_SIZE*3/4;
+		_stage.addChild(titleTextObj);
+		
+		var yOffset = (TITLE_TEXT_SIZE*2.2)|0;
+		
+		msgTextObj.x = startX + (menuX - msgTextObj.getBounds().width)/2|0;
+		msgTextObj.y = startY + yOffset;
+		_stage.addChild(msgTextObj);
+
+		buttonObj = new createjs.Container();
+		
+		//child id = 0
+		var border = new createjs.Shape();
+		border.graphics.beginFill(BUTTON_BORDER0_COLOR)
+			.drawRoundRect(-BUTTON_BORDER_SIZE/2, -BUTTON_BORDER_SIZE/2, buttonSizeX+BUTTON_BORDER_SIZE, MSG_AREA_Y+BUTTON_BORDER_SIZE ,BUTTON_ROUND_RADIUD).endFill();
+			
+		//child id = 1
+		var button = new createjs.Shape();
+		button.graphics.beginFill(BUTTON_COLOR).drawRoundRect(0, 0, buttonSizeX, MSG_AREA_Y,BUTTON_ROUND_RADIUD).endFill();
+			
+		//child id = 2
+		buttonTextObj.textAlign = "center";
+		buttonTextObj.x = buttonSizeX/2|0;
+		buttonTextObj.y = (MSG_AREA_Y - msgTextObj.getBounds().height)/2|0;
+		
+		yOffset += (MSG_GAP_Y*2 + TITLE_TEXT_SIZE/2)|0;
+		buttonObj.addChild(border, button, buttonTextObj);
+		buttonObj.x = startX + (menuX - buttonSizeX)/2|0;
+		buttonObj.y = startY+ yOffset;
+
+		buttonObj.on('click', buttonClick);
+		buttonObj.on('mouseover', buttonMouseOver);
+		buttonObj.on('mouseout', buttonMouseOut);			
+		_stage.addChild(buttonObj);
+	}
+	
+	function buttonClick()
+	{
+		var downloadfileName = downloadCustomLevelData();
+		restoreKeyState();
+		removeAllObj();
+		_stage.cursor = 'default';
+		_stage.enableMouseOver(0);
+		if(_callBackFun) _callBackFun();
+		
+		setTimeout(function() { showTipsText("BACKUP IS COMPLETE", 2500);}, 50);
+	}
+
+	function removeAllObj()
+	{
+		_stage.removeChild(coverBackgroundObj, background1Obj, background2Obj);
+		_stage.removeChild(titleTextObj, msgTextObj, buttonObj);
+		_stage.removeChild(closeIconObj);
+		_stage.update();
+	}	
+	
+	function buttonMouseOver()
+	{
+		var border = buttonObj.getChildAt(0);
+
+		border.graphics.clear();
+		border.graphics.beginFill(BUTTON_BORDER1_COLOR)
+			.drawRoundRect(-BUTTON_BORDER_SIZE, -BUTTON_BORDER_SIZE, buttonSizeX+BUTTON_BORDER_SIZE*2, MSG_AREA_Y+BUTTON_BORDER_SIZE*2,BUTTON_ROUND_RADIUD).endFill();
+
+		buttonTextObj.shadow = new createjs.Shadow(TITLE_TEXT_SHADOW_COLOR, 2, 2, 10 );
+		_stage.cursor = 'pointer';
+		_stage.update();
+	}
+	
+	function buttonMouseOut()
+	{
+		var border = buttonObj.getChildAt(0);
+	
+		border.graphics.clear();
+		border.graphics.beginFill(BUTTON_BORDER0_COLOR)
+			.drawRoundRect(-BUTTON_BORDER_SIZE/2, -BUTTON_BORDER_SIZE/2, buttonSizeX+BUTTON_BORDER_SIZE, MSG_AREA_Y+BUTTON_BORDER_SIZE, BUTTON_ROUND_RADIUD).endFill();
+		
+		buttonTextObj.shadow = null;
+		_stage.cursor = 'default';
+		_stage.update();
+	}	
+	
+	function closeDialog()
+	{
+		restoreKeyState();
+		removeAllObj();
+		_stage.cursor = 'default';
+		_stage.enableMouseOver(0);
+		if(_callBackFun) _callBackFun();
+	}
+
+	function getBackupFileName(d)
+	{
+		//var d = new Date();
+
+		//LR-05.10.21.141804.lrwg
+		return 'LR'+ ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2) + ('0'+d.getFullYear()).slice(-2) + '-'+ ('0'+d.getHours()).slice(-2) + ('0'+d.getMinutes()).slice(-2) + ('0'+d.getSeconds()).slice(-2) + '-' + ('00'+editLevels).slice(-3) + '.lrwg';
+	}
+	
+	function downloadCustomLevelData()
+	{
+		var date = new Date();
+		var fileName = getBackupFileName(date);
+		
+		download(fileName, backupCustomLevelData(date));
+		
+		return fileName;
+		
+		function download(filename, text) {
+			//reference: https://ourcodeworld.com/articles/read/189/how-to-create-a-file-and-generate-a-download-with-javascript-in-the-browser-without-a-server
+			var element = document.createElement('a');
+			element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+			element.setAttribute('download', filename);
+
+			element.style.display = 'none';
+			document.body.appendChild(element);
+
+			element.click();
+
+			document.body.removeChild(element);
+		}
+		
+	}
+	
+	function handleEscKeyDown(event) 
+	{
+		if(!event){ event = window.event; } //cross browser issues exist
+	
+		if(event.shiftKey || event.ctrlKey) return false;
+
+		switch(event.keyCode) {
+		case KEYCODE_ESC:
+			closeDialog();
+			break;	
+		default:
+			//debug("keycode = " + code);	
+			break;	
+		}
+		return false;
+	}	
+	
+}
+
+function restoreDialog(id, _callBackFun)
+{
+	//LODE RUNNER WEB GAME.Wed May 12 2021 19:04:16 GMT+0800 (台北標準時間).PLAYER.XXXXX\n
+
+	var _scale = tileScale;
+
+	var MAX_DISPLAY_FILENAME_LEN = 26; 
+
+	var TITLE_TEXT_SIZE = 48 * _scale;
+	var MSG_TEXT_SIZE = 40 * _scale;
+	var BUTTON_TEXT_SIZE = 40 * _scale;
+	var FILEINFO_TEXT_SIZE = 36 * _scale;
+	var MAPNO_TEXT_SIZE = 20 * _scale;
+	var TOTALLEVEL_TEXT_SIZE = 28 * _scale;
+	
+	var BUTTON_BORDER_SIZE = 8 * _scale;
+	var BUTTON_ROUND_RADIUD = 2+ 4 * _scale; 
+
+	var COVER_BACKGROUND_COLOR = "black";
+
+	var BUTTON_BACKGROUND_BORDER_COLOR = "white";
+	var BUTTON_BACKGROUND_SHADOW = "gold";
+	var BUTTON_BACKGROUND_COLOR = "#5b0680"; //"#890ee0";
+	var BUTTON_BACKGROUND_BORDER_SIZE = 8 * _scale;
+	
+	var PREVIEWMAP_BUTTON_COLOR = "white";
+	var PREVIEWMAP_BUTTON_BORDER_SIZE = 4 * _scale;
+	var PREVIEWMAP_BUTTON_GRAY_ALPHA = 0.2;
+	
+	var TITLE_TEXT_COLOR = "white";
+	var TITLE_TEXT_SHADOW_COLOR = "gold";
+	
+	var MSG_TEXT_COLOR = "white";
+
+	var WRONG_TEXT_COLOR = "#f54B42";
+	var WRONG_TEXT_OUTLINE_COLOR = "#FFFFB0";
+	var WRONG_TEXT_SHADOW_COLOR = "#404040";
+	
+	var BUTTON_TEXT_COLOR = "white"
+	var BUTTON_TEXT_SHADOW_COLOR = "gold";
+
+	var BUTTON_BORDER0_COLOR = "white";
+	var BUTTON_COLOR = "#5d7cff";
+	var BUTTON_BORDER1_COLOR = "gold";
+	
+	var OPENBUTTON_BACKGROUND_COLOR = BUTTON_BACKGROUND_COLOR,
+		OPENBUTTON_COLOR = "#FFFFFF",
+		OPENBUTTON_BORDER_COLOR = "gold";
+	
+	var OPENBUTTON_BORDER_SIZE = 8 * _scale, 
+		OPENBUTTON_ROUND_RADIUD = 2+ 4 * _scale;
+	
+	var FILEINFO_TEXT_COLOR = "#EEEEEE";
+
+	var CLOSE_ICON_ACTIVE_COLOR = "#ff5050";
+
+	var MSG_AREA_Y = MSG_TEXT_SIZE * 3/2 | 0;
+	var MSG_GAP_Y = MSG_TEXT_SIZE * 2/3 | 0;
+
+	var PREVIEW_MAP_SCALE = tileScale * 0.13;
+	var previewMapX = NO_OF_TILES_X*BASE_TILE_X*PREVIEW_MAP_SCALE,
+		previewMapY = NO_OF_TILES_Y*BASE_TILE_Y*PREVIEW_MAP_SCALE;
+	var previewMapGapX = 16*tileScale, 
+		previewMapPerLine = 5;
+	
+	var coverBackgroundObj;
+
+	var restoreCanvas;
+	var dialogStage;
+	
+	var background1Obj, background2Obj;
+	var titleTextObj, msgTextObj;
+	var fileTextObj, fileNameTextObj, fileNameBackgroundObj;
+	var openFolderButtonObj;
+	var wrongText1Obj, wrongText2Obj;
+	var fileInfoTextObj;
+	var buttonTextObj, buttonObj;
+	var fileNameObj = null;
+	
+	var closeIconObj;
+	var saveKeyStateObj;
+
+	var maxFileNameSize, totalFileNameSizeX, totalPreviewMapSizeX;
+	var previewNoYOffset, previewMapYOffset;
+	
+	var buttonSizeX;
+	var menuX, menuY;
+	var fileNameX, fileNameY;
+	var wrongMsgEnable = 0;
+
+	var openFolderButtonScale = 0.9;
+	var openFolderButtonX = openFolderBitmap.getBounds().width * tileScale * openFolderButtonScale,
+		openFolderButtonY = openFolderBitmap.getBounds().height * tileScale * openFolderButtonScale;
+	
+	var nextButtonX = nextBitmap.getBounds().width * tileScale,
+		nextButtonY = nextBitmap.getBounds().height * tileScale;
+	
+	var inputFileElement = null;
+
+	var tmpCustomLevels;
+	var levelMapNoObj = levelMapObjs = [];
+	var totalLevelTextObj = null;
+	var nextMapButtonObj, prevMapButtonObj;
+	var previewvMapFirst = previewMapLast = -1;
+	
+	init();
+	
+	function init()
+	{
+		saveKeyState();
+		coverParentStage();
+		createInputFileElement();
+		initContent();
+		createCanvas();
+		createDialogStage();
+		
+		creatBackground();
+		createContent();
+		closeIconObj = new closeIconClass(menuX, 0, dialogStage, _scale, CLOSE_ICON_ACTIVE_COLOR, closeDialog, null);
+	}
+	
+	function saveKeyState()
+	{
+		saveKeyStateObj = saveKeyHandler(handleEscKeyDown);
+	}
+	
+	function restoreKeyState()
+	{
+		restoreKeyHandler(saveKeyStateObj);
+	}
+	
+	function coverParentStage()
+	{
+		coverBackgroundObj = new createjs.Shape();
+		coverBackgroundObj.graphics.beginFill(COVER_BACKGROUND_COLOR).drawRect(0, 0, mainStage.canvas.width, mainStage.canvas.height).endFill();
+		coverBackgroundObj.alpha = 0.6;
+		mainStage.addChild(coverBackgroundObj); // mainStage
+		mainStage.update();
+	}
+
+	function createInputFileElement()
+	{
+		inputFileElement = document.createElement('input'); 
+		inputFileElement.type = 'file';
+		inputFileElement.accept = '.lrwg';
+		inputFileElement.style.display = 'none';
+		document.body.appendChild(inputFileElement);
+		inputFileElement.addEventListener('change', readRestoreFile);
+	}
+	
+	function initContent()
+	{
+		titleTextObj = new createjs.Text("Restore", "bold "+TITLE_TEXT_SIZE + "px Helvetica",TITLE_TEXT_COLOR);
+		titleTextObj.shadow = new createjs.Shadow(TITLE_TEXT_SHADOW_COLOR, 0, 0, 10 );
+		
+		msgTextObj = new createjs.Text("Restore custom levels from backup files", "bold " + MSG_TEXT_SIZE + "px Helvetica", MSG_TEXT_COLOR);
+
+		fileTextObj = new createjs.Text("File:", "bold " + MSG_TEXT_SIZE + "px Helvetica", MSG_TEXT_COLOR);
+
+		wrongText1Obj = new createjs.Text("Wrong file format !", "bold " + MSG_TEXT_SIZE + "px Helvetica", WRONG_TEXT_OUTLINE_COLOR);
+		wrongText1Obj.outline = _scale;
+		wrongText2Obj = new createjs.Text("Wrong file format !", "bold " + MSG_TEXT_SIZE + "px Helvetica", WRONG_TEXT_COLOR);
+		wrongText2Obj.shadow = new createjs.Shadow(WRONG_TEXT_SHADOW_COLOR, _scale, _scale*2, 1);
+		
+		//get maximun file name text size (width)
+		var tmpObj = new createjs.Text("X", "bold "+ MSG_TEXT_SIZE + "px Courier New", MSG_TEXT_COLOR);
+		maxFileNameSize = tmpObj.getBounds().width * MAX_DISPLAY_FILENAME_LEN;
+		
+		fileInfoTextObj = new createjs.Text("Preview","bold " + FILEINFO_TEXT_SIZE + "px Helvetica", FILEINFO_TEXT_COLOR);
+		
+		totalFileNameSizeX = fileTextObj.getBounds().width + maxFileNameSize + (tileWScale*2/3) + openFolderButtonX;
+		totalPreviewMapSizeX = (previewMapX+previewMapGapX) * previewMapPerLine + previewMapGapX;
+		
+		menuX = TITLE_TEXT_SIZE * 2 + (totalFileNameSizeX > totalPreviewMapSizeX?totalFileNameSizeX:totalPreviewMapSizeX) |0; 
+		menuY = (TITLE_TEXT_SIZE * 2.5 + (MSG_TEXT_SIZE+MSG_GAP_Y)*2) + ((MSG_TEXT_SIZE+MSG_GAP_Y)*2+ previewMapY + TITLE_TEXT_SIZE) + (MSG_GAP_Y*3 + BUTTON_TEXT_SIZE) |0;
+
+		buttonTextObj = new createjs.Text("   Restore   ", "bold " + BUTTON_TEXT_SIZE + "px Helvetica", BUTTON_TEXT_COLOR);
+
+		buttonSizeX = buttonTextObj.getBounds().width + BUTTON_TEXT_SIZE; 
+	}
+	
+	function createCanvas()
+	{
+		restoreCanvas = document.createElement('canvas');
+		restoreCanvas.id = "restoreDialog";
+		restoreCanvas.width  = menuX+10; //10 px for shadow
+		restoreCanvas.height = menuY+10; //10 px for shadow
+	
+		var left = (screenX1 - restoreCanvas.width)/2|0,
+		    top  = (screenY1 - restoreCanvas.height)/2|0;
+		
+		restoreCanvas.style.left = left + "px";
+		restoreCanvas.style.top =  top + "px";
+		restoreCanvas.style.position = "absolute";
+		document.body.appendChild(restoreCanvas);
+	}
+	
+	function createDialogStage()
+	{
+		dialogStage = new createjs.Stage(restoreCanvas);
+		dialogStage.enableMouseOver(60);
+		//createjs.Ticker.setFPS(20);
+		createjs.Ticker.addEventListener("tick", dialogStage);
+	}	
+
+	function creatBackground()
+	{
+		background1Obj = new createjs.Shape();
+		background1Obj.graphics.beginFill(BUTTON_BACKGROUND_BORDER_COLOR)
+			.drawRoundRect(0, 0, menuX, menuY, 8*_scale).endFill();
+		background1Obj.shadow = new createjs.Shadow(BUTTON_BACKGROUND_SHADOW, 3, 3, 5 );
+
+		background2Obj = new createjs.Shape();
+		background2Obj.graphics.beginFill(BUTTON_BACKGROUND_COLOR)
+			.drawRoundRect(BUTTON_BACKGROUND_BORDER_SIZE, BUTTON_BACKGROUND_BORDER_SIZE, 
+						   menuX-BUTTON_BACKGROUND_BORDER_SIZE*2, menuY-BUTTON_BACKGROUND_BORDER_SIZE*2, 8*_scale).endFill();
+		dialogStage.addChild(background1Obj, background2Obj);
+	}
+
+	function createContent()
+	{
+		titleTextObj.x = (menuX - titleTextObj.getBounds().width)/2|0;
+		titleTextObj.y = TITLE_TEXT_SIZE*3/4|0;
+		dialogStage.addChild(titleTextObj);
+		
+		var yOffset = TITLE_TEXT_SIZE*2.2|0;
+		
+		msgTextObj.x = (menuX - msgTextObj.getBounds().width)/2|0;
+		msgTextObj.y = yOffset;
+		dialogStage.addChild(msgTextObj);
+		
+		yOffset += (MSG_TEXT_SIZE+MSG_GAP_Y)|0;
+		fileTextObj.x = (menuX - totalFileNameSizeX)/2|0;
+		fileTextObj.y = yOffset;
+		dialogStage.addChild(fileTextObj);
+		
+		fileNameX = fileTextObj.x + fileTextObj.getBounds().width + (tileWScale/3)|0;
+		fileNameY = yOffset;
+		
+		fileNameBackgroundObj = new createjs.Shape();
+		fileNameBackgroundObj.graphics.beginFill("white").drawRect(
+			fileNameX, fileNameY, maxFileNameSize, MSG_TEXT_SIZE).endFill();
+		fileNameBackgroundObj.alpha = 0.2;
+		
+		dialogStage.addChild(fileNameBackgroundObj);
+		
+		addOpenButton(fileNameX+maxFileNameSize+(tileWScale*1/3)|0, fileNameY+(MSG_TEXT_SIZE-openFolderButtonY)/2|0);
+		
+		yOffset += (MSG_TEXT_SIZE+MSG_GAP_Y)|0; // fileInfo Box yOffset
+
+		var fileInfoBackgroundObj = new createjs.Shape();
+		var fileInfoTextBarObj = new createjs.Shape(); 
+		var fileInfoBoxSizeY = (MSG_TEXT_SIZE+MSG_GAP_Y)*2 + previewMapY + MSG_TEXT_SIZE | 0;
+		var fileInfoBoxYOffset = yOffset;
+
+		fileInfoBackgroundObj.graphics.beginFill("white").drawRoundRect(TITLE_TEXT_SIZE, yOffset, menuX-TITLE_TEXT_SIZE*2, fileInfoBoxSizeY, 16*_scale).endFill();
+		fileInfoBackgroundObj.alpha = 0.5;
+		dialogStage.addChild(fileInfoBackgroundObj);
+		
+		fileInfoTextObj.x = (menuX-fileInfoTextObj.getBounds().width)/2; 
+		fileInfoTextObj.y = yOffset+ (MSG_GAP_Y/2)|0;  // prevew text yOffset
+		dialogStage.addChild(fileInfoTextObj);
+		
+		previewNoYOffset = fileInfoTextObj.y + (MSG_TEXT_SIZE+MSG_GAP_Y/2)|0;
+		previewMapYOffset = previewNoYOffset + MSG_GAP_Y;
+
+		//set Wrong file format x,y 
+		wrongText1Obj.x = wrongText2Obj.x = (menuX-wrongText1Obj.getBounds().width)/2|0;
+		wrongText1Obj.y = wrongText2Obj.y = fileInfoBoxYOffset + (fileInfoBoxSizeY- wrongText1Obj.getBounds().height)/2;  //Y center of preview box Y shift title
+		
+		createPreviewMapButton();
+		
+		// create Restore button
+		buttonObj = new createjs.Container();
+		
+		//child id = 0
+		var border = new createjs.Shape();
+		border.graphics.beginFill(BUTTON_BORDER0_COLOR)
+			.drawRoundRect(-BUTTON_BORDER_SIZE/2, -BUTTON_BORDER_SIZE/2, buttonSizeX+BUTTON_BORDER_SIZE, MSG_AREA_Y+BUTTON_BORDER_SIZE ,BUTTON_ROUND_RADIUD).endFill();
+			
+		//child id = 1
+		var button = new createjs.Shape();
+		button.graphics.beginFill(BUTTON_COLOR).drawRoundRect(0, 0, buttonSizeX, MSG_AREA_Y,BUTTON_ROUND_RADIUD).endFill();
+			
+		//child id = 2
+		buttonTextObj.textAlign = "center";
+		buttonTextObj.x = buttonSizeX/2|0;
+		buttonTextObj.y = (MSG_AREA_Y - msgTextObj.getBounds().height)/2|0;
+		
+		buttonObj.addChild(border, button, buttonTextObj);
+		buttonObj.x = (menuX - buttonSizeX)/2|0;
+		buttonObj.y = fileInfoBoxYOffset + fileInfoBoxSizeY + MSG_GAP_Y|0;
+
+		buttonObj.on('click', buttonClick);
+		buttonObj.on('mouseover', buttonMouseOver);
+		buttonObj.on('mouseout', buttonMouseOut);	
+		buttonObj.alpha = 0;
+		dialogStage.addChild(buttonObj);
+	}
+
+	function createPreviewMapButton()
+	{
+		var nextMapX = nextMapBitmap.getBounds().width*_scale, 
+			nextMapY = nextMapBitmap.getBounds().height*_scale*2/3;
+		var borderNext = new createjs.Shape();
+		var borderPrev = new createjs.Shape();
+
+		nextMapButtonObj = new createjs.Container();
+		prevMapButtonObj = new createjs.Container();
+		
+		//Preview Map Next button
+		borderNext.graphics.beginFill(PREVIEWMAP_BUTTON_COLOR)
+			.drawRoundRect(-PREVIEWMAP_BUTTON_BORDER_SIZE/2|0, -PREVIEWMAP_BUTTON_BORDER_SIZE/2|0, nextMapX+PREVIEWMAP_BUTTON_BORDER_SIZE, nextMapY+PREVIEWMAP_BUTTON_BORDER_SIZE, BUTTON_ROUND_RADIUD).endFill();
+		borderNext.alpha =PREVIEWMAP_BUTTON_GRAY_ALPHA;
+		nextMapBitmap.setTransform(0, 0, _scale, _scale*2/3);
+		nextMapButtonObj.x = TITLE_TEXT_SIZE + (previewMapGapX + previewMapX)*previewMapPerLine - nextMapX-PREVIEWMAP_BUTTON_BORDER_SIZE/2;
+		nextMapButtonObj.y = previewMapYOffset + previewMapY + previewMapGapX/2;
+		nextMapButtonObj.myId = 1;
+		nextMapButtonObj.addChild(borderNext, nextMapBitmap);
+		nextMapButtonObj.on('click', PreviewButtonClick);
+		nextMapButtonObj.on('mouseover', PreviewButtonMouseOver);
+		nextMapButtonObj.on('mouseout', PreviewButtonMouseOut);		
+		nextMapButtonObj.alpha = 0;
+		dialogStage.addChild(nextMapButtonObj);
+		
+		//Preview Map Prev Button
+		borderPrev.graphics.beginFill(PREVIEWMAP_BUTTON_COLOR)
+			.drawRoundRect(-PREVIEWMAP_BUTTON_BORDER_SIZE/2|0, -PREVIEWMAP_BUTTON_BORDER_SIZE/2|0, nextMapX+PREVIEWMAP_BUTTON_BORDER_SIZE, nextMapY+PREVIEWMAP_BUTTON_BORDER_SIZE, BUTTON_ROUND_RADIUD).endFill();
+		borderPrev.alpha =PREVIEWMAP_BUTTON_GRAY_ALPHA;
+		prevMapBitmap.setTransform(0, 0, _scale, _scale*2/3);
+		prevMapButtonObj.x = TITLE_TEXT_SIZE + previewMapGapX + PREVIEWMAP_BUTTON_BORDER_SIZE/2;
+		prevMapButtonObj.y = previewMapYOffset + previewMapY + previewMapGapX/2;
+		prevMapButtonObj.myId = 2;
+		prevMapButtonObj.addChild(borderPrev, prevMapBitmap);
+		prevMapButtonObj.on('click', PreviewButtonClick);
+		prevMapButtonObj.on('mouseover', PreviewButtonMouseOver);
+		prevMapButtonObj.on('mouseout', PreviewButtonMouseOut);		
+		prevMapButtonObj.alpha = 0;
+		dialogStage.addChild(prevMapButtonObj);
+		
+		function PreviewButtonClick()
+		{
+			var myId = this.myId;
+			var totalLevels = tmpCustomLevels.length;
+			switch(myId) {
+				case 1: //next page
+					previewMapFirst += previewMapPerLine;
+					previewMapLast += previewMapPerLine;
+					if (previewMapLast >= totalLevels) previewMapLast = totalLevels-1;
+					break;
+				case 2: //previous page
+					previewMapFirst -= previewMapPerLine;
+					previewMapLast = previewMapFirst + previewMapPerLine-1;
+					if (previewMapLast >= totalLevels) previewMapLast = totalLevels-1;
+					break;
+				default:
+					error("Error: Design Error myId = " + myId );	
+					return;
+			}
+			removePreviewMap();
+			displayPreviewMap(myId);
+		}
+
+		function PreviewButtonMouseOver()
+		{
+			var backgroundObj = this.getChildAt(0);
+
+			backgroundObj.alpha = 1;	
+			dialogStage.cursor = 'pointer';
+			dialogStage.update();			
+		}
+
+		function PreviewButtonMouseOut()
+		{
+			var backgroundObj = this.getChildAt(0);
+
+			backgroundObj.alpha = PREVIEWMAP_BUTTON_GRAY_ALPHA;	
+			dialogStage.cursor = 'default';
+			dialogStage.update();			
+		}
+		
+	}
+	
+	function removePreviewObj()
+	{
+		if (wrongMsgEnable) {
+			dialogStage.removeChild(wrongText1Obj, wrongText2Obj);
+			//dialogStage.removeChild(wrongText2Obj);
+			wrongMsgEnable = 0;
+		}
+		removePreviewMap();
+		disableMapButton();
+		dialogStage.removeChild(totalLevelTextObj);
+		dialogStage.update();
+	}
+	
+	function readRestoreFile(e)
+	{
+		var file;
+		var readFiler; 
+		var fileSize, totalLevels, fileChecksum;
+
+		removePreviewObj();
+		buttonObj.alpha = 0; //disable restore button (hide)
+
+		if (e.target.files.length <= 0) {
+			displayFileName("");
+			return;
+		}
+		file = e.target.files[0];
+		displayFileName(file.name);
+
+		// (1) First only read header for check file format
+		readHeaderInfo(); 
+
+		//reference: https://developer.mozilla.org/en-US/docs/Web/API/FileReader
+		function readHeaderInfo()
+		{
+			var readHeader = new FileReader();
+			var blob = file.slice(0, 150); //read 0 - 150 bytes
+
+			readHeader.onloadend = function(e) {
+				if (e.target.readyState == FileReader.DONE) {
+					checkHeaderInfo(e.target.result);
+				}
+			};
+
+			readHeader.readAsText(blob);
+		}
+
+		function checkHeaderInfo(headerInfo)
+		{
+			//LODE RUNNER WEB GAME.Sun May 16 2021 11:12:20 GMT+0800 (台北標準時間).SISS.MTAyMDAwNDA5YTg1NExS
+			var maxFileSize = 150 + NO_OF_TILES_X * NO_OF_TILES_Y * 256;
+			var newLinePos = headerInfo.indexOf('\n');
+			if(newLinePos < 0) {
+				displayAlertMsg("wrong header");
+				return;
+			}
+
+			var lastDotPos = headerInfo.substr(0, newLinePos).lastIndexOf('.');
+			if (lastDotPos < 0 || newLinePos - lastDotPos != 21) {
+				displayAlertMsg("wrong fileInfo");
+				return;
+			} else {
+				try {
+					var fileInfo = atob(headerInfo.substr(lastDotPos+1, newLinePos-lastDotPos-1));
+				} catch(e) {
+					// wrong base64 
+					displayAlertMsg("wrong base64");
+					return;
+				}
+				var verInfo = fileInfo.charAt(0);
+				if ( verInfo != '1' && verInfo != '2') {
+					displayAlertMsg("wrong fileInfo.version (" + verInfo + ")");
+					return;
+				}
+				if (headerInfo.indexOf(LRWG_FILE_START_INFO) != 0) {
+					displayAlertMsg("wrong startInfo");
+					return;
+				}
+				totalLevels = parseInt(fileInfo.substr(1,2), 16);
+				fileSize = parseInt(fileInfo.substr(3,6), 16);
+				fileChecksum = parseInt(fileInfo.substr(9,4), 16);
+				if (totalLevels > MAX_EDIT_LEVEL || totalLevels <= 0) {
+					displayAlertMsg("wrong edit levels (" + totalLevels + ")");
+					return;
+				}
+				if (file.size > maxFileSize) {
+					displayAlertMsg("Error: file size too large (" + file.size + ")");
+					return;
+				}
+				if (fileSize != file.size) {
+					displayAlertMsg("wrong file size");
+					return;
+				}
+				
+				// (2) Read all file
+				readAllFile = new FileReader();
+
+				readAllFile.onloadend = function(e) {
+					if (e.target.readyState == FileReader.DONE) {
+						readCustomLevels(e.target.result, verInfo);
+					}
+				}
+				readAllFile.readAsText(file);
+			}
+		}
+
+		function readCustomLevels(fileData, verInfo)
+		{
+			var firstNewLinePos = fileData.indexOf('\n');
+			var dataChecksum = 0;
+			var levelData = fileData.substr(firstNewLinePos); //skip header 
+
+			for(var i = 0; i < levelData.length; i++) {
+				dataChecksum += levelData.charCodeAt(i);
+			}
+			if (fileChecksum != (dataChecksum & 0xFFFF)) {
+				displayAlertMsg("wrong file checksum");
+				return;
+			}
+
+			tmpCustomLevels = [];
+			
+			if (verInfo == '1') {
+				// v1: level format
+				// -------------------------------
+				// level map format:
+				// 
+				//    +----- startLevelPos
+				// 	  V
+				// \n tile * NO_OF_TILES_X 
+				// \n tile * NO_OF_TILES_X
+				// ....
+				// \n tile * NO_OF_TILES_X
+				// \n checksum
+				// ------------------------------
+				var oneLevelSize = (NO_OF_TILES_X+1) * NO_OF_TILES_Y+2;  // +2: checksum + '\n'
+				
+				if(levelData.length != totalLevels * oneLevelSize) {
+					displayAlertMsg("wrong levels data size (1)");
+					return;
+				}
+
+				for(var curLevel = 0; curLevel < totalLevels; curLevel++) {
+					var startLevelPos = curLevel * oneLevelSize + 1; // +1: skip first '\n'
+					var curLevelMap = '';
+					for(var tileY = 0; tileY < NO_OF_TILES_Y; tileY++) {
+						// (startLevelPos+1), +1 : skip \n
+						curLevelMap += levelData.substr(startLevelPos+tileY*(NO_OF_TILES_X+1), NO_OF_TILES_X);
+					}
+					var checksum = levelData.charAt(startLevelPos+oneLevelSize-2);
+					var levelChecksum = getShareChecksum(curLevelMap);
+					if (checksum != levelChecksum) {
+						displayAlertMsg("wrong level checksum (" + (curLevel+1) + ")");
+						return;
+					}
+					tmpCustomLevels.push(curLevelMap);
+				}
+			} else {
+				// v2: level format
+				// -----------------------------
+				//  \n zipLevelData
+				//  \n zipLevelData
+				//   .......
+				//  \n zipLevelData
+				// -----------------------------
+				var startLevelPos = 1; // begin from pos = 1
+				var nextNewLinePos;
+				var zipLevelData, curLevelMap;
+				for(var curLevel = 0; curLevel < totalLevels; curLevel++) {
+					nextNewLinePos = levelData.indexOf('\n', startLevelPos);
+					if (nextNewLinePos < 0) {
+						displayAlertMsg("wrong level data @" + (curLevel+1));
+						return;
+					}
+					curLevelMap = unzipLevelMap(levelData.substr(startLevelPos, nextNewLinePos-startLevelPos));
+					if (!curLevelMap) {
+						displayAlertMsg("wrong ziplevel data @" + (curLevel+1));
+						return;
+					}
+					tmpCustomLevels.push(curLevelMap);
+					startLevelPos = nextNewLinePos+1;
+				}
+				if (levelData.length != startLevelPos) {
+					displayAlertMsg("wrong levels data size (2)");
+					return;
+				}
+			}
+			
+			// SUCCESS 	
+			displayFileInfo();
+			buttonObj.alpha = 1; //enable restore button
+		}
+
+		function displayAlertMsg(errMsg)
+		{
+			debug(errMsg);
+			wrongMsgEnable = 1;
+			dialogStage.addChild(wrongText1Obj, wrongText2Obj);
+			dialogStage.update();
+		}
+	}
+	
+	function displayFileName(fileName)
+	{
+		if (fileNameObj) {
+			dialogStage.removeChild(fileNameObj);
+			fileNameObj = null;
+		}
+		if (fileName.length <= 0) { 
+			dialogStage.update();
+			return;
+		}
+		
+		if (stringDisplayWidth(fileName) > MAX_DISPLAY_FILENAME_LEN) {
+			fileName = cutFileName(fileName);
+		}
+		fileNameObj = new createjs.Text(fileName, "bold " + MSG_TEXT_SIZE + "px Helvetica", MSG_TEXT_COLOR);
+		
+		if(fileNameObj.getBounds().width > maxFileNameSize) {
+			fileNameObj = new createjs.Text(fileName, "bold " + MSG_TEXT_SIZE + "px Courier New", MSG_TEXT_COLOR);
+		}
+		
+		fileNameObj.x = fileNameX;
+		fileNameObj.y = fileNameY;
+		dialogStage.addChild(fileNameObj);
+		dialogStage.update();
+		
+		function stringDisplayWidth(str) 
+		{
+			// 0x00-0xFF assume 1 char others assume 2 chars 	
+			//reference: https://blog.typeart.cc/JavaScript計算含中英文字的字串長度/
+			return str.replace(/[^\x00-\xff]/g,"xx").length;          
+		}
+		
+		function cutFileName(str)
+		{
+			var oneSideSize = (MAX_DISPLAY_FILENAME_LEN - 3)/2|0;
+			var leftName = '', rightName = '';
+			
+			for(var i = 0, width=0; width < oneSideSize; i++, width++) {
+				var charCode = str.charCodeAt(i);
+				if (charCode <= 0xFF) {
+					leftName += str.charAt(i);
+				} else {
+					if(++width < oneSideSize) {
+						leftName += str.charAt(i);
+					} else {
+						break;
+					}
+				}
+			}
+
+			for(var i = str.length-1, width=0; width < oneSideSize; i--, width++) {
+				var charCode = str.charCodeAt(i);
+				if (charCode <= 0xFF) {
+					rightName = str.charAt(i) + rightName;
+				} else {
+					if(++width < oneSideSize) {
+						rightName = str.charAt(i) + rightName;
+					} else {
+						break;
+					}
+				}
+			}
+			return leftName + "...." + rightName;
+		}
+	}
+	
+	function addOpenButton(xOffset, yOffset)
+	{
+		openFolderButtonObj = new createjs.Container();
+		border = new createjs.Shape();	
+		button = new createjs.Shape();
+
+		//id = 0
+		border.graphics.beginFill(OPENBUTTON_BACKGROUND_COLOR)
+			.drawRoundRect(-OPENBUTTON_BORDER_SIZE, -OPENBUTTON_BORDER_SIZE, openFolderButtonX+OPENBUTTON_BORDER_SIZE*2, openFolderButtonY+OPENBUTTON_BORDER_SIZE*2, OPENBUTTON_ROUND_RADIUD).endFill();
+		//id = 1
+		button.graphics.beginFill(OPENBUTTON_COLOR)
+			.drawRect(-OPENBUTTON_BORDER_SIZE/3, -OPENBUTTON_BORDER_SIZE/3, openFolderButtonX+OPENBUTTON_BORDER_SIZE*2/3, openFolderButtonY+OPENBUTTON_BORDER_SIZE*2/3).endFill();
+		button.alpha = 0.9;
+
+		//id = 2
+		openFolderBitmap.setTransform(0, 0, _scale*openFolderButtonScale, _scale*openFolderButtonScale);
+
+		openFolderButtonObj.x = xOffset;
+		openFolderButtonObj.y = yOffset;
+		openFolderButtonObj.addChild(border, button, openFolderBitmap);
+
+		openFolderButtonObj.on('click', openButtonClick);
+		openFolderButtonObj.on('mouseover', openButtonMouseOver);
+		openFolderButtonObj.on('mouseout', openButtonMouseOut);	
+		dialogStage.addChild(openFolderButtonObj);
+		
+		function openButtonClick()
+		{
+			inputFileElement.click();
+			openButtonMouseOut();
+		}
+		
+		function openButtonMouseOver()
+		{
+			var border = openFolderButtonObj.getChildAt(0);
+
+			border.graphics.clear();
+			border.graphics.beginFill(OPENBUTTON_BORDER_COLOR)
+				.drawRoundRect(-OPENBUTTON_BORDER_SIZE, -OPENBUTTON_BORDER_SIZE, 
+							   openFolderButtonX+OPENBUTTON_BORDER_SIZE*2, openFolderButtonY+OPENBUTTON_BORDER_SIZE*2, OPENBUTTON_ROUND_RADIUD).endFill();
+
+			dialogStage.cursor = 'pointer';
+			dialogStage.update();
+		}	
+
+		function openButtonMouseOut()
+		{
+			var border = openFolderButtonObj.getChildAt(0);
+
+			border.graphics.clear();
+			border.graphics.beginFill(OPENBUTTON_BACKGROUND_COLOR)
+				.drawRoundRect(-OPENBUTTON_BORDER_SIZE, -OPENBUTTON_BORDER_SIZE, 
+							   openFolderButtonX+OPENBUTTON_BORDER_SIZE*2, openFolderButtonY+OPENBUTTON_BORDER_SIZE*2, OPENBUTTON_ROUND_RADIUD).endFill();
+
+			dialogStage.cursor = 'default';
+			dialogStage.update();
+		}		
+
+	}
+	
+	function removePreviewMap()
+	{
+		for(var i=0 ; i < levelMapObjs.length; i++) {
+			dialogStage.removeChild(levelMapObjs[i]);
+		}
+
+		for(var i=0 ; i < levelMapNoObj.length; i++) {
+			dialogStage.removeChild(levelMapNoObj[i]);
+		}
+	}
+	
+	function disableMapButton()
+	{
+		prevMapButtonObj.alpha = 0; //disable next map button (hide)
+		nextMapButtonObj.alpha = 0; //disable prev map button (hide)
+	}
+
+	function displayPreviewMap(myId=0)
+	{
+		var borderSize = _scale < 1?1:_scale;
+		var scaleX = scaleY = PREVIEW_MAP_SCALE;
+		
+		levelMapObjs = [];
+		levelMapNoObj = [];
+		for(var level=previewMapFirst, i=0; level <= previewMapLast; level++, i++) {
+			var levelMap = new createjs.Container();
+			var border = new createjs.Shape();
+			var background = new createjs.Shape();
+			var mapOffsetX = TITLE_TEXT_SIZE + previewMapGapX + (previewMapX+previewMapGapX) * i;
+			
+			levelMapNoObj[i] = new createjs.Text(("00"+(level+1)).slice(-3), "bold " + MAPNO_TEXT_SIZE + "px Helvetica", "black");
+			levelMapNoObj[i].x = mapOffsetX;
+			levelMapNoObj[i].y = previewNoYOffset;
+			levelMapNoObj[i].alpha = 0.6;
+			dialogStage.addChild(levelMapNoObj[i]);
+			
+			border.graphics.beginFill("white")
+			      .drawRoundRect(-borderSize, -borderSize, previewMapX+2*borderSize, previewMapY+2*borderSize, borderSize);
+			background.graphics.beginFill("black").drawRect(0, 0, previewMapX, previewMapY);
+			
+			levelMap.addChild(border, background, level2Bitmap(tmpCustomLevels[level], scaleX, scaleY));
+			levelMapObjs[i] = levelMap;
+			levelMapObjs[i].x = mapOffsetX;
+			levelMapObjs[i].y = previewMapYOffset|0;
+			dialogStage.addChild(levelMapObjs[i]);
+		}
+		
+		if (previewMapFirst <= 0) {
+			prevMapButtonObj.alpha = 0; //disable
+		} else prevMapButtonObj.alpha = 1; //enable
+
+		if (previewMapLast+1 >= tmpCustomLevels.length) {
+			nextMapButtonObj.alpha = 0; //disable
+		} else nextMapButtonObj.alpha = 1; //enable
+		dialogStage.update();
+	}
+
+	function displayFileInfo()
+	{
+		var totalLevels = tmpCustomLevels.length;
+		var levelText =  totalLevels > 1? " Levels": " Level";
+
+		previewMapFirst = 0;
+		previewMapLast = previewMapPerLine-1;
+		if(previewMapLast+1 >= totalLevels) previewMapLast = totalLevels-1;
+		displayPreviewMap();
+		
+		totalLevelTextObj = new createjs.Text("Total: " + tmpCustomLevels.length + levelText, "bold " + TOTALLEVEL_TEXT_SIZE + "px Helvetica", "black");
+		totalLevelTextObj.x = (menuX-totalLevelTextObj.getBounds().width)/2|0;
+		totalLevelTextObj.y = previewMapYOffset + previewMapY + previewMapGapX*2;
+		totalLevelTextObj.alpha = 0.6;
+		dialogStage.addChild(totalLevelTextObj);
+		
+		dialogStage.update();
+	}
+
+	function level2Bitmap(levelMap, scaleX, scaleY)
+	{
+		var container = new createjs.Container();	
+		var guardCount = 0, runner = 0;
+		var bitmap;
+
+		//--------------------------------------------
+		// Parser map from right-bottom to left-top
+		// for drop guards if too manys	
+		//--------------------------------------------
+		var index = NO_OF_TILES_Y * NO_OF_TILES_X - 1;
+		for(var y = NO_OF_TILES_Y-1; y >= 0; y--) {
+			for(var x = NO_OF_TILES_X-1; x >= 0; x--) {
+				var id = levelMap.charAt(index--);		
+
+				var curTile;	
+				switch(id) {
+				default:		
+				case ' ': //empty
+					continue;
+				case '#': //Normal Brick
+					curTile = getThemeBitmap("brick");
+					break;	
+				case '@': //Solid Brick
+					curTile = getThemeBitmap("solid");
+					break;	
+				case 'H': //Ladder
+					curTile = getThemeBitmap("ladder");
+					break;	
+				case '-': //Line of rope
+					curTile = getThemeBitmap("rope");
+					break;	
+				case 'X': //False brick
+					curTile = getThemeBitmap("brick");
+					break;
+				case 'S': //Ladder appears at end of level
+					continue;
+				case '$': //Gold chest
+					curTile = getThemeBitmap("gold");
+					break;	
+				case '0': //Guard
+					if(++guardCount > MAX_NEW_GUARD) { 
+						continue;  //too many guard , set this tile as empty
+					}
+					curTile = new createjs.Sprite(guardData, "runLeft");
+					curTile.stop();	
+					break;	
+				case '&': //Player
+					if(++runner > 1) {
+						continue;  //too many runner, set this tile as empty
+					}
+					curTile = new createjs.Sprite(runnerData, "runRight");
+					curTile.stop();	
+					break;	
+				}
+				curTile.setTransform(x*BASE_TILE_X*scaleX, y*BASE_TILE_Y*scaleX, scaleX, scaleY);
+				container.addChild(curTile); 
+			}
+		}	
+		container.cache(0, 0, previewMapX, previewMapY);
+		bitmap = new createjs.Bitmap( container.cacheCanvas); // change "cont.getCacheDataURL()" to "cont.cacheCanvas"
+		container.removeAllChildren();
+		return bitmap;
+	}	
+
+	function restoreConfirm(rc)
+	{ 
+		var tmpTestInfo = {level: 1}; // "level:1" for data safe 
+		var oldEditLevels = editLevels; // 1 - 
+		
+		if(rc) { //yes restore custom levels
+			
+			//------------------------------------------------------------------------------------
+			//(1) clear edit levels 
+			getTestLevel(tmpTestInfo);
+			clearEditLevelInfo(); //clear edit level info
+			clearStorage(STORAGE_USER_SCORE_INFO); //clear user score info
+			clearTestLevel(); //clear test level
+			initEditLevelInfo();
+	
+			//(2) add levelmap to storage
+			editLevelData = [];
+			for(var i=0; i < tmpCustomLevels.length; i++) {
+				setEditLevel(++editLevels, tmpCustomLevels[i]); //editLevels: 1 - MAX_EDIT_LEVEL
+			}
+			
+			//(3) save edit info
+			setEditLevelInfo();
+			if(tmpTestInfo.level > oldEditLevels && editLevels < MAX_EDIT_LEVEL && !levelMapIsEmpty(tmpTestInfo.levelMap)) {
+				//still have space for save new editing level
+				tmpTestInfo.level = editLevels+1;
+				setTestLevel(tmpTestInfo);
+			}
+			//-----------------------------------------------------------------------------------
+			
+			restoreKeyState();
+			curLevel = 1;
+			setModernInfo(); // set current level = 1 for play mode
+			if(playMode == PLAY_EDIT) {
+				editEdit(-1, _callBackFun);
+			} else {
+				editPlay(-1, _callBackFun);
+			}
+		} else {
+			restoreKeyState();
+			if(_callBackFun) _callBackFun();
+			
+		}
+	}
+	
+	//restore button click 
+	function buttonClick()
+	{
+		removeCanvas();
+		removeCoverBackground();
+		yesNoDialog(["Warning", "Overwrite existing custom levels ?"], yesBitmap, noBitmap, mainStage, tileScale, restoreConfirm);
+	}
+
+	//restore button mouse over
+	function buttonMouseOver()
+	{
+		var border = buttonObj.getChildAt(0);
+
+		border.graphics.clear();
+		border.graphics.beginFill(BUTTON_BORDER1_COLOR)
+			.drawRoundRect(-BUTTON_BORDER_SIZE, -BUTTON_BORDER_SIZE, buttonSizeX+BUTTON_BORDER_SIZE*2, MSG_AREA_Y+BUTTON_BORDER_SIZE*2,BUTTON_ROUND_RADIUD).endFill();
+
+		buttonTextObj.shadow = new createjs.Shadow(TITLE_TEXT_SHADOW_COLOR, 2, 2, 10 );
+		dialogStage.cursor = 'pointer';
+		dialogStage.update();
+	}
+	
+	//restore button mouse out
+	function buttonMouseOut()
+	{
+		var border = buttonObj.getChildAt(0);
+	
+		border.graphics.clear();
+		border.graphics.beginFill(BUTTON_BORDER0_COLOR)
+			.drawRoundRect(-BUTTON_BORDER_SIZE/2, -BUTTON_BORDER_SIZE/2, buttonSizeX+BUTTON_BORDER_SIZE, MSG_AREA_Y+BUTTON_BORDER_SIZE, BUTTON_ROUND_RADIUD).endFill();
+		
+		buttonTextObj.shadow = null;
+		dialogStage.cursor = 'default';
+		dialogStage.update();
+	}	
+	
+	function removeCanvas()
+	{
+		dialogStage.removeAllChildren();
+		dialogStage.enableMouseOver(0);
+		createjs.Ticker.removeEventListener(dialogStage);
+		document.body.removeChild(restoreCanvas);
+	}
+	
+	function removeCoverBackground()
+	{
+		mainStage.removeChild(coverBackgroundObj);
+	}		
+	
+	function closeDialog()
+	{
+		restoreKeyState();
+		removeCanvas();
+		removeCoverBackground();
+		if(_callBackFun) _callBackFun();
+	}
+	
+	function handleEscKeyDown(event) 
+	{
+		if(!event){ event = window.event; } //cross browser issues exist
+	
+		if(event.shiftKey || event.ctrlKey) return false;
+
+		switch(event.keyCode) {
+		case KEYCODE_ESC:
+			closeDialog();
+			break;	
+		default:
+			//debug("keycode = " + code);	
+			break;	
+		}
+		return false;
 	}	
 }

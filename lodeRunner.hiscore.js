@@ -79,6 +79,16 @@ function showScoreTable(_playData, _curScoreInfo, _callbackFun, _waitTime)
 	
 	}
 
+	function setLastScoreInfo(scoreInfo)
+	{
+		if(typeof cId == "undefined") return;
+		
+		scoreInfo.id = cId;
+		var infoJSON = JSON.stringify(scoreInfo);
+		
+		setStorage(STORAGE_LASTSCORE+_playData, infoJSON); 
+	}
+	
 	function updateScoreInfo()
 	{
 		var addId = -1;
@@ -246,7 +256,8 @@ function showScoreTable(_playData, _curScoreInfo, _callbackFun, _waitTime)
 			//update name for score info  
 			hiScoreInfo[recordId].n = nameString;
 			setHiScoreInfo();
-			
+			setLastScoreInfo(hiScoreInfo[recordId]); //save last score
+
 			if(nameString != playerName && nameString != "???") { //set and save playerName 
 				playerName = nameString;
 				setPlayerName(nameString);     
@@ -348,8 +359,10 @@ function showScoreTable(_playData, _curScoreInfo, _callbackFun, _waitTime)
 				name[curPos] = nextChar(name[curPos], -1);
 				break;
 			case (code == KEYCODE_ENTER): //ENTER
-				if(name.length > 0) inputFinish(true);	//async
-				else soundPlay("beep");	
+				if(vaildPlayerName(name)) {
+					restoreKeyDownHandler();  //avoid type "ENTER" twice
+					inputFinish(true);	//async
+				} else soundPlay("beep");	
 				break;	
 			default:
 				//debug(code);	
@@ -420,7 +433,27 @@ function inputPlayerName(_stage, _callbackFun)
 		_callbackFun();
 	}
 }
- 
+
+function vaildPlayerName(playerArray)
+{
+	var len = playerArray.length;
+
+	//(1)skip tail space 
+	for(var i = len-1; i >= 0; i--) {
+		if(playerArray[i] == " ") len--;
+		else break;
+	}
+		
+	//(2) string length must > 1 and don't all same char 
+	if(len <= 1) return 0; //too short
+		
+	for(var i = 1; i < len; i++) {
+		if(playerArray[0] != playerArray[i]) return 1; //OK
+	}
+		
+	return 0; //all same char
+}	
+
 
 function inputString(_stage, _maxSize, _startX, _startY, _defaultString, _callbackFun) 
 {
@@ -542,7 +575,7 @@ function inputString(_stage, _maxSize, _startX, _startY, _defaultString, _callba
 			inputText[curPos] = nextChar(inputText[curPos], -1);
 			break;
 		case (code == KEYCODE_ENTER): //ENTER
-			if(inputText.length > 0) { 
+			if(vaildPlayerName(inputText)) { 
 				inputFinish();
 				return true;
 			} else soundPlay("beep");	

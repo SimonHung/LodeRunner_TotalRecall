@@ -686,7 +686,7 @@ function removeFillHoleObj(spriteObj)
 			return;
 		}
 	}
-	error(arguments.callee.name, "design error !");
+	error("design error !");
 }
 
 //=======================================

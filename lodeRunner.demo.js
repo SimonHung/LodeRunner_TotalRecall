@@ -135,7 +135,7 @@ function setDemoData(jsonTxt)
 			playerDemoData[wDemoData[i].level-1] = wDemoData[i]; 
 		}
 	} else {
-		error(arguments.callee.name, "Wrong Demo Data: " + jsonTxt);
+		error("Wrong Demo Data: " + jsonTxt);
 	}
 	demoDataLoading = 0; 
 	if(playMode == PLAY_MODERN && gameState == GAME_START ) demoIconObj.enable();
@@ -175,7 +175,7 @@ function getDemoInfo()
 		//demoData = playerDemoData[playData-1];
 		demoData = playerDemoData;
 	} else {
-		error(arguments.callee.name, "design error, value =" + playData );
+		error("design error, value =" + playData );
 	}	
 
 	if(infoJSON == null) {
@@ -196,7 +196,7 @@ function setDemoInfo()
 	if (playData >= 1 && playData <= maxPlayId) {
 		setStorage(STORAGE_DEMO_INFO + playData, infoJSON); 	
 	} else {
-		error(arguments.callee.name, "design error, value =" + playData );
+		error("design error, value =" + playData );
 	}	
 }
 
@@ -217,7 +217,7 @@ function getNextDemoLevel()
 function curDemoLevelIsVaild()
 {
 	if(playData == PLAY_DATA_USERDEF) return 0;
-	return (typeof playerDemoData[curLevel-1] != "undefined");
+	return (playerDemoData.length >= curLevel && typeof playerDemoData[curLevel-1] != "undefined");
 }
 
 function updatePlayerDemoData(playData, demoDataInfo)
@@ -258,7 +258,7 @@ function respUpdatePlayerDemoData(jsonTxt)
 			playerDemoData[level-1].cId = respObj.cId;
 		}
 	} else {
-		error(arguments.callee.name, "Wrong resp Data: " + jsonTxt);
+		error("Wrong resp Data: " + jsonTxt);
 	}
 }
 
@@ -471,7 +471,7 @@ function convertBornPos()
 	bornRecord = tmpRecord;
 }
 
-var curDemoData;
+var curDemoData = { ai: AI_VERSION, time: 0 }; //bug fixed: when press CTRL-C without demo data
 function dumpRecord()
 {
 	var txtStr;	

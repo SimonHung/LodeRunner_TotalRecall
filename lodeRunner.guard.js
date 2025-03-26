@@ -463,7 +463,7 @@ function add2GuardShakeQueue(id, shape)
 	curGuard.curFrameTime = -1; //for init
 		
 	shakingGuardList.push(id);
-	//error(arguments.callee.name, "push id =" + id + "(" + shakingGuardList + ")" );
+	//error("push id =" + id + "(" + shakingGuardList + ")" );
 	
 }
 
@@ -488,7 +488,7 @@ function processGuardShake()
 				
 					var id = shakingGuardList[i];
 					shakingGuardList.splice(i, 1); //remove from list
-					//error(arguments.callee.name, "remove id =" + id + "(" + shakingGuardList + ")" );
+					//error("remove id =" + id + "(" + shakingGuardList + ")" );
 					climbOut(id); //climb out
 					continue;
 				}
@@ -504,11 +504,11 @@ function removeFromShake(id)
 	for(var i = 0; i < shakingGuardList.length;i++) {
 		if(shakingGuardList[i] == id) {
 			shakingGuardList.splice(i, 1); //remove from list
-			//error(arguments.callee.name, "remove id =" + id + "(" + shakingGuardList + ")" );
+			//error("remove id =" + id + "(" + shakingGuardList + ")" );
 			return;
 		}
 	}
-	error(arguments.callee.name, "design error id =" + id + "(" + shakingGuardList + ")" );
+	error("design error id =" + id + "(" + shakingGuardList + ")" );
 }
 
 //======================

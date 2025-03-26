@@ -50,6 +50,8 @@ var editorTile =[], editorActiveTileId = -1;
 var editorButton = [], editorButtonMouseOverId = -1;
 var editInNarrowScreen = 0;
 
+var editMapIsEmpty = 1;
+
 function startEditMode() 
 {
 	playMode = PLAY_EDIT;
@@ -69,6 +71,7 @@ function startEditMode()
 	
 	createBaseTile();
 	createEditMap();
+	checkEditMapEmpty(); // 2021/04
 	startEditTicker();
 	setButtonState();
 	initForPlay();
@@ -116,6 +119,7 @@ function canvasEditReSize()
 	canvas.style.left = (left>0?left:0) + "px";
 	canvas.style.top =  (top>0?top:0) + "px";
 	canvas.style.position = "absolute";
+	canvas.style.cursor = "default";
 	
 	tileWScale = BASE_TILE_X * tileScale;
 	tileHScale = BASE_TILE_Y * tileScale;
@@ -208,6 +212,7 @@ function clearEditMap()
 			tileObj.id = emptyTile.id;
 		}
 	}
+	editMapIsEmpty = 1;
 }
 
 function tile2Id(tileChar)
@@ -453,6 +458,7 @@ function drawNewButton()
 			} else {
 				disableTestButton();
 			}
+			setPasteIconState();
 			clearTestLevel();
 			testLevelInfo.fromPlayData = -1; 
 			testLevelInfo.fromLevel = -1;
@@ -577,7 +583,7 @@ function drawLoadButton()
 	function loadButtonClick()
 	{
 		saveState();
-		if(!editMapIsEmpty()) {
+		if(!editMapIsEmpty) {
 			yesNoDialog(["Abort current editing ?"], yesBitmap, noBitmap, mainStage, tileScale, loadExistLevel);
 		} else {
 			loadExistLevel(1);
@@ -804,7 +810,7 @@ function stageMouseDown(event)
 		mouseDown = 1;
 		//console.log(e.which)
 		//console.log("DOWN");
-	} 	
+	}
 }
 	
 function stageMouseUp(event)
@@ -895,7 +901,7 @@ function delManCheck(id, x, y)
 			guardTile.id = emptyTile.id;
 			lastGuardList.splice(removeId,1);
 		} else {
-			error(arguments.callee.name, "design error !");
+			error("design error !");
 		}
 		break;	
 	}
@@ -905,26 +911,35 @@ function delManCheck(id, x, y)
 function editSelectMenuClose(levelDeleted, newLevel, state)
 {
 	if(levelDeleted) {
-		switch(true) {
-		case (state > 0): //level changed
-			getTestLevel(testLevelInfo);
-			testLevelInfo.level = newLevel;
-			setTestLevel(testLevelInfo);
+		
+		setEditSelectMenu();
+		startEditMode();
+/*	
+	Bug fixed: If player delete some custom levels and restart the program immediate will cause 
+	           testLevel inconsistent, must del or shift testlevel immediate.  
+	           ==> so move below statements into function delLevel(level).	
+
+	switch(true) {
+		case (state > 0): //level number changed
+			//getTestLevel(testLevelInfo);
+			//testLevelInfo.level = newLevel;
+			//setTestLevel(testLevelInfo);
 			startEditMode();
 			break;
 		case (state < 0): //level deleted
-			clearTestLevel();
+			//clearTestLevel();
 			setEditSelectMenu();	
 			startEditMode();
 			break;	
-		case (state == 0 && newLevel == 0): //new level
-			if(testLevelInfo.modified == 1) {	
-				testLevelInfo.level = editLevels+1;
-				setTestLevel(testLevelInfo);
-			} 
+		case (state == 0 && newLevel == 0): //newLevel = 0 : meanings edit new level just need change level id
+			//if(testLevelInfo.modified == 1) {	
+			//	testLevelInfo.level = editLevels+1;
+			//	setTestLevel(testLevelInfo);
+			//} 
 			startEditMode();
 			break;
 		}
+*/		
 	}
 }
 
@@ -949,14 +964,28 @@ function map2LevelData()
 	}
 }
 
-function editMapIsEmpty()
+function checkEditMapEmpty()
 {
+	editMapIsEmpty = 1;
+	
+	mapCheckLoop:
 	for(var y = 0; y < NO_OF_TILES_Y; y++) {
 		for(var x = 0; x < NO_OF_TILES_X; x++) {
-			if(editMap[x][y].id != emptyTile.id) return 0;
+			if(editMap[x][y].id != emptyTile.id) {
+				editMapIsEmpty = 0;
+				break mapCheckLoop;
+			}
 		}
 	}
-	return 1;
+	setPasteIconState();
+}
+
+function setPasteIconState()
+{
+	if (editMapIsEmpty && copyLevelMap != null && testLevelInfo.level <= MAX_EDIT_LEVEL)
+		pasteIconObj.enable();
+	else 
+		pasteIconObj.disable();
 }
 
 function copyEditingMap()
@@ -977,7 +1006,7 @@ function copyEditingMap()
 var editWarningText = null;
 function editWarningMsg(hidden)
 {
-	var x, y, width, height;
+	var width, height;
 
 	if(editWarningText == null) 
 		editWarningText = new createjs.Text("Too many custom levels !", 
@@ -985,9 +1014,9 @@ function editWarningMsg(hidden)
 	
 	width = editWarningText.getBounds().width;
 	height = editWarningText.getBounds().height;
-	x = editWarningText.x = (NO_OF_TILES_X*(tileWScale+EDIT_PADDING) - width) / 2 | 0;
-	y = editWarningText.y = (NO_OF_TILES_Y*tileHScale - height) / 2 | 0;
-	editWarningText.shadow = new createjs.Shadow("white", 2, 2, 1);
+	editWarningText.x = ((NO_OF_TILES_X+2)*(tileWScale+EDIT_PADDING) - width) / 2 | 0;
+	editWarningText.y = (NO_OF_TILES_Y*tileHScale - height) / 2 | 0;
+	editWarningText.shadow = new createjs.Shadow("white", tileScale, 2*tileScale, 1);
 	
 	if(hidden) {
 		mainStage.removeChild(editWarningText);
@@ -1005,26 +1034,34 @@ function editHandleKeyDown(event)
 	if (event.ctrlKey) {
 		switch(event.keyCode) {
 		case KEYCODE_C: //CTRL-C : copy current level
-			copyLevelMap = copyEditingMap();
-			copyLevelPassed = (!testLevelInfo.modified && lastRunner) || testLevelInfo.pass;
-			setTimeout(function() { showTipsText("COPY MAP", 1500);}, 50);
+			if (!editMapIsEmpty) {	
+				copyLevelMap = copyEditingMap();
+				copyLevelPassed = (!testLevelInfo.modified && lastRunner) || testLevelInfo.pass;
+				setTimeout(function() { showTipsText("COPY MAP", 1500);}, 50);
+			}
 			break;	
 		case KEYCODE_V: //CTRL-V : paste copy map
-			if(copyLevelMap != null) {
-				testLevelInfo.levelMap = copyLevelMap;
-				testLevelInfo.modified = 1;
-				testLevelInfo.pass = copyLevelPassed;
-				testLevelInfo.fromPlayData = testLevelInfo.fromLevel = -1;
-				setTestLevel(testLevelInfo);
-				startEditMode();
-				////setButtonState();
-				setTimeout(function() { showTipsText("PASTE MAP", 1500);}, 50);
+			if(copyLevelMap != null && editMapIsEmpty && testLevelInfo.level <= MAX_EDIT_LEVEL) {
+				editPasteMap();
 			}
 			break;	
 		}
 	}
 	return true;
 }	
+
+function editPasteMap()
+{
+	testLevelInfo.levelMap = copyLevelMap;
+	testLevelInfo.modified = 1;
+	testLevelInfo.pass = copyLevelPassed;
+	testLevelInfo.fromPlayData = testLevelInfo.fromLevel = -1;
+	setTestLevel(testLevelInfo);
+	copyLevelMap = null; //clear copy map after paste
+	startEditMode();
+	////setButtonState();
+	setTimeout(function() { showTipsText("PASTE MAP", 1500);}, 50);
+}
 
 function checkTileMouseOver(x, y)
 {
@@ -1049,6 +1086,7 @@ function selectTileMouseOver(tile)
 	
 	border.graphics.clear();
 	border.graphics.beginFill("gold").drawRect(-editBorder, -editBorder, tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
+	canvas.style.cursor = "pointer";
 	//mouseOver = 1;
 }
 	
@@ -1059,6 +1097,7 @@ function selectTileMouseOut(tile)
 	
 	border.graphics.clear();
 	border.graphics.beginFill(color).drawRect(-editBorder, -editBorder, tileWScale+editBorder*2, tileHScale+editBorder*2).endFill();
+	canvas.style.cursor = "default";
 	//mouseOver = 0;
 }
 
@@ -1090,7 +1129,8 @@ function editorButtonMouseOver(button)
 	var backColor = button.getChildAt(1);
 	backColor.graphics.clear();
 	backColor.graphics.beginFill("#ffa").drawRect(0, 0, width, tileHScale).endFill();
-		
+	if (button.alpha)
+		canvas.style.cursor = "pointer";	
 	//mouseOver = 1;	
 }
 
@@ -1105,7 +1145,7 @@ function editorButtonMouseOut(button)
 	var backColor = button.getChildAt(1);
 	backColor.graphics.clear();
 	backColor.graphics.beginFill("#fff").drawRect(0, 0, width, tileHScale).endFill();
-		
+	canvas.style.cursor = "default";	
 	//mouseOver = 0;	
 }	
 
@@ -1113,8 +1153,10 @@ function setButtonState()
 {
 	if(testLevelInfo.level > MAX_EDIT_LEVEL) {
 		newButton.alpha = 0;
+		loadButton.alpha = 0;
 		testButton.alpha = 0;
 		saveButton.alpha = 0;
+		canvas.style.cursor = "default";
 		editWarningMsg(0);
 		return;
 	} else {
@@ -1141,47 +1183,87 @@ function editTick()
 	var x = (x < 0)?-1:(x|0);
 	var y = ((mainStage.mouseY-EDIT_PADDING) / (tileHScale+EDIT_PADDING) )| 0;
 	
-	if(testLevelInfo.level > MAX_EDIT_LEVEL) {
-		return;
-	}
-	//debug(mainStage.mouseX,editStartX, x,y);
-	if(mouseInStage && x >= 0 && x < NO_OF_TILES_X && y >= 0 && y < NO_OF_TILES_Y) {
-		//edit area
+	if(testLevelInfo.level <= MAX_EDIT_LEVEL) {
+		//debug(mainStage.mouseX,editStartX, x,y);
+		if(mouseInStage && x >= 0 && x < NO_OF_TILES_X && y >= 0 && y < NO_OF_TILES_Y) {
+			//edit area
 
-		if(editorActiveTileId >= 0) selectTileMouseOut(editorTile[editorActiveTileId]);
-		if(editorButtonMouseOverId >= 0) editorButtonMouseOut(editorButton[editorButtonMouseOverId]);
-		
-		if( x != lastDown.x || y != lastDown.y) {
-			cursorTileObj.alpha = 1;
-			cursorTileObj.x = (tileWScale + EDIT_PADDING) * x+EDIT_PADDING + editStartX;
-			cursorTileObj.y = (tileHScale + EDIT_PADDING) * y+EDIT_PADDING;
-			if(mouseDown) {
-				var clickTile = editMap[x][y];
-				
-				if(!actTile.id || clickTile.id == actTile.id) {
-					if(actTile.id) cursorTileObj.alpha = 0.1;
-					delManCheck(clickTile.id, x, y);
-					clickTile.tile.getChildAt(1).image =  emptyTile.image;
-					clickTile.id = emptyTile.id;
-				} else {	
-					delManCheck(clickTile.id, x, y);
-					clickTile.tile.getChildAt(1).image =  actTile.image;
-					clickTile.id = actTile.id;
-					addManCheck(actTile.id, x, y);
-				}
-				lastDown = {x:x, y:y};
-				
-				if(testLevelInfo.pass || actTile.id == RUNNER_ID || testLevelInfo.modified == 0) {
-					testLevelInfo.modified = 1;
-					testLevelInfo.pass = 0;
-					setButtonState();
+			if(editorActiveTileId >= 0) selectTileMouseOut(editorTile[editorActiveTileId]);
+			if(editorButtonMouseOverId >= 0) editorButtonMouseOut(editorButton[editorButtonMouseOverId]);
+
+			if( x != lastDown.x || y != lastDown.y) {
+				cursorTileObj.alpha = 1;
+				cursorTileObj.x = (tileWScale + EDIT_PADDING) * x+EDIT_PADDING + editStartX;
+				cursorTileObj.y = (tileHScale + EDIT_PADDING) * y+EDIT_PADDING;
+				if(mouseDown) {
+					var clickTile = editMap[x][y];
+
+					if(!actTile.id || clickTile.id == actTile.id) {
+						if(actTile.id) cursorTileObj.alpha = 0.1;
+						delManCheck(clickTile.id, x, y);
+						clickTile.tile.getChildAt(1).image =  emptyTile.image;
+						clickTile.id = emptyTile.id;
+					} else {	
+						delManCheck(clickTile.id, x, y);
+						clickTile.tile.getChildAt(1).image =  actTile.image;
+						clickTile.id = actTile.id;
+						addManCheck(actTile.id, x, y);
+					}
+					lastDown = {x:x, y:y};
+					checkEditMapEmpty();
+
+					if(testLevelInfo.pass || actTile.id == RUNNER_ID || testLevelInfo.modified == 0) {
+						testLevelInfo.modified = 1;
+						testLevelInfo.pass = 0;
+						setButtonState();
+					}
 				}
 			}
+		} else {
+			checkTileMouseOver(mainStage.mouseX, mainStage.mouseY);
+			checkButtonMouseOver(mainStage.mouseX, mainStage.mouseY);
+			cursorTileObj.alpha = 0;
 		}
-	} else {
-		checkTileMouseOver(mainStage.mouseX, mainStage.mouseY);
-		checkButtonMouseOver(mainStage.mouseX, mainStage.mouseY);
-		cursorTileObj.alpha = 0;
 	}
 	mainStage.update();
+}
+
+function levelMapIsEmpty(levelMap)
+{
+	for(i =0; i < levelMap.length; i++) {
+		if (levelMap[i] != ' ') return 0; 
+	}
+	return 1;
+}
+
+//========================================================
+//
+//  Copy share level to test level or copy map for editig 
+//
+//=========================================================
+function copyShareLevelForEditing()
+{
+	
+	getTestLevel(testLevelInfo);
+	if(testLevelInfo.level <= MAX_EDIT_LEVEL && levelMapIsEmpty(testLevelInfo.levelMap)) {
+		//test map is empty, replace test map with share level map
+		testLevelInfo.levelMap = shareLevelData[0];
+		testLevelInfo.modified = 1;
+		testLevelInfo.pass = 1;
+		testLevelInfo.fromPlayData = testLevelInfo.fromLevel = -1;
+		setTestLevel(testLevelInfo);
+	} else {
+		if (shareLevelData[0] != testLevelInfo.levelMap) {
+			//(testMap != empty and testMap != shareMap) ==> keep shareLevel map to copyMap 
+			copyLevelMap = shareLevelData[0];
+		    copyLevelPassed = 1;
+		}
+	}
+	
+}
+
+function editShareLevel()
+{
+	editEdit(0, null);
+	
 }

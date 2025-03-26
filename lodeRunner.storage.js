@@ -63,7 +63,7 @@ function getClassicInfo()
 		// END for support base64 encode
 		//================================
 	} else {
-		error(arguments.callee.name, "design error, value =" + playData );
+		error("design error, value =" + playData );
 		playData = 1;	
 	}
 	levelData = getPlayVerData(playData);
@@ -104,7 +104,7 @@ function setClassicInfo(passed)
 	if(playData >= 1 && playData <= maxPlayId) {
 		setStorage(STORAGE_CLASSIC_INFO+playData, infoJSON); 	
 	} else {
-		error(arguments.callee.name, "design error, value =" + playData );
+		error("design error, value =" + playData );
 	}
 }
 
@@ -128,13 +128,13 @@ function getModernInfo()
 			levelData = editLevelData;
 		} else { //no any user created level !
 			playData = 1;
-			playData2MainMenuId();
+			playData2GameVersionMenuId();
 			infoJSON = getStorage(STORAGE_MODERN_INFO+1); 
 			levelData = getPlayVerData(playData);
 		}
 		break;	
 	default:		
-		error(arguments.callee.name, "design error, value =" + playData );
+		error("design error, value =" + playData );
 		playData = 1;	
 		break;
 	}
@@ -165,7 +165,7 @@ function setModernInfo()
 		setStorage(STORAGE_USER_INFO, infoJSON); //user created
 		break;
 	default:
-		error(arguments.callee.name, "design error, value =" + playData );
+		error("design error, value =" + playData );
 		break;	
 	}
 }
@@ -180,7 +180,7 @@ function clearModernInfo()
 		clearStorage(STORAGE_USER_INFO);	
 		break;
 	default:
-		error(arguments.callee.name, "design error, value =" + playData );
+		error("design error, value =" + playData );
 		break;	
 	}	
 }
@@ -199,7 +199,7 @@ function getModernScoreInfo()
 		levelSize = MAX_EDIT_LEVEL;	
 		break;
 	default:
-		error(arguments.callee.name, "design error, value =" + playData );
+		error("design error, value =" + playData );
 		break;	
 	}	
 	
@@ -225,7 +225,7 @@ function setModernScoreInfo()
 		setStorage(STORAGE_USER_SCORE_INFO, infoJSON); 
 		break;
 	default:
-		error(arguments.callee.name, "design error, value =" + playData );
+		error("design error, value =" + playData );
 		break;	
 	}
 }
@@ -376,6 +376,17 @@ function getTestLevel(testInfo)
 	} else {
 		var init = testInfo.level<0?1:0;
 		var infoObj = JSON.parse(infoJSON);
+
+		//add statements for testInfo safer
+		if(!('level' in infoObj) || !('map' in infoObj) || !('pass' in infoObj) || 
+		   infoObj.level < 0 || infoObj.level > editLevels+1 || 
+		   infoObj.map.length != NO_OF_TILES_X * NO_OF_TILES_Y) 
+		{
+			//wrong map data clear it 
+			clearTestLevel();
+			initNewLevelInfo(testInfo);
+			return;
+		}
 		
 		testInfo.level  = infoObj.level;
 		testInfo.levelMap = infoObj.map;
@@ -389,18 +400,19 @@ function getTestLevel(testInfo)
 		}
 
 		//BEGIN for debug ====================
-		var i = 0;
-		for(var y = 0; y < NO_OF_TILES_Y; y++) {
-			var string = ""
-			for(var x = 0; x < NO_OF_TILES_X; x++) {
-				string += testInfo.levelMap[i++];
-			}
-			//debug('"' + string + '"');
-		}
+		//var i = 0;
+		//for(var y = 0; y < NO_OF_TILES_Y; y++) {
+		//	var string = ""
+		//	for(var x = 0; x < NO_OF_TILES_X; x++) {
+		//		string += testInfo.levelMap[i++];
+		//	}
+		//	//debug('"' + string + '"');
+		//}
 		//END   for debug ====================
 		
-		if(testInfo.level > editLevels) testInfo.modified = 1;
-		else {
+		if(testInfo.level > editLevels) {
+			testInfo.modified = 1;
+		} else {
 			if(compareWithExist(editLevelData[infoObj.level-1], testInfo.levelMap) == 0) { 
 				if(init) {
 					//same as exist level, new level 
@@ -411,7 +423,6 @@ function getTestLevel(testInfo)
 				testInfo.modified = 1;
 			}
 		}
-		
 	}
 }
 

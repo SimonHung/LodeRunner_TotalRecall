@@ -268,6 +268,7 @@ function pressKey(code)
 			menuIconDisable(1);
 			gamePause();
 			showScoreTable(playData, null, function() { menuIconEnable(); gameResume();});	
+			return; //don't record this key code !
 		} else {
 			keyAction = ACT_UNKNOWN;
 		}
@@ -277,7 +278,7 @@ function pressKey(code)
 		//debug("keycode = " + code);	
 		break;	
 	}
-  if(recordMode && code != KEYCODE_ESC) saveKeyCode(code, keyAction);
+	if(recordMode && code != KEYCODE_ESC) saveKeyCode(code, keyAction);
 }
 
 function gameResume()

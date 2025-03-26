@@ -178,7 +178,9 @@ function selectIconClass( _screenX1, _screenY1, _scale, _bitmap)
 		enabled = 1;
 		disableMouseHandler();
 		enableMouseHandler();
-		document.body.appendChild(selectCanvas);
+
+		document.body.appendChild(selectCanvas);  //overlay with selectCanvas, make zIndex up ?
+
 		selectIcon.set({alpha:1})
 		stage.enableMouseOver(60);
 		stage.update();
@@ -369,6 +371,9 @@ function demoIconClass( _screenX1, _screenY1, _scale, _bitmap)
 		enabled = 1;
 		disableMouseHandler();
 		enableMouseHandler();
+		
+		document.body.appendChild(canvas); //overlay with pasteCanvas, make zIndex up ?
+		
 		iconObj.set({alpha:1})
 		stage.enableMouseOver(60);
 		stage.update();
@@ -627,6 +632,8 @@ function soundIconClass( _screenX1, _screenY1, _scale, _soundOnBitmap, _soundOff
 			if((soundOff ^= 1)) { soundStop(soundDig); soundStop(soundFall); }
 		}
 		
+		resumeAudioContext();  //2021/08/25
+
 		self.updateSoundImage();
 		mouseOut();
 	}	
@@ -1238,6 +1245,132 @@ function themeIconClass( _screenX1, _screenY1, _scale, _themeBitmapApple2, _them
 function themeColorIconUpdate()
 {
 	themeColorObj.themeChange();
+}
+
+// For EDIT mode
+function pasteIconClass( _screenX1, _screenY1, _scale, _bitmap)
+{
+	var border = 4 * _scale;
+	var canvas, stage;
+	var	iconObj, bgObj;
+	var saveStateObj;
+	var mouseOverHandler = null, mouseOutHandler = null, mouseClickHandler = null;
+	
+	var bitmapX = _bitmap.getBounds().width * _scale;
+	var bitmapY = _bitmap.getBounds().height * _scale;	
+	var self = this;
+	var enabled = 0;
+	
+	init();
+	
+	function init()
+	{
+		createCanvas();
+		createIconObj();
+	}
+	
+	this.enable = function ()
+	{
+		if (enabled) return;
+		
+		enabled = 1;
+		disableMouseHandler();
+		enableMouseHandler();
+		
+		document.body.appendChild(canvas); //overlay with demoCanvas, make zIndex up ?
+		
+		iconObj.set({alpha:1})
+		stage.enableMouseOver(60);
+		stage.update();
+	}
+	
+	this.disable = function ()
+	{
+		if (!enabled) return;
+		
+		disableMouseHandler();
+		iconObj.set({alpha:0});
+		stage.update();
+		enabled = 0;
+		stage.enableMouseOver(0);
+	}
+	
+	function enableMouseHandler()
+	{
+		mouseOverHandler = iconObj.on("mouseover", mouseOver);
+		mouseOutHandler = iconObj.on("mouseout", mouseOut);
+		mouseClickHandler = iconObj.on("click", mouseClick);
+	}
+	
+	function disableMouseHandler()
+	{
+		iconObj.removeEventListener("mouseover", mouseOverHandler);
+		iconObj.removeEventListener("mouseout", mouseOutHandler);
+		iconObj.removeEventListener("click", mouseClickHandler);
+		stage.cursor = "default";
+		stage.update();
+	}
+	
+	function createCanvas()
+	{
+		canvas = document.createElement('canvas');
+		canvas.id = "paste_icon";
+		canvas.width  = bitmapX+border*2;
+		canvas.height = bitmapY+border*2;
+	
+		var left = (_screenX1 - canvas.width - screenBorder),
+			top  = (canvas.height*2 + bitmapY*3/2)|0;
+		
+		canvas.style.left = left + "px";
+		canvas.style.top =  top + "px";
+		canvas.style.position = "absolute";
+		document.body.appendChild(canvas);
+	}
+	
+	function createIconObj()
+	{
+		stage = new createjs.Stage(canvas);
+		iconObj = new createjs.Container();
+		
+		//create mouseOver shape
+		bgObj = new createjs.Shape();
+		bgObj.graphics.beginFill(mouseOverBGColor)
+			      .drawRect(0, 0, bitmapX+border*2, bitmapY+border*2).endFill();
+		bgObj.alpha = 0;
+		
+		//change bitmap size
+		_bitmap.setTransform(border, border, _scale, _scale);
+		
+		iconObj.addChild(bgObj);
+		iconObj.addChild(_bitmap);
+		iconObj.set({alpha:0})
+		
+		stage.addChild(iconObj);
+		stage.update();
+	}
+	
+	function mouseOver()
+	{
+		if(playMode != PLAY_EDIT) return;
+		
+		stage.cursor = "pointer";
+		bgObj.alpha = 1;
+		stage.update();
+	}
+	
+	function mouseOut()
+	{
+		stage.cursor = "default";
+		bgObj.alpha = 0;
+		stage.update();
+	}
+	
+	function mouseClick()
+	{
+		if(playMode != PLAY_EDIT) return;
+		mouseOut();
+		editPasteMap();
+	}
 }
 
 //======================================

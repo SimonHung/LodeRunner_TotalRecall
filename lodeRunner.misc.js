@@ -14,9 +14,9 @@ function assert(expression, msg)
 	console.assert(expression, msg);
 }
 
-function error(funName, string) 
+function error(string) 
 {
-	console.log("Error In " + funName + "( ): " + string);
+	console.log("Error In " + error.caller.name + "( ): " + string);
 }
 
 function getScreenSize() 
@@ -49,8 +49,11 @@ function getScreenSize()
 //===============================
 function showTipsMsg(_tipsTxt, _stage, _scale, _tipsTxt1)
 {
-	var TEXT_SIZE = 72* _scale;
-	var TEXT_COLOR = "#ff2020";
+	var TEXT_SIZE = 72 * _scale;
+	var TEXT1_SIZE = 66 * _scale;
+	var TEXT_COLOR = "#FF2020";
+	var TEXT1_COLOR = "#FF2020";
+
 	var tipsText = new createjs.Text(_tipsTxt, "bold " +  TEXT_SIZE + "px Helvetica", TEXT_COLOR);
 	var screenX1 = _stage.canvas.width;
 	var screenY1 = _stage.canvas.height;
@@ -67,7 +70,7 @@ function showTipsMsg(_tipsTxt, _stage, _scale, _tipsTxt1)
 		
 	if(_tipsTxt1 != null) {
 		// two tips 
-		var tipsText1 = new createjs.Text(_tipsTxt1, "bold " +  TEXT_SIZE + "px Helvetica", TEXT_COLOR);
+		var tipsText1 = new createjs.Text(_tipsTxt1, "bold " +  TEXT1_SIZE + "px Helvetica", TEXT1_COLOR);
 		
 		tipsText1.x = (screenX1) / 2 | 0;
 		tipsText1.y = screenY1/2 | 0;
@@ -172,12 +175,28 @@ function phpTimeZone()
 //========================================
 // get local time (YYYY-MM-DD HH:MM:SS)
 //========================================
-function getLocalTime()
+function getLocalTime(d)
 {
-	var d = new Date();
+	if (d == null) d = new Date();
 	
 	return (("000"+d.getFullYear()).slice(-4)+ "-" +("0"+(d.getMonth() + 1)).slice(-2)+ "-" +("0"+d.getDate()).slice(-2)+ " " +	
 	       ("0"+d.getHours()).slice(-2) + ":" + ("0"+d.getMinutes()).slice(-2) + ":"  + ("0"+d.getSeconds()).slice(-2));
+}
+
+// ======================================================================
+// return format : "2021-06-08 12:09:08 GMT+0800 (Taipei Standard Time)"
+// ======================================================================
+function getLocalTimeZone(d)
+{
+	if (d == null) d = new Date();
+	
+	var dString = d.toString(); // format: "Tue Jun 08 2021 12:09:08 GMT+0800 (台北標準時間)"
+	var dGMTOffset = dString.indexOf('GMT');
+	var dGMT = ""
+
+	if(dGMTOffset >= 0) dGMT = ' ' + dString.substr(dGMTOffset);
+	
+	return getLocalTime(d) + dGMT;
 }
 
 //===============

@@ -1,4 +1,4 @@
-var VERSION = "2.21i";
+var VERSION = "2.30e";
 var AI_VERSION = 4;
 
 var NO_OF_TILES_X = 28,
@@ -27,7 +27,7 @@ var KEYCODE_BKSPACE = 8, //backspace
 	KEYCODE_ESC = 27, //escape
 	
 	KEYCODE_X = 88,  //dig right
-	KEYCODE_Y = 89,  //dig left (for German keyboards)
+	KEYCODE_Y = 89,  //dig left (Y key to dig left, for German keyboards)
 	KEYCODE_Z = 90,  //dig left
 
 	KEYCODE_LEFT  = 37, //move left
@@ -75,10 +75,11 @@ var	KEYCODE_0 = 48,
 	KEYCODE_8 = 56,
 	KEYCODE_9 = 57;
 	
-var SCORE_COMPLETE_LEVEL = 1500, SCORE_COUNTER = 15;
+var SCORE_COMPLETE_LEVEL = 1500, SCORE_COUNTER = 15,
 	SCORE_GET_GOLD = 250,
 	SCORE_IN_HOLE = 75,
-	SCORE_GUARD_DEAD = 75;
+	SCORE_GUARD_DEAD = 75,
+	SCORE_WIN_PER_MAN = 42500;
 
 var SCORE_VALUE_PER_POINT = 100; //for modern & edit mode
 
@@ -91,7 +92,8 @@ var GAME_START = 0,          GAME_RUNNING = 1,
 	GAME_NEW_LEVEL = 6,      GAME_RUNNER_DEAD = 7, 
 	GAME_OVER_ANIMATION = 8, GAME_OVER = 9,
 	GAME_NEXT_LEVEL = 10,    GAME_PREV_LEVEL = 11,
-	GAME_LOADING = 12,       GAME_WIN = 13;
+	GAME_LOADING = 12,       GAME_WIN_SCORE_COUNT = 13,
+	GAME_WIN = 14;
 
 var ACT_UNKNOWN = -1, ACT_STOP = 0, 
 	ACT_LEFT = 1,     ACT_RIGHT = 2, 
@@ -181,6 +183,8 @@ var STORAGE_TEST_LEVEL  = "loderunner_testlevel";
 
 var STORAGE_HISCORE_INFO = "loderunner_hiScore";
 
+var STORAGE_LASTSCORE = "loderunner_lastScore";
+
 var STORAGE_PLAYER_NAME = "loderunner_player";
 var STORAGE_UID = "loderunner_uid";
 
@@ -189,3 +193,8 @@ var STORAGE_THEME_COLOR = "loderunner_color_";
 
 var STORAGE_REPEAT_ACTION = "loderunner_actRepeat";
 var STORAGE_GAMEPAD_MODE = "loderunner_gamepadMode";
+
+//================================
+// backup & restore file header
+//================================
+var LRWG_FILE_START_INFO = "LODE RUNNER WEB GAME.";

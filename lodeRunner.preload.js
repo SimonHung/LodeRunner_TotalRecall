@@ -21,6 +21,7 @@ var helpObj, helpBitmap, editHelpBitmap;
 var mainMenuIconBitmap, mainMenuIconObj;
 var selectIconBitmap, selectIconObj;
 var demoIconBitmap, demoIconObj;
+var pasteIconBitmap, pasteIconObj; // paste icon
 var soundOnIconBitmap, soundOffIconBitmap, soundIconObj;
 var helpIconBitmap, helpIconObj;
 var infoObj, infoIconBitmap, infoIconObj;
@@ -28,6 +29,8 @@ var repeatActionOnIconBitmap, repeatActionOffIconBitmap, repeatActionIconObj;
 var apple2IconBitmap, C64IconBitmap, themeIconObj, themeColorObj;
 var checkBitmap;
 var returnBitmap, select1Bitmap, nextBitmap;
+var openFolderBitmap; // for restore custom levels
+var nextMapBitmap, prevMapBitmap; // for restore custom levels
 var yesBitmap, noBitmap;
 var coverPageLoad;
 var noCache = "?" + VERSION+ ".1051230";
@@ -199,11 +202,17 @@ function preloadResource()
 		{ src: "image/return.png"+noCache,  id: "return" },
 		{ src: "image/select1.png"+noCache, id: "select1" },
 		{ src: "image/next.png"+noCache,    id: "next" },
+
+		{ src: "image/openFolder.png"+noCache,  id: "openFolder" }, //05/17/2021
+		{ src: "image/nextMap.png"+noCache,   id: "nextMap" }, //05/21/2021
+		{ src: "image/prevMap.png"+noCache,   id: "prevMap" }, //05/21/2021
 		
 		{ src: "image/yes.png"+noCache,     id: "yes" },
 		{ src: "image/no.png"+noCache,      id: "no" },
 
 		{ src: "image/demo.png"+noCache,id: "demo" },
+
+		{ src: "image/paste.png"+noCache,id: "paste" }, //04/23/2021
 		
 		{ src: "image/soundOn.png"+noCache,  id: "soundOn" },
 		{ src: "image/soundOff.png"+noCache, id: "soundOff" },
@@ -287,7 +296,7 @@ function preloadResource()
 	
 	//Set percentTxt position
 	percentTxt.x = (canvas.width - percentTxt.getBounds().width) / 2 | 0;
-	percentTxt.y = (BASE_SCREEN_Y - COVER_PROGRESS_UNDER_Y) * tileScale;
+	percentTxt.y = (BASE_SCREEN_Y - COVER_PROGRESS_UNDER_Y) * tileScale + height/12;  // move percent number Lower
 	
 	mainStage.addChild(runnerSprite, progress, progressBorder, percentTxt);
 	
@@ -383,6 +392,9 @@ function preloadResource()
 		
 		demoIconBitmap = new createjs.Bitmap(preload.getResult("demo")); //04/18/2015
 		demoIconObj = new demoIconClass(screenX1, screenY1, tileScale, demoIconBitmap);
+		
+		pasteIconBitmap = new createjs.Bitmap(preload.getResult("paste")); //04/23/2021
+		pasteIconObj = new pasteIconClass(screenX1, screenY1, tileScale, pasteIconBitmap);
 
 		soundOnIconBitmap = new createjs.Bitmap(preload.getResult("soundOn")); //04/18/2015
 		soundOffIconBitmap = new createjs.Bitmap(preload.getResult("soundOff"));
@@ -409,6 +421,10 @@ function preloadResource()
 		returnBitmap = new createjs.Bitmap(preload.getResult("return"));
 		select1Bitmap = new createjs.Bitmap(preload.getResult("select1"));
 		nextBitmap = new createjs.Bitmap(preload.getResult("next"));
+		
+		openFolderBitmap = new createjs.Bitmap(preload.getResult("openFolder")); // for restore custom levels
+		nextMapBitmap = new createjs.Bitmap(preload.getResult("nextMap")); // for restore custom levels
+		prevMapBitmap = new createjs.Bitmap(preload.getResult("prevMap"));
 		
 		yesBitmap = new createjs.Bitmap(preload.getResult("yes"));
 		noBitmap = new createjs.Bitmap(preload.getResult("no"));

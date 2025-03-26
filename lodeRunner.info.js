@@ -126,7 +126,7 @@ function infoMenu(callbackFun, args)
 	if(infoMsg) infoObj.showInfo(infoMsg, callbackFun, args);
 	else {
 		if(callbackFun) callbackFun(args);
-		error(arguments.callee.name, "Error:  playMode = " + playMode);
+		error("Error:  playMode = " + playMode);
 	}
 }
 
@@ -278,7 +278,7 @@ function infoMenuClass(_stage, _scale)
 				menuY += (infoObj[i].textHeight * 3/2|0);	
 				break;	
 			default:
-				error(arguments.callee.name, "Error: type don't support, type = " + infoList[i].type);
+				error("Error: type don't support, type = " + infoList[i].type);
 					continue;	
 			}
 			if(maxTextWidth < infoObj[i].width) maxTextWidth = infoObj[i].width;
@@ -373,7 +373,7 @@ function infoMenuClass(_stage, _scale)
 				_stage.addChild(infoObj[i].textLink);
 				break;	
 			default:
-				error(arguments.callee.name, "Error: type don't support, type = " + infoObj[i].type);
+				error("Error: type don't support, type = " + infoObj[i].type);
 				continue;	
 			}
 		}
@@ -396,7 +396,7 @@ function infoMenuClass(_stage, _scale)
 				_stage.removeChild(infoObj[i].textLink);
 				break;
 			default:
-				error(arguments.callee.name, "Error: type don't support, type = " + infoObj[i].type);
+				error("Error: type don't support, type = " + infoObj[i].type);
 				continue;	
 			}
 		}

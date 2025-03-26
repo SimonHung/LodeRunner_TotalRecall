@@ -66,7 +66,7 @@ function init()
 	var screenSize = getScreenSize();
 	screenX1 = screenSize.x;
 	screenY1 = screenSize.y;
-	
+
 	canvasReSize();
 	createStage();
 	setBackground();
@@ -126,6 +126,7 @@ function canvasReSize()
 	canvas.style.left = (left>0?left:0) + "px";
 	canvas.style.top =  (top>0?top:0) + "px";
 	canvas.style.position = "absolute";
+	canvas.style.cursor = "default";
 	
 	tileW = BASE_TILE_X; //tileW and tileH for detection so don't change scale
 	tileH = BASE_TILE_Y;
@@ -505,7 +506,7 @@ function moveSprite2Top()
 	}
 	
 	if(runner == null) {
-		error(arguments.callee.name, "Without runner ???");
+		error("Without runner ???");
 	} else {
 		//move runner to top (z index)
 		moveChild2Top(mainStage, runner.sprite); 
@@ -1313,8 +1314,8 @@ function gameFinishCallback(selectMode)
 		gameState = GAME_NEW_LEVEL;
 		break;
 	case 1: //menu selection
-		//incLevel(1);	
-		activeSelectMenu(gameFinishActiveNew, gameFinishCloseIcon, null)	
+		//incLevel(1);
+		activeSelectMenu(gameFinishActiveNew, gameFinishCloseIcon);	
 		break;
 	case 2: //new level
 		incLevel(1,0);	
@@ -1379,13 +1380,13 @@ function mainTick(event)
 			}
 			break;
 		case PLAY_DEMO:	
-			error(arguments.callee.name, "DEMO dead level=" + curLevel);
+			error("DEMO dead level=" + curLevel);
 				
 			setTimeout(function() {incLevel(1,0); gameState = GAME_NEW_LEVEL; }, 500);
 			gameState = GAME_WAITING;	
 			break;	
 		case PLAY_DEMO_ONCE:
-			error(arguments.callee.name, "DEMO dead level=" + curLevel);
+			error("DEMO dead level=" + curLevel);
 				
 			disableStageClickEvent();
 			document.onkeydown = handleKeyDown;
@@ -1442,7 +1443,7 @@ function mainTick(event)
 		case PLAY_MODERN:
 			soundPlay(soundEnding);
 			var lastHiScore = lastHiScore = updateModernScoreInfo();
-			levelPassDialog(curLevel, curGetGold, curGuardDeadNo, curTime, lastHiScore, 
+			levelPassDialog(curLevel, curGetGold, curGuardDeadNo, curTime, lastHiScore,
 						  returnBitmap, select1Bitmap, nextBitmap,
 						  mainStage, tileScale, gameFinishCallback);	
 			gameState = GAME_WAITING;
@@ -1453,7 +1454,7 @@ function mainTick(event)
 			gameState = GAME_WAITING;
 			break;
 		default:
-			error(arguments.callee.name, "design error, playMode =" + playMode);
+			error("design error, playMode =" + playMode);
 			break;	
 		}
 

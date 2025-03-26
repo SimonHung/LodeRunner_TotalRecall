@@ -141,12 +141,19 @@ function changeColor(canvas, oldColor, newColor)
 	var data = imgData.data;
 	var bitChanged = 0;
 	
+	// add a range compare for fix browser (Brave) color have bit different ?, 6/3/2021
+	var oldMin = [oldColor[0]-2, oldColor[1]-2, oldColor[2]-2];
+	var oldMax = [oldColor[0]+2, oldColor[1]+2, oldColor[2]+2];
+	
 	for (var i = 0; i < data.length; i += 4) {
 		var red   = data[i + 0];
 		var green = data[i + 1];
 		var blue  = data[i + 2];
 		var alpha = data[i + 3];
-		if(oldColor[0] == red && oldColor[1] == green && oldColor[2] == blue) {
+		if(oldMin[0] <= red   && red   <= oldMax[0] && 
+		   oldMin[1] <= green && green <= oldMax[1] &&
+		   oldMin[2] <= blue  && blue  <= oldMax[2]) 
+		{
 			data[i+0] = newColor[0];
 			data[i+1] = newColor[1];
 			data[i+2] = newColor[2];
