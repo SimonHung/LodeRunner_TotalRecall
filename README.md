@@ -94,4 +94,6 @@ This program build with Javascript + [CreateJS](http://www.createjs.com).
 3. Alternatively, download `sswws.zip` from [here](https://github.com/faustinoaq/sswws/releases/tag/v0.1.0), extract it into the LodeRunner directory, and run "`sswws.exe -p 8080`" from the command prompt.
 4. Open a web browser and go to "`http://127.0.0.1:8080/lodeRunner.html`".
 #####  <font color="red">Note:</font><font color="blue"> Changing the HTTP port will cause the browser to store "status" or "custom levels" data in a separate storage.</font>
+
+### * <a target="_blank" href="https://simonhung.github.io/LodeRunner_TotalRecall/lodeRunner.html">Play Online</a>
 ------------------------------------
