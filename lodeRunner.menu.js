@@ -1606,7 +1606,8 @@ var playVersionInfo = [
 	{ id:3, verData: proData,      name: gameVersionName[2], info: proInfo },
 	{ id:4, verData: revengeData,  name: gameVersionName[3], info: revengeInfo },
 	{ id:5, verData: fanBookData,  name: gameVersionName[4], info: fanBookInfo },
-	{ id:2, verData: championData, name: gameVersionName[1], info: championInfo }
+        { id:2, verData: championData, name: gameVersionName[1], info: championInfo },
+	{ id:6, verData: sneakyData,   name: gameVersionName[5], info: sneakyInfo }
 ];
 
 //var customItemInfo = { id:999, name:" Custom Levels " };
